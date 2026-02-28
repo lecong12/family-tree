@@ -1,5 +1,5 @@
-import Root from 'src/views/Root/Root';
+import { redirect } from 'next/navigation';
 
-export default async function Home() {
-    return <Root />;
+export default function Home() {
+    redirect('/login');
 }
