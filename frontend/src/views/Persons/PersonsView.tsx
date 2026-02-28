@@ -197,9 +197,11 @@ export default function PersonsView() {
     const handleCloseAddChildModal = useCallback(() => setAddChildModalOpen(false), []);
     const handleCloseAddPersonModal = useCallback(() => setAddPersonModalOpen(false), []);
 
+    // Show loading state while checking auth
+    if (authLoading) return <LoadingOverlay isLoading={true} />;
     
-    // If not loading and no user, the useEffect will handle redirect, return null to avoid flash
-    if (!user) return null;
+    // If not loading and no user, show loading while redirecting instead of blank screen
+    if (!user) return <LoadingOverlay isLoading={true} />;
 
     return (
         <div className="w-screen h-screen flex flex-col bg-gray-50">
