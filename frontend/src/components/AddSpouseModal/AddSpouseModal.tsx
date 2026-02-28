@@ -114,7 +114,6 @@ export default function AddSpouseModal({ isOpen, onClose, onSuccess, person }: A
         // Check if this order already exists for this person
         const orderField = isPersonMale ? 'wifeOrder' : 'husbandOrder';
         const existingOrder = existingSpouses.some((spouse) => {
-            // const spouseId = isPersonMale ? (typeof spouse.wife === 'string' ? spouse.wife : spouse.wife?._id) : typeof spouse.husband === 'string' ? spouse.husband : spouse.husband?._id;
             return spouse[orderField] === order;
         });
 

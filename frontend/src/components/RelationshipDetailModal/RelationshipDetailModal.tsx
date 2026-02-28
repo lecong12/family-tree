@@ -58,41 +58,6 @@ export default function RelationshipDetailModal({ isOpen, onClose, spouse }: Rel
     const handleSave = () => {
         if (!spouse?._id) return;
 
-        const updateData: Partial<Spouse> = {
-            husbandOrder: formData.husbandOrder,
-            wifeOrder: formData.wifeOrder,
-            marriageDate: formData.marriageDate ? new Date(formData.marriageDate) : undefined,
-            divorceDate: formData.divorceDate ? new Date(formData.divorceDate) : undefined,
-        };
-
-        // If dates are empty strings, we might want to send null or handle it in backend.
-        // Based on AddSpouseModal, undefined is used.
-        // However, if we want to clear a date, we might need to send null if the backend supports it,
-        // or just undefined if we only update what's present.
-        // Assuming backend handles null/undefined correctly for clearing if needed, or just updates.
-        // If the user clears the date input, formData.marriageDate will be ''.
-        // new Date('') is Invalid Date.
-
-        if (formData.marriageDate === '') {
-            // If it was present and now is empty, we might want to clear it.
-            // But Partial<Spouse> defines dates as Date | undefined.
-            // Let's assume undefined means "no change" or "null" depending on backend.
-            // Usually to clear, we might need to send null.
-            // Let's check spouseService types.
-            // It says marriageDate?: Date.
-            // Let's try sending null as any if needed, but for now let's stick to undefined if empty string
-            // Wait, if I want to REMOVE a date, I probably need to send null.
-            // But let's look at how AddSpouseModal does it:
-            // marriageDate: marriageDate ? new Date(marriageDate) : undefined
-            // This is for creation. For update, if I want to unset, I might need explicit null.
-            // Let's assume for now we just update values.
-        }
-
-        // Refined logic for dates:
-        // If user clears the date, we want to save it as null/undefined.
-        // If the backend uses Mongoose, setting a field to undefined usually doesn't unset it.
-        // We might need to send null.
-
         const payload: any = {
             husbandOrder: formData.husbandOrder,
             wifeOrder: formData.wifeOrder,
@@ -100,18 +65,14 @@ export default function RelationshipDetailModal({ isOpen, onClose, spouse }: Rel
 
         if (formData.marriageDate) {
             payload.marriageDate = new Date(formData.marriageDate);
-        } else {
-            // If empty, we might want to unset it?
-            // For now let's just not send it if it's empty, effectively not updating it if it was there?
-            // Or if we want to allow clearing, we should send null.
-            // Let's try sending null if it was previously set.
-            if (spouse.marriageDate) payload.marriageDate = null;
+        } else if (spouse.marriageDate) {
+            payload.marriageDate = null;
         }
 
         if (formData.divorceDate) {
             payload.divorceDate = new Date(formData.divorceDate);
-        } else {
-            if (spouse.divorceDate) payload.divorceDate = null;
+        } else if (spouse.divorceDate) {
+            payload.divorceDate = null;
         }
 
         updateSpouseMutation.mutate(payload);
