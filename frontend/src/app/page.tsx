@@ -9,6 +9,13 @@ export default function Home() {
     const { user, loading } = useAuth();
 
     useEffect(() => {
+        // Debug log để kiểm tra trên Vercel
+        console.log('--- DEBUG INFO ---');
+        console.log('API URL:', process.env.NEXT_PUBLIC_API_URL);
+        console.log('Auth Loading:', loading);
+        console.log('User:', user);
+        console.log('------------------');
+
         if (!loading) {
             if (user) {
                 router.replace('/persons');
