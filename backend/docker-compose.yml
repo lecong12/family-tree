@@ -1,13 +1,18 @@
+version: '3.8'
+
 services:
-    mongodb:
-        image: mongo:5.0.15
-        environment:
-            MONGO_INITDB_ROOT_USERNAME: root
-            MONGO_INITDB_ROOT_PASSWORD: 123456
-        ports:
-            - 27017:27017
-        volumes:
-            - mongodb_family_tree:/data/db
+  mongodb:
+    image: mongo:latest
+    container_name: family-tree-mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: 123456
+      MONGO_INITDB_DATABASE: familytree
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongodb_data:/data/db
 
 volumes:
-    mongodb_family_tree:
+  mongodb_data:

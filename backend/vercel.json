@@ -1,16 +1,18 @@
 {
-    "version": 2,
-    "builds": [
-        {
-            "src": "src/vercel.ts",
-            "use": "@vercel/node"
-        }
-    ],
-    "routes": [
-        {
-            "src": "/(.*)",
-            "dest": "src/vercel.ts",
-            "methods": ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
-        }
-    ]
+  "rewrites": [
+    {
+      "source": "/api/v1/:path*",
+      "destination": "http://localhost:9999/api/v1/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
+        { "key": "Access-Control-Allow-Headers", "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version" }
+      ]
+    }
+  ]
 }
