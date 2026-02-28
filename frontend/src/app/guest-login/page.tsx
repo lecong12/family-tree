@@ -1,18 +1,27 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function GuestLoginPage() {
+    const router = useRouter();
     const [code, setCode] = useState('');
     const [error, setError] = useState('');
-    const { loginGuest } = useAuth();
+    const { loginGuest, user } = useAuth();
+
+    useEffect(() => {
+        if (user) {
+            router.replace('/persons');
+        }
+    }, [user, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             await loginGuest(code);
+            router.push('/persons');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Mã khách không hợp lệ hoặc đã hết hạn');
         }

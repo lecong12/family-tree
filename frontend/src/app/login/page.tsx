@@ -1,19 +1,28 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
+    const router = useRouter();
     const [username, setUsername] = useState('admin');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const { login } = useAuth();
+    const { login, user } = useAuth();
+
+    useEffect(() => {
+        if (user) {
+            router.replace('/persons');
+        }
+    }, [user, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             await login(username, password);
+            router.push('/persons');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Đăng nhập thất bại');
         }

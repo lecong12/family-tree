@@ -197,7 +197,9 @@ export default function PersonsView() {
     const handleCloseAddChildModal = useCallback(() => setAddChildModalOpen(false), []);
     const handleCloseAddPersonModal = useCallback(() => setAddPersonModalOpen(false), []);
 
-    if (authLoading || !user) return null;
+    
+    // If not loading and no user, the useEffect will handle redirect, return null to avoid flash
+    if (!user) return null;
 
     return (
         <div className="w-screen h-screen flex flex-col bg-gray-50">
