@@ -13,7 +13,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "dest": "backend/src/vercel.ts"
+      "destination": "backend/src/vercel.ts"
     }
   ]
 }
