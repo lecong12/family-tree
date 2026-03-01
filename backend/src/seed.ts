@@ -63,8 +63,8 @@ async function seed() {
         const spouseAC = await spouseService.create({
             husband: ongA._id as any,
             wife: baC._id as any,
-            husbandOrder: 1,
-            wifeOrder: 2,
+            husbandOrder: 2,
+            wifeOrder: 1,
             marriageDate: new Date('1925-01-01'),
         });
 

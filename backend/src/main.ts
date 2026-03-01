@@ -20,13 +20,18 @@ async function bootstrap() {
 
     //Config Cors
     app.enableCors({
-        origin: ['https://dong-ho-le-dinh.vercel.app', 'http://localhost:3000'],
+        origin: true, // Cho phép tất cả origin trong giai đoạn development/test. Khi production ổn định nên set cụ thể lại.
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
     });
 
     // Swagger setup
-    const config = new DocumentBuilder().setTitle('API Documentation').setDescription('Documentation for the API').setVersion('1.0').build();
+    const config = new DocumentBuilder()
+        .setTitle('Family Tree API')
+        .setDescription('API documentation for Family Tree application')
+        .setVersion('1.0')
+        .addBearerAuth() // Thêm nút Authorize để test JWT token trên Swagger
+        .build();
     const document = SwaggerModule.createDocument(app as any, config);
     SwaggerModule.setup('api/docs', app as any, document);
 
