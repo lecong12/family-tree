@@ -21,9 +21,13 @@ import { AuthModule } from './modules/auth/auth.module';
         ConfigModule.forRoot({ isGlobal: true, envFilePath: ['.env', '.env.local'] }),
         MongooseModule.forRootAsync({
             imports: [ConfigModule],
-            useFactory: async (configService: ConfigService) => ({
-                uri: configService.get<string>('MONGO_URI'),
-            }),
+            useFactory: async (configService: ConfigService) => {
+                const uri = configService.get<string>('MONGO_URI');
+                if (!uri) {
+                    throw new Error('❌ MONGO_URI is missing in Environment Variables!');
+                }
+                return { uri };
+            },
             inject: [ConfigService],
         }),
     ],

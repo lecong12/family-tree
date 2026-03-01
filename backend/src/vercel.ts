@@ -7,6 +7,11 @@ import * as express from 'express';
 
 const server = express();
 
+// 👇 Thêm đoạn này để khi vào trang chủ sẽ thấy thông báo
+server.get('/', (req, res) => {
+    res.send('Hello! Family Tree API is running. Go to <a href="/api/docs">/api/docs</a> to see the API.');
+});
+
 async function bootstrap() {
     const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
 
