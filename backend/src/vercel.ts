@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import express = require('express');
+import express from 'express';
 
 const server = express();
 
@@ -16,7 +16,7 @@ async function bootstrap() {
 
     // 1. Enable CORS ngay lập tức để tránh lỗi chặn truy cập từ Frontend
     app.enableCors({
-        origin: '*',
+        origin: true,
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
     });

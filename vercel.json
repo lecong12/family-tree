@@ -16,6 +16,10 @@
       "dest": "backend/src/vercel.ts"
     },
     {
+      "source": "/",
+      "dest": "backend/src/vercel.ts"
+    },
+    {
       "source": "/((?!api/).*)",
       "dest": "/frontend/$1"
     }
