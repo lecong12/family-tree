@@ -10,6 +10,13 @@ const server = express();
 async function bootstrap() {
     const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
 
+    // 1. Enable CORS ngay lập tức để tránh lỗi chặn truy cập từ Frontend
+    app.enableCors({
+        origin: '*',
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+        credentials: true,
+    });
+
     app.useGlobalPipes(
         new ValidationPipe({
             whitelist: true,
@@ -17,12 +24,6 @@ async function bootstrap() {
         }),
     );
     app.setGlobalPrefix('api/v1');
-
-    app.enableCors({
-        origin: '*',
-        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-        credentials: true,
-    });
 
     const config = new DocumentBuilder()
         .setTitle('Family Tree API')
@@ -45,6 +46,9 @@ export default async function (req: any, res: any) {
             isInitialized = true;
         } catch (error) {
             console.error('❌ NestJS Bootstrap Error:', error);
+            // 2. Thêm Header CORS thủ công cho response lỗi để Frontend đọc được nội dung lỗi
+            res.setHeader('Access-Control-Allow-Origin', '*');
+            res.setHeader('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
             res.status(500).send({
                 message: 'Server Initialization Error',
                 error: error instanceof Error ? error.message : String(error),
