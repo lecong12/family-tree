@@ -3,7 +3,7 @@ import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import express from 'express';
+import express = require('express');
 
 const server = express();
  
@@ -23,7 +23,7 @@ async function bootstrap() {
             forbidNonWhitelisted: true,
         }),
     );
-    // app.setGlobalPrefix('api/v1'); // Prefix is handled by vercel.json rewrites
+    app.setGlobalPrefix('api');
 
     const config = new DocumentBuilder()
         .setTitle('Family Tree API')
