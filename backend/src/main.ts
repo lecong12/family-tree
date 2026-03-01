@@ -16,7 +16,7 @@ async function bootstrap() {
             forbidNonWhitelisted: true, //TODO: throw an error when any other fields that are not in the DTO
         }),
     );
-    app.setGlobalPrefix('api');
+    app.setGlobalPrefix('api/v1');
 
     //Config Cors
     app.enableCors({
@@ -33,7 +33,7 @@ async function bootstrap() {
         .addBearerAuth() // Thêm nút Authorize để test JWT token trên Swagger
         .build();
     const document = SwaggerModule.createDocument(app as any, config);
-    SwaggerModule.setup('docs', app as any, document);
+    SwaggerModule.setup('api/docs', app as any, document);
 
     await app.listen(port);
 }

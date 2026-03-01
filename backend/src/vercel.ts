@@ -25,7 +25,7 @@ async function bootstrap() {
                 forbidNonWhitelisted: true,
             }),
         );
-        app.setGlobalPrefix('api');
+        app.setGlobalPrefix('api/v1');
 
         const config = new DocumentBuilder()
             .setTitle('Family Tree API')
@@ -34,7 +34,7 @@ async function bootstrap() {
             .addBearerAuth()
             .build();
         const document = SwaggerModule.createDocument(app, config);
-        SwaggerModule.setup('docs', app, document);
+        SwaggerModule.setup('api/docs', app, document);
 
         await app.init();
         cachedServer = server;
