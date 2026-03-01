@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
-import { ValidationPipe, RequestMethod } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as express from 'express';
 
@@ -16,12 +16,10 @@ async function bootstrap() {
             forbidNonWhitelisted: true,
         }),
     );
-    app.setGlobalPrefix('api/v1', {
-        exclude: [{ path: '/', method: RequestMethod.GET }],
-    });
+    app.setGlobalPrefix('api/v1');
 
     app.enableCors({
-        origin: true,
+        origin: '*',
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
     });
@@ -47,9 +45,10 @@ export default async function (req: any, res: any) {
             isInitialized = true;
         } catch (error) {
             console.error('❌ NestJS Bootstrap Error:', error);
-            res.status(500).json({
+            res.status(500).send({
                 message: 'Server Initialization Error',
                 error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
             });
             return;
         }
