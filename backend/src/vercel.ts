@@ -40,8 +40,17 @@ let isInitialized = false;
 
 export default async function (req: any, res: any) {
     if (!isInitialized) {
-        await bootstrap();
-        isInitialized = true;
+        try {
+            await bootstrap();
+            isInitialized = true;
+        } catch (error) {
+            console.error('❌ NestJS Bootstrap Error:', error);
+            res.status(500).json({
+                message: 'Server Initialization Error',
+                error: error instanceof Error ? error.message : String(error),
+            });
+            return;
+        }
     }
     server(req, res);
 }

@@ -14,7 +14,7 @@ Tạo file `.env` trong thư mục `backend/` dựa trên file `.env.example`.
 | Biến                          | Mô tả                                      | Ví dụ                                                               |
 | ----------------------------- | ------------------------------------------ | ------------------------------------------------------------------- |
 | `PORT`                        | Port mà backend sẽ chạy                    | `9999`                                                              |
-| `MONGODB_URI`                 | Chuỗi kết nối MongoDB                      | `mongodb://root:123456@localhost:27017/familytree?authSource=admin` |
+| `MONGO_URI`                   | Chuỗi kết nối MongoDB                      | `mongodb://root:123456@localhost:27017/familytree?authSource=admin` |
 | `JWT_SECRET_KEY`              | Khóa bí mật để mã hóa token                | `chuoi_ngau_nhien_bao_mat`                                          |
 | `JWT_ACCESS_TOKEN_EXPIRES_IN` | Thời gian hết hạn token                    | `7d`                                                                |
 | `CLOUDINARY_CLOUD_NAME`       | Tên Cloudinary (lưu ảnh)                   | `my-cloud-name`                                                     |
@@ -24,7 +24,7 @@ Tạo file `.env` trong thư mục `backend/` dựa trên file `.env.example`.
 
 ### Lưu ý khi Deploy
 
--   Nếu dùng Docker Compose cho cả App và DB, `MONGODB_URI` nên trỏ tới tên service (ví dụ: `mongodb://root:123456@mongodb:27017/...`).
+-   Nếu dùng Docker Compose cho cả App và DB, `MONGO_URI` nên trỏ tới tên service (ví dụ: `mongodb://root:123456@mongodb:27017/...`).
 -   `CORS` hiện tại đang để `origin: '*'`. Trong môi trường production, nên đổi lại thành domain của frontend để bảo mật hơn (sửa trong `backend/src/main.ts`).
 
 ## 2. Frontend (Next.js)
