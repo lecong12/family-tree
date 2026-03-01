@@ -23,7 +23,7 @@ async function bootstrap() {
             forbidNonWhitelisted: true,
         }),
     );
-    app.setGlobalPrefix('api/v1');
+    // app.setGlobalPrefix('api/v1'); // Prefix is handled by vercel.json rewrites
 
     const config = new DocumentBuilder()
         .setTitle('Family Tree API')
@@ -32,7 +32,7 @@ async function bootstrap() {
         .addBearerAuth()
         .build();
     const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
+    SwaggerModule.setup('docs', app, document);
 
     await app.init();
 }
