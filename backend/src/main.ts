@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, RequestMethod } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
@@ -16,7 +16,9 @@ async function bootstrap() {
             forbidNonWhitelisted: true, //TODO: throw an error when any other fields that are not in the DTO
         }),
     );
-    app.setGlobalPrefix('api/v1', { exclude: [''] });
+    app.setGlobalPrefix('api/v1', {
+        exclude: [{ path: '/', method: RequestMethod.GET }],
+    });
 
     //Config Cors
     app.enableCors({

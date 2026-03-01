@@ -1,16 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, RequestMethod } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as express from 'express';
 
 const server = express();
-
-// 👇 Thêm đoạn này để khi vào trang chủ sẽ thấy thông báo
-server.get('/', (req, res) => {
-    res.send('Hello! Family Tree API is running. Go to <a href="/api/docs">/api/docs</a> to see the API.');
-});
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
@@ -21,7 +16,9 @@ async function bootstrap() {
             forbidNonWhitelisted: true,
         }),
     );
-    app.setGlobalPrefix('api/v1', { exclude: [''] });
+    app.setGlobalPrefix('api/v1', {
+        exclude: [{ path: '/', method: RequestMethod.GET }],
+    });
 
     app.enableCors({
         origin: true,
