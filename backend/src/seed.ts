@@ -40,23 +40,28 @@ async function seed() {
     await parentChildModel.deleteMany({});
     await spouseModel.deleteMany({});
     await personModel.deleteMany({});
-    // Xóa tất cả user admin cũ để đảm bảo chỉ có 1 admin duy nhất
-    await userModel.deleteMany({});
+    // Chỉ xóa user 'admin' để không ảnh hưởng các user khác nếu có
+    await userModel.deleteMany({ username: 'admin' });
     console.log('✅ Old data cleaned.');
 
     try {
         // Tạo Admin User
         console.log('Creating Admin User...');
-        const adminPassword = configService.get<string>('ADMIN_PASSWORD') || 'Admin123456@';
-        console.log(`🔑 Admin Password being used: ${adminPassword}`); // In ra mật khẩu để kiểm tra
-        await userService.create({
-            username: 'admin',
-            password: adminPassword,
-            role: UserRoles.ADMIN,
-            isActive: true,
-        } as any);
-        createdAdmin = true;
-        console.log('✅ Admin user created successfully');
+        const existingAdmin = await userService.findByUsername('admin');
+        if (!existingAdmin) {
+            const adminPassword = configService.get<string>('ADMIN_PASSWORD') || 'Admin123456@';
+            console.log(`🔑 Creating admin with password: ${adminPassword}`);
+            await userService.create({
+                username: 'admin',
+                password: adminPassword,
+                role: UserRoles.ADMIN,
+                isActive: true,
+            } as any);
+            createdAdmin = true;
+            console.log('✅ Admin user created successfully');
+        } else {
+            console.log('⚠️ Admin user already exists, skipping creation.');
+        }
 
         // Generation 1 (Ông bà)
         console.log('Creating Generation 1...');

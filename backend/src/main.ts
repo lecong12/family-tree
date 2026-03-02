@@ -27,8 +27,9 @@ async function bootstrap() {
     });
 
     //Config Cors
+    const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
     app.enableCors({
-        origin: true, // Cho phép tất cả origin trong giai đoạn development/test. Khi production ổn định nên set cụ thể lại.
+        origin: [frontendUrl, 'https://family-tree-frontend-git-main-lecong12s-projects.vercel.app'],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
     });
@@ -44,5 +45,6 @@ async function bootstrap() {
     SwaggerModule.setup('api/docs', app as any, document);
 
     await app.listen(port);
+    console.log(`🚀 Backend application is running on: http://localhost:${port}`);
 }
 bootstrap();
