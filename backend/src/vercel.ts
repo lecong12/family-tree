@@ -16,6 +16,9 @@ async function bootstrap() {
         server.get('/api', (req, res) => {
             res.send({ status: 'ok', message: 'Family Tree API is running!' });
         });
+        server.get('/', (req, res) => {
+            res.send('Hello! Family Tree API is running. Go to <a href="/api/docs">/api/docs</a> to see the API.');
+        });
 
         // 1. Enable CORS ngay lập tức để tránh lỗi chặn truy cập từ Frontend
         app.enableCors({
@@ -32,9 +35,7 @@ async function bootstrap() {
         );
         
         // Exclude root path '/' from prefix to avoid 404 on health checks if needed
-        app.setGlobalPrefix('api/v1', {
-            exclude: [{ path: 'api', method: RequestMethod.GET }]
-        });
+        app.setGlobalPrefix('api/v1');
 
         const config = new DocumentBuilder()
             .setTitle('Family Tree API')

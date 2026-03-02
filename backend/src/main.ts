@@ -16,9 +16,7 @@ async function bootstrap() {
             forbidNonWhitelisted: true, //TODO: throw an error when any other fields that are not in the DTO
         }),
     );
-    app.setGlobalPrefix('api/v1', {
-        exclude: [{ path: 'api', method: RequestMethod.GET }]
-    });
+    app.setGlobalPrefix('api/v1');
 
     //Config Cors
     app.enableCors({
