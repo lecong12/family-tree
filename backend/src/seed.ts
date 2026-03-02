@@ -35,16 +35,16 @@ async function seed() {
 
     console.log('🌱 Starting seed...');
 
-    try {
-        // Xóa dữ liệu cũ
-        console.log('🧹 Cleaning old data...');
-        await parentChildModel.deleteMany({});
-        await spouseModel.deleteMany({});
-        await personModel.deleteMany({});
-        // Xóa user admin cũ để đảm bảo chỉ có 1 admin duy nhất
-        await userModel.deleteMany({ username: 'admin' });
-        console.log('✅ Old data cleaned.');
+    // Xóa dữ liệu cũ
+    console.log('🧹 Cleaning old data...');
+    await parentChildModel.deleteMany({});
+    await spouseModel.deleteMany({});
+    await personModel.deleteMany({});
+    // Xóa user admin cũ để đảm bảo chỉ có 1 admin duy nhất
+    await userModel.deleteMany({ username: 'admin' });
+    console.log('✅ Old data cleaned.');
 
+    try {
         // Tạo Admin User
         console.log('Creating Admin User...');
         const adminPassword = configService.get<string>('ADMIN_PASSWORD') || 'Admin123456@';
