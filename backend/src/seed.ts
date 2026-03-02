@@ -3,7 +3,10 @@ import { AppModule } from './app.module';
 import { PersonService } from './modules/person/person.service';
 import { SpouseService } from './modules/spouse/spouse.service';
 import { ParentChildService } from './modules/parent-child/parent-child.service';
+import { UserService } from './modules/user/user.service';
+import { ConfigService } from '@nestjs/config';
 import { Gender } from './constants';
+import { Types } from 'mongoose';
 
 async function seed() {
     const app = await NestFactory.createApplicationContext(AppModule);
@@ -11,10 +14,46 @@ async function seed() {
     const personService = app.get(PersonService);
     const spouseService = app.get(SpouseService);
     const parentChildService = app.get(ParentChildService);
+    const userService = app.get(UserService);
+    const configService = app.get(ConfigService);
+
+    let createdPersons = 0;
+    let createdSpouseRels = 0;
+    let createdParentChildRels = 0;
+    let createdAdmin = false;
 
     console.log('🌱 Starting seed...');
 
     try {
+        // Xóa dữ liệu cũ
+        console.log('🧹 Cleaning old data...');
+        await personService.deleteAll();
+        await spouseService.deleteAll();
+        await parentChildService.deleteAll();
+        // await personService.deleteAll();
+        // await spouseService.deleteAll();
+        // await parentChildService.deleteAll();
+        // Không xóa user để giữ lại tài khoản admin
+        // await userService.deleteAll(); 
+        console.log('✅ Old data cleaned.');
+        console.log('✅ Old data cleaned (Skipped - Manual cleanup required if conflicts occur).');
+
+        // Tạo Admin User
+        console.log('Creating Admin User...');
+        const existingAdmin = await userService.findOneByUsername('admin');
+        const existingAdmin = await userService.findByUsername('admin');
+        if (!existingAdmin) {
+            const adminPassword = configService.get<string>('ADMIN_PASSWORD') || 'Admin123456@';
+            await userService.create({
+                username: 'admin',
+                password: adminPassword,
+            } as any);
+            createdAdmin = true;
+            console.log('✅ Admin user created successfully');
+        } else {
+            console.log('⚠️ Admin user already exists, skipping creation.');
+        }
+
         // Generation 1 (Ông bà)
         console.log('Creating Generation 1...');
         const ongA = await personService.create({
@@ -27,6 +66,7 @@ async function seed() {
             address: 'Hà Nội',
             desc: 'Là người cha của gia tộc',
         });
+        createdPersons++;
 
         const baX = await personService.create({
             cccd: '1224567890',
@@ -38,6 +78,7 @@ async function seed() {
             address: 'Hà Nội',
             desc: 'Vợ đầu của ông A',
         });
+        createdPersons++;
 
         const baC = await personService.create({
             cccd: '4253475475',
@@ -49,24 +90,31 @@ async function seed() {
             address: 'Hà Nội',
             desc: 'Vợ hai của ông A',
         });
+        createdPersons++;
 
         // Tạo quan hệ vợ chồng Generation 1
         console.log('Creating spouse relationships for Generation 1...');
         const spouseAX = await spouseService.create({
+            husband: ongA._id as Types.ObjectId,
+            wife: baX._id as Types.ObjectId,
             husband: ongA._id as any,
             wife: baX._id as any,
             husbandOrder: 1,
             wifeOrder: 1,
             marriageDate: new Date('1920-01-01'),
         });
+        createdSpouseRels++;
 
         const spouseAC = await spouseService.create({
+            husband: ongA._id as Types.ObjectId,
+            wife: baC._id as Types.ObjectId,
             husband: ongA._id as any,
             wife: baC._id as any,
             husbandOrder: 2,
             wifeOrder: 1,
             marriageDate: new Date('1925-01-01'),
         });
+        createdSpouseRels++;
 
         // Generation 2 (Con cái)
         console.log('Creating Generation 2...');
@@ -80,6 +128,7 @@ async function seed() {
             address: 'Hà Nội',
             desc: 'Con gái đầu của ông A và bà X',
         });
+        createdPersons++;
 
         const leDinhYX = await personService.create({
             cccd: '3454566334',
@@ -91,6 +140,7 @@ async function seed() {
             address: 'Hà Nội',
             desc: 'Con trai thứ hai của ông A và bà X',
         });
+        createdPersons++;
 
         const leDinhXX = await personService.create({
             cccd: '4564636456',
@@ -102,26 +152,36 @@ async function seed() {
             address: 'Hà Nội',
             desc: 'Con trai của ông A và bà C',
         });
+        createdPersons++;
 
         // Tạo quan hệ cha mẹ - con
         console.log('Creating parent-child relationships...');
         await parentChildService.create({
+            parent: spouseAX._id as Types.ObjectId,
+            child: leThiAX._id as Types.ObjectId,
             parent: spouseAX._id as any,
             child: leThiAX._id as any,
             isAdopted: false,
         });
+        createdParentChildRels++;
 
         await parentChildService.create({
+            parent: spouseAX._id as Types.ObjectId,
+            child: leDinhYX._id as Types.ObjectId,
             parent: spouseAX._id as any,
             child: leDinhYX._id as any,
             isAdopted: false,
         });
+        createdParentChildRels++;
 
         await parentChildService.create({
+            parent: spouseAC._id as Types.ObjectId,
+            child: leDinhXX._id as Types.ObjectId,
             parent: spouseAC._id as any,
             child: leDinhXX._id as any,
             isAdopted: false,
         });
+        createdParentChildRels++;
 
         // Thêm vợ/chồng cho thế hệ 2
         console.log('Creating spouses for Generation 2...');
@@ -135,6 +195,7 @@ async function seed() {
             address: 'Hà Nội',
             desc: 'Chồng của Lê Thị AX',
         });
+        createdPersons++;
 
         const phamThiD = await personService.create({
             cccd: '8899001122',
@@ -146,22 +207,29 @@ async function seed() {
             address: 'Hà Nội',
             desc: 'Vợ của Lê Đình XX',
         });
+        createdPersons++;
 
         const spouseAXB = await spouseService.create({
+            husband: tranVanB._id as Types.ObjectId,
+            wife: leThiAX._id as Types.ObjectId,
             husband: tranVanB._id as any,
             wife: leThiAX._id as any,
             husbandOrder: 1,
             wifeOrder: 1,
             marriageDate: new Date('1940-05-20'),
         });
+        createdSpouseRels++;
 
         const spouseXXD = await spouseService.create({
+            husband: leDinhXX._id as Types.ObjectId,
+            wife: phamThiD._id as Types.ObjectId,
             husband: leDinhXX._id as any,
             wife: phamThiD._id as any,
             husbandOrder: 1,
             wifeOrder: 1,
             marriageDate: new Date('1945-10-10'),
         });
+        createdSpouseRels++;
 
         // Generation 3 (Cháu)
         console.log('Creating Generation 3...');
@@ -175,6 +243,7 @@ async function seed() {
             address: 'Hà Nội',
             desc: 'Con trai của Trần Văn B và Lê Thị AX',
         });
+        createdPersons++;
 
         const tranThiF = await personService.create({
             cccd: '0011223344',
@@ -186,6 +255,7 @@ async function seed() {
             address: 'Hà Nội',
             desc: 'Con gái của Trần Văn B và Lê Thị AX',
         });
+        createdPersons++;
 
         const leDinhG = await personService.create({
             cccd: '1122334455',
@@ -197,31 +267,42 @@ async function seed() {
             address: 'Hà Nội',
             desc: 'Con trai của Lê Đình XX và Phạm Thị D',
         });
+        createdPersons++;
 
         await parentChildService.create({
+            parent: spouseAXB._id as Types.ObjectId,
+            child: tranVanE._id as Types.ObjectId,
             parent: spouseAXB._id as any,
             child: tranVanE._id as any,
             isAdopted: false,
         });
+        createdParentChildRels++;
 
         await parentChildService.create({
+            parent: spouseAXB._id as Types.ObjectId,
+            child: tranThiF._id as Types.ObjectId,
             parent: spouseAXB._id as any,
             child: tranThiF._id as any,
             isAdopted: false,
         });
+        createdParentChildRels++;
 
         await parentChildService.create({
+            parent: spouseXXD._id as Types.ObjectId,
+            child: leDinhG._id as Types.ObjectId,
             parent: spouseXXD._id as any,
             child: leDinhG._id as any,
             isAdopted: false,
         });
+        createdParentChildRels++;
 
         console.log('✅ Seed completed successfully!');
         console.log(`
 📊 Summary:
-- Persons created: 10
-- Spouse relationships: 4
-- Parent-child relationships: 6
+- Admin user created: ${createdAdmin}
+- Persons created: ${createdPersons}
+- Spouse relationships: ${createdSpouseRels}
+- Parent-child relationships: ${createdParentChildRels}
 - Generations: 3
         `);
     } catch (error) {
