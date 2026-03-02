@@ -5,7 +5,7 @@ import { SpouseService } from './modules/spouse/spouse.service';
 import { ParentChildService } from './modules/parent-child/parent-child.service';
 import { UserService } from './modules/user/user.service';
 import { ConfigService } from '@nestjs/config';
-import { Gender } from './constants';
+import { Gender, UserRoles } from './constants';
 import { Types } from 'mongoose';
 
 async function seed() {
@@ -27,9 +27,9 @@ async function seed() {
     try {
         // Xóa dữ liệu cũ
         console.log('🧹 Cleaning old data...');
-        await personService.deleteAll();
-        await spouseService.deleteAll();
-        await parentChildService.deleteAll();
+        // await personService.deleteAll();
+        // await spouseService.deleteAll();
+        // await parentChildService.deleteAll();
         // await personService.deleteAll();
         // await spouseService.deleteAll();
         // await parentChildService.deleteAll();
@@ -40,13 +40,14 @@ async function seed() {
 
         // Tạo Admin User
         console.log('Creating Admin User...');
-        const existingAdmin = await userService.findOneByUsername('admin');
         const existingAdmin = await userService.findByUsername('admin');
         if (!existingAdmin) {
             const adminPassword = configService.get<string>('ADMIN_PASSWORD') || 'Admin123456@';
             await userService.create({
                 username: 'admin',
                 password: adminPassword,
+                role: UserRoles.ADMIN,
+                isActive: true,
             } as any);
             createdAdmin = true;
             console.log('✅ Admin user created successfully');
@@ -95,8 +96,6 @@ async function seed() {
         // Tạo quan hệ vợ chồng Generation 1
         console.log('Creating spouse relationships for Generation 1...');
         const spouseAX = await spouseService.create({
-            husband: ongA._id as Types.ObjectId,
-            wife: baX._id as Types.ObjectId,
             husband: ongA._id as any,
             wife: baX._id as any,
             husbandOrder: 1,
@@ -106,8 +105,6 @@ async function seed() {
         createdSpouseRels++;
 
         const spouseAC = await spouseService.create({
-            husband: ongA._id as Types.ObjectId,
-            wife: baC._id as Types.ObjectId,
             husband: ongA._id as any,
             wife: baC._id as any,
             husbandOrder: 2,
@@ -157,8 +154,6 @@ async function seed() {
         // Tạo quan hệ cha mẹ - con
         console.log('Creating parent-child relationships...');
         await parentChildService.create({
-            parent: spouseAX._id as Types.ObjectId,
-            child: leThiAX._id as Types.ObjectId,
             parent: spouseAX._id as any,
             child: leThiAX._id as any,
             isAdopted: false,
@@ -166,8 +161,6 @@ async function seed() {
         createdParentChildRels++;
 
         await parentChildService.create({
-            parent: spouseAX._id as Types.ObjectId,
-            child: leDinhYX._id as Types.ObjectId,
             parent: spouseAX._id as any,
             child: leDinhYX._id as any,
             isAdopted: false,
@@ -175,8 +168,6 @@ async function seed() {
         createdParentChildRels++;
 
         await parentChildService.create({
-            parent: spouseAC._id as Types.ObjectId,
-            child: leDinhXX._id as Types.ObjectId,
             parent: spouseAC._id as any,
             child: leDinhXX._id as any,
             isAdopted: false,
@@ -210,8 +201,6 @@ async function seed() {
         createdPersons++;
 
         const spouseAXB = await spouseService.create({
-            husband: tranVanB._id as Types.ObjectId,
-            wife: leThiAX._id as Types.ObjectId,
             husband: tranVanB._id as any,
             wife: leThiAX._id as any,
             husbandOrder: 1,
@@ -221,8 +210,6 @@ async function seed() {
         createdSpouseRels++;
 
         const spouseXXD = await spouseService.create({
-            husband: leDinhXX._id as Types.ObjectId,
-            wife: phamThiD._id as Types.ObjectId,
             husband: leDinhXX._id as any,
             wife: phamThiD._id as any,
             husbandOrder: 1,
@@ -270,8 +257,6 @@ async function seed() {
         createdPersons++;
 
         await parentChildService.create({
-            parent: spouseAXB._id as Types.ObjectId,
-            child: tranVanE._id as Types.ObjectId,
             parent: spouseAXB._id as any,
             child: tranVanE._id as any,
             isAdopted: false,
@@ -279,8 +264,6 @@ async function seed() {
         createdParentChildRels++;
 
         await parentChildService.create({
-            parent: spouseAXB._id as Types.ObjectId,
-            child: tranThiF._id as Types.ObjectId,
             parent: spouseAXB._id as any,
             child: tranThiF._id as any,
             isAdopted: false,
@@ -288,8 +271,6 @@ async function seed() {
         createdParentChildRels++;
 
         await parentChildService.create({
-            parent: spouseXXD._id as Types.ObjectId,
-            child: leDinhG._id as Types.ObjectId,
             parent: spouseXXD._id as any,
             child: leDinhG._id as any,
             isAdopted: false,
