@@ -41,7 +41,7 @@ async function seed() {
     await spouseModel.deleteMany({});
     await personModel.deleteMany({});
     // Xóa tất cả user admin cũ để đảm bảo chỉ có 1 admin duy nhất
-    await userModel.deleteMany({ username: 'admin' });
+    await userModel.deleteMany({});
     console.log('✅ Old data cleaned.');
 
     try {
