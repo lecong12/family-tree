@@ -6,7 +6,11 @@ import { ParentChildService } from './modules/parent-child/parent-child.service'
 import { UserService } from './modules/user/user.service';
 import { ConfigService } from '@nestjs/config';
 import { Gender, UserRoles } from './constants';
-import { Types } from 'mongoose';
+import { Model, Types } from 'mongoose';
+import { getModelToken } from '@nestjs/mongoose';
+import { Person } from './modules/person/schemas/person.schema';
+import { Spouse } from './modules/spouse/schemas/spouse.schema';
+import { ParentChild } from './modules/parent-child/schemas/parent-child.schema';
 
 async function seed() {
     const app = await NestFactory.createApplicationContext(AppModule);
@@ -16,6 +20,11 @@ async function seed() {
     const parentChildService = app.get(ParentChildService);
     const userService = app.get(UserService);
     const configService = app.get(ConfigService);
+
+    // Lấy model trực tiếp để xóa dữ liệu
+    const personModel = app.get<Model<Person>>(getModelToken(Person.name));
+    const spouseModel = app.get<Model<Spouse>>(getModelToken(Spouse.name));
+    const parentChildModel = app.get<Model<ParentChild>>(getModelToken(ParentChild.name));
 
     let createdPersons = 0;
     let createdSpouseRels = 0;
@@ -27,16 +36,12 @@ async function seed() {
     try {
         // Xóa dữ liệu cũ
         console.log('🧹 Cleaning old data...');
-        // await personService.deleteAll();
-        // await spouseService.deleteAll();
-        // await parentChildService.deleteAll();
-        // await personService.deleteAll();
-        // await spouseService.deleteAll();
-        // await parentChildService.deleteAll();
+        await parentChildModel.deleteMany({});
+        await spouseModel.deleteMany({});
+        await personModel.deleteMany({});
         // Không xóa user để giữ lại tài khoản admin
         // await userService.deleteAll(); 
         console.log('✅ Old data cleaned.');
-        console.log('✅ Old data cleaned (Skipped - Manual cleanup required if conflicts occur).');
 
         // Tạo Admin User
         console.log('Creating Admin User...');
