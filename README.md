@@ -57,6 +57,6 @@ Tạo file `.env.local` (hoặc set biến môi trường trên server) trong th
     - `npm run build`
     - `npm start` (chạy Next.js server) hoặc export ra static file nếu cần.
 
-## 4. Docker (Tùy chọn)
+## 4. Docker. (Tùy chọn)
 
 Nếu bạn muốn đóng gói cả ứng dụng, bạn có thể viết thêm `Dockerfile` cho Backend và Frontend.

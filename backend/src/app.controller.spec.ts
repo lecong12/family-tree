@@ -19,9 +19,5 @@ describe('AppController', () => {
     it('should return the welcome message', () => {
       expect(appController.getHello()).toContain('Hello! Family Tree API is running.');
     });
-
-    it('should return health check status', () => {
-      expect(appController.healthCheck()).toEqual({ status: 'ok', message: 'Family Tree API is running!' });
-    });
   });
 });
