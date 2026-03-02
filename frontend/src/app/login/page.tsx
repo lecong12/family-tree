@@ -65,6 +65,11 @@ export default function LoginPage() {
                         Đăng nhập
                     </button>
                 </form>
+                {process.env.NODE_ENV === 'development' && (
+                    <p className="text-xs text-gray-500 mt-4 text-center">
+                        Gợi ý (dev mode): Mật khẩu được lấy từ biến `ADMIN_PASSWORD` trong file `.env` của backend.
+                    </p>
+                )}
                 <div className="mt-4 text-center">
                     <Link href="/guest-login" className="text-blue-500 hover:underline text-sm">
                         Đăng nhập bằng mã khách (Guest)
