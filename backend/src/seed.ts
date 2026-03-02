@@ -35,12 +35,12 @@ async function seed() {
 
     console.log('🌱 Starting seed...');
 
-    // Xóa dữ liệu cũ
+    // Xóa dữ liệu cũ - Đặt ở ngoài try...catch để đảm bảo luôn được thực thi
     console.log('🧹 Cleaning old data...');
     await parentChildModel.deleteMany({});
     await spouseModel.deleteMany({});
     await personModel.deleteMany({});
-    // Xóa user admin cũ để đảm bảo chỉ có 1 admin duy nhất
+    // Xóa tất cả user admin cũ để đảm bảo chỉ có 1 admin duy nhất
     await userModel.deleteMany({ username: 'admin' });
     console.log('✅ Old data cleaned.');
 
