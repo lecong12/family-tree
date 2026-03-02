@@ -1,4 +1,4 @@
-import PersonsView from 'src/views/Persons/PersonsView';
+import PersonsView from './PersonsView';
 
 export default function PersonsPage() {
     return <PersonsView />;
