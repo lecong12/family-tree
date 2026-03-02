@@ -9,6 +9,7 @@ import { Gender, UserRoles } from './constants';
 import { Model, Types } from 'mongoose';
 import { getModelToken } from '@nestjs/mongoose';
 import { Person } from './modules/person/schemas/person.schema';
+import { User } from './modules/user/schemas/user.schema';
 import { Spouse } from './modules/spouse/schemas/spouse.schema';
 import { ParentChild } from './modules/parent-child/schemas/parent-child.schema';
 
@@ -24,6 +25,7 @@ async function seed() {
     // Lấy model trực tiếp để xóa dữ liệu
     const personModel = app.get<Model<Person>>(getModelToken(Person.name));
     const spouseModel = app.get<Model<Spouse>>(getModelToken(Spouse.name));
+    const userModel = app.get<Model<User>>(getModelToken(User.name));
     const parentChildModel = app.get<Model<ParentChild>>(getModelToken(ParentChild.name));
 
     let createdPersons = 0;
@@ -39,26 +41,21 @@ async function seed() {
         await parentChildModel.deleteMany({});
         await spouseModel.deleteMany({});
         await personModel.deleteMany({});
-        // Không xóa user để giữ lại tài khoản admin
-        // await userService.deleteAll(); 
+        // Xóa user admin cũ để đảm bảo chỉ có 1 admin duy nhất
+        await userModel.deleteMany({ username: 'admin' });
         console.log('✅ Old data cleaned.');
 
         // Tạo Admin User
         console.log('Creating Admin User...');
-        const existingAdmin = await userService.findByUsername('admin');
-        if (!existingAdmin) {
-            const adminPassword = configService.get<string>('ADMIN_PASSWORD') || 'Admin123456@';
-            await userService.create({
-                username: 'admin',
-                password: adminPassword,
-                role: UserRoles.ADMIN,
-                isActive: true,
-            } as any);
-            createdAdmin = true;
-            console.log('✅ Admin user created successfully');
-        } else {
-            console.log('⚠️ Admin user already exists, skipping creation.');
-        }
+        const adminPassword = configService.get<string>('ADMIN_PASSWORD') || 'Admin123456@';
+        await userService.create({
+            username: 'admin',
+            password: adminPassword,
+            role: UserRoles.ADMIN,
+            isActive: true,
+        } as any);
+        createdAdmin = true;
+        console.log('✅ Admin user created successfully');
 
         // Generation 1 (Ông bà)
         console.log('Creating Generation 1...');
