@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ConfigModule } from '@nestjs/config';
 
 describe('AppController', () => {
   let appController: AppController;
@@ -8,7 +9,7 @@ describe('AppController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [AppController],
-      providers: [AppService],
+      providers: [AppService, { provide: ConfigModule, useValue: { get: jest.fn() } }],
     }).compile();
 
     appController = app.get<AppController>(AppController);
@@ -17,6 +18,10 @@ describe('AppController', () => {
   describe('root', () => {
     it('should return the welcome message', () => {
       expect(appController.getHello()).toContain('Hello! Family Tree API is running.');
+    });
+
+    it('should return health check status', () => {
+      expect(appController.healthCheck()).toEqual({ status: 'ok', message: 'Family Tree API is running!' });
     });
   });
 });

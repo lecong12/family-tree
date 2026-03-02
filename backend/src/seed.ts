@@ -35,16 +35,16 @@ async function seed() {
 
     console.log('🌱 Starting seed...');
 
-    // Xóa dữ liệu cũ - Đặt ở ngoài try...catch để đảm bảo luôn được thực thi
-    console.log('🧹 Cleaning old data...');
-    await parentChildModel.deleteMany({});
-    await spouseModel.deleteMany({});
-    await personModel.deleteMany({});
-    // Chỉ xóa user 'admin' để không ảnh hưởng các user khác nếu có
-    await userModel.deleteMany({ username: 'admin' });
-    console.log('✅ Old data cleaned.');
-
     try {
+        // Xóa dữ liệu cũ
+        console.log('🧹 Cleaning old data...');
+        await parentChildModel.deleteMany({});
+        await spouseModel.deleteMany({});
+        await personModel.deleteMany({});
+        // Chỉ xóa user 'admin' để không ảnh hưởng các user khác nếu có
+        await userModel.deleteMany({ username: 'admin' });
+        console.log('✅ Old data cleaned.');
+
         // Tạo Admin User
         console.log('Creating Admin User...');
         const existingAdmin = await userService.findByUsername('admin');
@@ -299,6 +299,7 @@ async function seed() {
         throw error;
     } finally {
         await app.close();
+        process.exit(0);
     }
 }
 

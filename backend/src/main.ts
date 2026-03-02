@@ -6,14 +6,9 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
-    
-    // Route kiểm tra nhanh server tại /api/v1 (cho môi trường Local)
-    app.getHttpAdapter().getInstance().get('/api/v1', (req: any, res: any) => {
-        res.json({ status: 'ok', message: 'Family Tree API is running!' });
-    });
 
     const configService = app.get(ConfigService);
-    const port = configService.get<number>('PORT');
+    const port = configService.get<number>('PORT') || 9999;
 
     app.useGlobalPipes(
         new ValidationPipe({
@@ -23,13 +18,21 @@ async function bootstrap() {
         }),
     );
     app.setGlobalPrefix('api/v1', {
-        exclude: [{ path: '/', method: RequestMethod.GET }],
+        exclude: [
+            { path: '/', method: RequestMethod.GET },
+            { path: 'api/v1', method: RequestMethod.GET }, // Exclude the health check
+        ],
     });
 
     //Config Cors
     const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
     app.enableCors({
-        origin: [frontendUrl, 'https://family-tree-frontend-git-main-lecong12s-projects.vercel.app'],
+        origin: [
+            frontendUrl,
+            'https://family-tree-frontend-git-main-lecong12s-projects.vercel.app',
+            'http://localhost:3000',
+            'http://127.0.0.1:3000',
+        ],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
     });
