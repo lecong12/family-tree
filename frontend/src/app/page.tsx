@@ -13,7 +13,9 @@ export default function Home() {
         msg: 'Đang kiểm tra kết nối tới Backend...',
     });
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL;
+    // Tự động thêm https:// nếu người dùng quên nhập (để tránh lỗi Network Error)
+    const apiUrl = rawApiUrl && !rawApiUrl.startsWith('http') ? `https://${rawApiUrl}` : rawApiUrl;
 
     useEffect(() => {
         const checkConnection = async () => {
