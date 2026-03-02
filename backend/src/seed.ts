@@ -48,6 +48,7 @@ async function seed() {
         // Tạo Admin User
         console.log('Creating Admin User...');
         const adminPassword = configService.get<string>('ADMIN_PASSWORD') || 'Admin123456@';
+        console.log(`🔑 Admin Password being used: ${adminPassword}`); // In ra mật khẩu để kiểm tra
         await userService.create({
             username: 'admin',
             password: adminPassword,

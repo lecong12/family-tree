@@ -10,6 +10,12 @@ let cachedServer: any;
 async function bootstrap() {
     if (!cachedServer) {
         const server = express();
+
+        // Route kiểm tra nhanh server tại /api/v1 để Frontend không bị 404
+        server.get('/api/v1', (req, res) => {
+            res.json({ status: 'ok', message: 'Family Tree API is running!' });
+        });
+
         const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
 
         // 1. Enable CORS ngay lập tức để tránh lỗi chặn truy cập từ Frontend

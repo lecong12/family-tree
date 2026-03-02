@@ -6,6 +6,12 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
+    
+    // Route kiểm tra nhanh server tại /api/v1 (cho môi trường Local)
+    app.getHttpAdapter().getInstance().get('/api/v1', (req: any, res: any) => {
+        res.json({ status: 'ok', message: 'Family Tree API is running!' });
+    });
+
     const configService = app.get(ConfigService);
     const port = configService.get<number>('PORT');
 
