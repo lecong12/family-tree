@@ -10,6 +10,7 @@ export default function LoginPage() {
     const [username, setUsername] = useState('admin');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
     const { login, user } = useAuth();
 
     useEffect(() => {
@@ -20,11 +21,15 @@ export default function LoginPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsLoading(true);
+        setError('');
         try {
             await login(username, password);
             router.push('/persons');
         } catch (err: any) {
             setError(err.response?.data?.message || 'Đăng nhập thất bại');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -61,8 +66,13 @@ export default function LoginPage() {
                             required
                         />
                     </div>
-                    <button type="submit" className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors">
-                        Đăng nhập
+                    <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center justify-center"
+                    >
+                        {isLoading && <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />}
+                        {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
                     </button>
                 </form>
                 {process.env.NODE_ENV === 'development' && (
