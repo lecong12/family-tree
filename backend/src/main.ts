@@ -27,10 +27,10 @@ async function bootstrap() {
     //Config Cors
     // const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
     app.enableCors({
-        // Tạm thời cho phép tất cả các domain để gỡ lỗi CORS trên Vercel.
-        // Sau khi hoạt động, bạn nên đổi lại thành domain của frontend để bảo mật hơn.
-        // Ví dụ: origin: ['https://family-tree-frontend-mu.vercel.app', 'http://localhost:3000']
-        origin: true,
+        origin: [
+            'https://family-tree-frontend-mu.vercel.app', // Domain production của Frontend
+            'http://localhost:3000', // Domain khi chạy Frontend ở máy local
+        ],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
     });

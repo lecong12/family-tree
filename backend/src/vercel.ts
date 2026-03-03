@@ -15,7 +15,10 @@ async function bootstrap() {
 
         // 1. Enable CORS ngay lập tức để tránh lỗi chặn truy cập từ Frontend
         app.enableCors({
-            origin: true,
+            origin: [
+                'https://family-tree-frontend-mu.vercel.app', // Domain production của Frontend
+                'http://localhost:3000', // Domain khi chạy Frontend ở máy local
+            ],
             methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
             credentials: true,
         });
