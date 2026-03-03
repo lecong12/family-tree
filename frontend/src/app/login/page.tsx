@@ -1,107 +1,89 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import Link from 'next/link';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-    const router = useRouter();
     const [username, setUsername] = useState('admin');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
+    const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const { login, user } = useAuth();
+    const router = useRouter();
 
-    useEffect(() => {
-        if (user) {
-            router.replace('/persons');
-        }
-    }, [user, router]);
+    // QUAN TRỌNG: Đã xóa useEffect kiểm tra token tại đây.
+    // Trang login không nên tự động chuyển hướng người dùng đã có token.
+    // Điều này phá vỡ vòng lặp chuyển hướng.
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        setError('');
+        setError(null);
+
         try {
-            await login(username, password);
-            router.push('/persons');
-        } catch (err: any) {
-            setError(err.response?.data?.message || 'Đăng nhập thất bại');
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9999/api/v1';
+            const response = await fetch(`${apiUrl}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Đăng nhập thất bại');
+            }
+
+            const data = await response.json();
+            
+            // Sửa lỗi: NestJS trả về 'access_token'
+            const token = data.accessToken || data.access_token;
+
+            if (token) {
+                localStorage.setItem('accessToken', token);
+                // Dùng `replace` để trang login không nằm trong lịch sử trình duyệt
+                router.replace('/persons');
+            } else {
+                throw new Error('Không nhận được token từ server');
+            }
+
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Đã có lỗi xảy ra';
+            // Cung cấp hướng dẫn cụ thể khi gặp lỗi sai mật khẩu
+            if (errorMessage.toLowerCase().includes('invalid credentials')) {
+                setError('Sai mật khẩu. Vui lòng kiểm tra biến ADMIN_PASSWORD trong file .env của backend.');
+            } else {
+                setError(errorMessage);
+            }
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 relative">
-            <Link href="/" className="absolute top-4 left-4 flex items-center text-gray-600 hover:text-blue-600 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Quay lại trang chủ
-            </Link>
-
-            <div className="bg-white p-8 rounded-lg shadow-md w-96">
-                <h1 className="text-2xl font-bold mb-6 text-center">Đăng nhập Admin</h1>
-                {error && <div className="bg-red-100 text-red-700 p-3 rounded mb-4">{error}</div>}
-                <form onSubmit={handleSubmit}>
-                    <div className="mb-4 hidden">
-                        <label className="block text-gray-700 text-sm font-bold mb-2">Tên đăng nhập</label>
-                        <input
-                            type="text"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
-                            required
-                        />
-                    </div>
-                    <div className="mb-6">
-                        <label className="block text-gray-700 text-sm font-bold mb-2">Mật khẩu</label>
-                        <input
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:border-blue-500"
-                            required
-                        />
-                    </div>
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="w-full bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors disabled:bg-blue-300 disabled:cursor-not-allowed flex items-center justify-center"
-                    >
-                        {isLoading && <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />}
-                        {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
-                    </button>
-                </form>
-                {process.env.NODE_ENV === 'development' && (
-                    <p className="text-xs text-gray-500 mt-4 text-center">
-                        Gợi ý (dev mode): Mật khẩu được lấy từ biến `ADMIN_PASSWORD` trong file `.env` của backend.
-                    </p>
-                )}
-                <div className="mt-4 text-center">
-                    <Link href="/guest-login" className="text-blue-500 hover:underline text-sm">
-                        Đăng nhập bằng mã khách (Guest)
-                    </Link>
+        <div className="flex items-center justify-center min-h-screen bg-gray-100">
+            <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold text-gray-800">Đăng nhập Quản trị</h1>
+                    <p className="text-sm text-gray-500 mt-1">Tài khoản: admin</p>
                 </div>
-            </div>
-
-            <div className="mt-8 text-center text-gray-600 text-sm">
-                <p className="font-bold mb-2">Thông tin tác giả:</p>
-                <p>Họ tên: Lê Đình Quyền</p>
-                <p>
-                    Gmail:{' '}
-                    <a href="mailto:quyenld9699@gmail.com" className="text-blue-500 hover:underline">
-                        quyenld9699@gmail.com
-                    </a>
-                </p>
-                <p>
-                    SĐT:{' '}
-                    <a href="tel:0941158376" className="text-blue-500 hover:underline">
-                        0941158376
-                    </a>
-                </p>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {/* Trường Tên đăng nhập bị ẩn, giá trị mặc định là 'admin' */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Mật khẩu</label>
+                        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500" required />
+                    </div>
+                    {error && <p className="text-sm text-red-600">{error}</p>}
+                    <div>
+                        <button type="submit" disabled={isLoading} className="w-full px-4 py-2 font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50">
+                            {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
+                        </button>
+                    </div>
+                </form>
+                <div className="text-center text-xs text-gray-400 pt-4 border-t">
+                    <p>Hỗ trợ kỹ thuật: 0123.456.789</p>
+                    <p>Phần mềm quản lý gia phả</p>
+                </div>
             </div>
         </div>
     );
