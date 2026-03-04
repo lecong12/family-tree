@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { DataImportService } from './data-import.service';
-import { AdminImportController } from './data-import.controller';
-import { PersonSchema } from '../person/schemas/person.schema'; // Kiểm tra lại đường dẫn schema của bạn
+import { DataImportService } from './import.service';
+import { DataImportController as AdminImportController } from './import.controller';
+import { PersonSchema } from '../person/schemas/person.schema';
 
 @Module({
   imports: [

@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import csv from 'csv-parser';
 import { Model, Types } from 'mongoose';
-import * as csv from 'csv-parser';
-import { Readable } from 'stream';
+import { Readable } from 'node:stream';
 import slugify from 'slugify';
+
 
 @Injectable()
 export class DataImportService {
@@ -15,10 +16,10 @@ export class DataImportService {
 
   async importFamilyData(fileBuffer: Buffer) {
     const rows: any[] = [];
-    const stream = Readable.from(fileBuffer).pipe(csv());
+    const stream = Readable.from(fileBuffer).pipe(csv());    
 
     for await (const row of stream) {
-      if (row.full_name) rows.push(row);
+            if (row.full_name) rows.push(row);
     }
 
     // --- BƯỚC 1: DỌN DẸP 3 BẢNG DỮ LIỆU ---
