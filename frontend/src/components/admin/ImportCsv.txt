@@ -1,0 +1,71 @@
+import React, { useState } from 'react';
+
+const ImportCsv = () => {
+  const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) setFile(e.target.files[0]);
+  };
+
+  const handleUpload = async () => {
+    if (!file) return alert("Vui lòng chọn file CSV!");
+
+    setLoading(true);
+    setMessage('Đang xử lý 964 người, vui lòng chờ...');
+    
+    const formData = new FormData();
+    formData.append('file', file); // 'file' phải khớp với tên trong Backend
+
+    try {
+      const token = localStorage.getItem('access_token'); // Hoặc 'token' tùy dự án của bạn
+      const response = await fetch('http://localhost:3000/api/v1/admin/import/csv', {
+        method: 'POST',
+        headers: { 'Authorization': Bearer ${token} },
+        body: formData
+      });
+
+      const result = await response.json();
+      if (response.ok) {
+        setMessage(✅ Thành công! Đã nạp ${result.total} người.);
+        alert("Nạp dữ liệu gia phả thành công!");
+      } else {
+        setMessage(❌ Lỗi: ${result.message});
+      }
+    } catch (error) {
+      setMessage('❌ Không thể kết nối đến máy chủ.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ padding: '20px', border: '1px solid #ddd', borderRadius: '8px', background: '#f9f9f9' }}>
+      <h3>Công cụ Import Gia Phả</h3>
+      <p>Chọn file CSV để nạp 964 người vào hệ thống (Dữ liệu cũ sẽ bị xóa sạch).</p>
+      
+      <input type="file" accept=".csv" onChange={handleFileChange} style={{ marginBottom: '15px' }} />
+      <br />
+      
+      <button 
+        onClick={handleUpload} 
+        disabled={loading}
+        style={{
+          padding: '10px 20px',
+          backgroundColor: loading ? '#ccc' : '#007bff',
+          color: 'white',
+          border: 'none',
+          borderRadius: '4px',
+          cursor: loading ? 'not-allowed' : 'pointer'
+        }}
+      >
+        {loading ? 'Đang nạp dữ liệu...' : 'Bắt đầu Import'}
+      </button>
+
+      {message && <p style={{ marginTop: '15px', fontWeight: 'bold' }}>{message}</p>}
+    </div>
+  );
+};
+
+export default ImportCsv;
