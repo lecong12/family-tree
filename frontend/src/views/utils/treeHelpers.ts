@@ -24,8 +24,8 @@ export const sortSpouses = (spouses: SpouseWithDetails[], personId: string): Spo
 
         // Check if the common person is the husband
         if (aHusbandId === personId && bHusbandId === personId) {
-            // We are sorting the wives of a husband, so use wifeOrder
-            return (a.wifeOrder || 1) - (b.wifeOrder || 1);
+            // We are sorting the marriages of a husband, so use husbandOrder
+            return (a.husbandOrder || 1) - (b.husbandOrder || 1);
         }
 
         const aWifeId = typeof a.wife === 'string' ? a.wife : a.wife?._id;
@@ -33,8 +33,8 @@ export const sortSpouses = (spouses: SpouseWithDetails[], personId: string): Spo
 
         // Check if the common person is the wife
         if (aWifeId === personId && bWifeId === personId) {
-            // We are sorting the husbands of a wife, so use husbandOrder
-            return (a.husbandOrder || 1) - (b.husbandOrder || 1);
+            // We are sorting the marriages of a wife, so use wifeOrder
+            return (a.wifeOrder || 1) - (b.wifeOrder || 1);
         }
 
         // Fallback for mixed cases or if personId doesn't match

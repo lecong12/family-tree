@@ -16,7 +16,7 @@ import {
     GENERATION_BOX_STYLE,
 } from '../constants/layoutConstants';
 import { mapGender, getChildId, getSpousePersonId, sortSpouses } from './treeHelpers';
-import { extractId } from './types';
+import { extractId } from '../Persons/types';
 export interface RenderResult {
     nodes: Node[];
     edges: Edge[];
@@ -36,6 +36,7 @@ export const renderFamilyTree = (
 ): RenderResult => {
     const nodes: Node[] = [];
     const edges: Edge[] = [];
+    const renderedRelationships = new Set<string>(); // To prevent duplicate rendering
 
     // Calculate global generation box bounds
     const absoluteMinX = Math.min(...Array.from(nodeXPositions.values()));
@@ -92,7 +93,7 @@ export const renderFamilyTree = (
 
         // Render persons in this generation
         genPersons.forEach((person) => {
-            renderPerson(person, genIndex, genY, spouseMap, childrenMap, personGeneration, nodeXPositions, relationshipXPositions, spouseNodeXPositions, nodes, edges);
+            renderPerson(person, genIndex, genY, spouseMap, childrenMap, personGeneration, nodeXPositions, relationshipXPositions, spouseNodeXPositions, nodes, edges, renderedRelationships);
         });
     });
 
@@ -114,6 +115,7 @@ function renderPerson(
     spouseNodeXPositions: Map<string, number>,
     nodes: Node[],
     edges: Edge[],
+    renderedRelationships: Set<string>,
 ): void {
     const personId = person._id!;
     const personX = nodeXPositions.get(personId);
@@ -153,7 +155,7 @@ function renderPerson(
 
     // Render each spouse relationship
     sortedSpouses.forEach((spouse, idx) => {
-        renderSpouseRelationship(spouse, personId, personGender, genIndex, genY, idx, childrenMap, personGeneration, relationshipXPositions, spouseNodeXPositions, nodes, edges);
+        renderSpouseRelationship(spouse, personId, personGender, genIndex, genY, idx, childrenMap, personGeneration, relationshipXPositions, spouseNodeXPositions, nodes, edges, renderedRelationships);
     });
 }
 
@@ -173,8 +175,14 @@ function renderSpouseRelationship(
     spouseNodeXPositions: Map<string, number>,
     nodes: Node[],
     edges: Edge[],
+    renderedRelationships: Set<string>,
 ): void {
     const spouseId = spouse._id!;
+
+    // Prevent duplicate rendering of the same relationship node
+    if (renderedRelationships.has(spouseId)) return;
+    renderedRelationships.add(spouseId);
+
     const spouseX = relationshipXPositions.get(spouseId);
     if (spouseX === undefined) return;
 
@@ -190,7 +198,8 @@ function renderSpouseRelationship(
         data: {
             id: spouseId,
             top: personGender,
-            order: (personGender === Gender.MALE ? spouse.wifeOrder : spouse.husbandOrder) ?? 1,
+            // Corrected logic: If the person is MALE, use husbandOrder. If FEMALE, use wifeOrder.
+            order: (personGender === Gender.MALE ? spouse.husbandOrder : spouse.wifeOrder) || 1,
             marriageDate: spouse.marriageDate,
             divorceDate: spouse.divorceDate,
         },

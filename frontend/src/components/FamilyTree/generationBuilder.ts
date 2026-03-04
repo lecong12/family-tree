@@ -1,7 +1,7 @@
 import { Person } from 'src/services/personService';
 import { SpouseWithDetails } from 'src/services/spouseService';
 import { ParentChildWithDetails } from 'src/services/parentChildService';
-import { extractId } from '../Persons/types';
+import { extractId } from '../../views/Persons/types';
 
 // This function builds the generation levels via a Breadth-First Search
 export const buildGenerations = (
