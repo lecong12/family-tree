@@ -1,5 +1,6 @@
 import { Node, Edge } from '@xyflow/react';
 import { Person } from 'src/services/personService';
+import { Gender } from 'src/constants';
 import { SpouseWithDetails } from 'src/services/spouseService';
 import { ParentChildWithDetails } from 'src/services/parentChildService';
 

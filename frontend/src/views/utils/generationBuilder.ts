@@ -33,7 +33,7 @@ export const buildGenerations = (
 
             // Chỉ con cái được thêm vào thế hệ tiếp theo
             const personSpouses = spouseMap.get(pid) || [];
-            personSpouses.forEach((spouse) => {
+            sortSpouses(personSpouses, pid).forEach((spouse) => {
                 const children = childrenMap.get(spouse._id!) || [];
                 children.forEach((pc) => {
                     const childId = getChildId(pc);
@@ -51,7 +51,7 @@ export const buildGenerations = (
 
             personIds.forEach((pid) => {
                 const personSpouses = spouseMap.get(pid) || [];
-                const sortedSpouses = sortSpouses(personSpouses);
+                const sortedSpouses = sortSpouses(personSpouses, pid);
 
                 sortedSpouses.forEach((spouse) => {
                     const spouseId = spouse._id!;
@@ -107,7 +107,7 @@ export const buildChildrenByParentMap = (
 
         prevGen.forEach((parent) => {
             const parentSpouses = spouseMap.get(parent._id!) || [];
-            const sortedSpouses = sortSpouses(parentSpouses);
+            const sortedSpouses = sortSpouses(parentSpouses, parent._id!);
 
             sortedSpouses.forEach((spouse) => {
                 const children = childrenMap.get(spouse._id!) || [];

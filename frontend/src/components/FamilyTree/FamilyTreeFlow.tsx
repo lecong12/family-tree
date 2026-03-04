@@ -8,6 +8,7 @@ import { ParentChildWithDetails } from 'src/services/parentChildService';
 import { buildGenerations, buildChildrenByParentMap } from 'src/views/utils/generationBuilder';
 import { calculateNodePositions } from 'src/views/utils/positionCalculator';
 import { renderFamilyTree } from 'src/views/utils/nodeRenderer';
+import { extractId } from 'src/views/Persons/types';
 
 interface FamilyTreeFlowProps {
     persons: Person[];
@@ -48,8 +49,8 @@ const FamilyTreeFlow: React.FC<FamilyTreeFlowProps> = ({ persons, spouses, paren
         persons.forEach((p) => p._id && personMap.set(p._id, p));
 
         spouses.forEach((spouse) => {
-            const husbandId = spouse.husband?._id || spouse.husband;
-            const wifeId = spouse.wife?._id || spouse.wife;
+            const husbandId = extractId(spouse.husband as Person | string);
+            const wifeId = extractId(spouse.wife as Person | string);
 
             if (husbandId) {
                 if (!spouseMap.has(husbandId)) spouseMap.set(husbandId, []);

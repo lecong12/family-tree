@@ -1,6 +1,7 @@
 import { Person } from 'src/services/personService';
 import { SpouseWithDetails } from 'src/services/spouseService';
 import { ParentChildWithDetails } from 'src/services/parentChildService';
+import { extractId } from '../Persons/types';
 
 // This function builds the generation levels via a Breadth-First Search
 export const buildGenerations = (
@@ -31,8 +32,8 @@ export const buildGenerations = (
         // Find spouses and add them to the same generation
         const spouseRels = spouseMap.get(personId) || [];
         spouseRels.forEach(rel => {
-            const husbandId = typeof rel.husband === 'string' ? rel.husband : rel.husband?._id;
-            const wifeId = typeof rel.wife === 'string' ? rel.wife : rel.wife?._id;
+            const husbandId = extractId(rel.husband as Person | string);
+            const wifeId = extractId(rel.wife as Person | string);
             const spousePersonId = husbandId === personId ? wifeId : husbandId;
 
             if (spousePersonId && !visited.has(spousePersonId)) {
@@ -48,7 +49,7 @@ export const buildGenerations = (
             if (relId) {
                 const childrenOfRel = childrenMap.get(relId) || [];
                 childrenOfRel.forEach(c => {
-                    const childId = typeof c.child === 'string' ? c.child : c.child?._id;
+                    const childId = extractId(c.child as Person | string);
                     if (childId && !visited.has(childId)) {
                         visited.add(childId);
                         queue.push({ personId: childId, gen: gen + 1 });

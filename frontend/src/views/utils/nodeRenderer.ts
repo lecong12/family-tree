@@ -1,5 +1,6 @@
 import { Node, Edge, Position } from '@xyflow/react';
 import { Person, SpouseWithDetails, ParentChildWithDetails } from 'src/services';
+import { Gender } from 'src/constants';
 import {
     PERSON_WIDTH,
     RELATIONSHIP_WIDTH,
@@ -15,6 +16,7 @@ import {
     GENERATION_BOX_STYLE,
 } from '../constants/layoutConstants';
 import { mapGender, getChildId, getSpousePersonId, sortSpouses } from './treeHelpers';
+import { extractId } from './types';
 export interface RenderResult {
     nodes: Node[];
     edges: Edge[];
@@ -147,7 +149,7 @@ function renderPerson(
     const personSpouses = spouseMap.get(personId) || [];
     if (personSpouses.length === 0) return;
 
-    const sortedSpouses = sortSpouses(personSpouses);
+    const sortedSpouses = sortSpouses(personSpouses, personId);
 
     // Render each spouse relationship
     sortedSpouses.forEach((spouse, idx) => {
@@ -188,8 +190,7 @@ function renderSpouseRelationship(
         data: {
             id: spouseId,
             top: personGender,
-            husbandOrder: spouse.husbandOrder || 1,
-            wifeOrder: spouse.wifeOrder || 1,
+            order: (personGender === Gender.MALE ? spouse.wifeOrder : spouse.husbandOrder) ?? 1,
             marriageDate: spouse.marriageDate,
             divorceDate: spouse.divorceDate,
         },

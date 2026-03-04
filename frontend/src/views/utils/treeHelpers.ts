@@ -15,37 +15,32 @@ export const mapGender = (genderValue: any): Gender => {
  * For a husband with multiple wives: sort by wifeOrder (wife 1, wife 2, ...)
  * For a wife with multiple husbands: sort by husbandOrder (husband 1, husband 2, ...)
  */
-export const sortSpouses = (spouses: SpouseWithDetails[]): SpouseWithDetails[] => {
+export const sortSpouses = (spouses: SpouseWithDetails[], personId: string): SpouseWithDetails[] => {
     if (spouses.length === 0) return [];
 
-    // We need to know which person we are sorting for to know whether to use wifeOrder or husbandOrder.
-    // However, this helper function doesn't take the personId.
-    // But usually, a list of spouses for a person will have that person as common.
-    // If the common person is the husband, then wifeOrder varies.
-    // If the common person is the wife, then husbandOrder varies.
-
-    // Let's try to detect which field varies more or just sort by both?
-    // If we sort by wifeOrder first, then husbandOrder.
-
     return [...spouses].sort((a, b) => {
-        const aWifeOrder = a.wifeOrder || 0;
-        const bWifeOrder = b.wifeOrder || 0;
-        const aHusbandOrder = a.husbandOrder || 0;
-        const bHusbandOrder = b.husbandOrder || 0;
+        const aHusbandId = typeof a.husband === 'string' ? a.husband : a.husband?._id;
+        const bHusbandId = typeof b.husband === 'string' ? b.husband : b.husband?._id;
 
-        // If both have wifeOrder > 0 and they differ, use wifeOrder
-        if (aWifeOrder > 0 && bWifeOrder > 0 && aWifeOrder !== bWifeOrder) {
-            return aWifeOrder - bWifeOrder;
+        // Check if the common person is the husband
+        if (aHusbandId === personId && bHusbandId === personId) {
+            // We are sorting the wives of a husband, so use wifeOrder
+            return (a.wifeOrder || 1) - (b.wifeOrder || 1);
         }
 
-        // If both have husbandOrder > 0 and they differ, use husbandOrder
-        if (aHusbandOrder > 0 && bHusbandOrder > 0 && aHusbandOrder !== bHusbandOrder) {
-            return aHusbandOrder - bHusbandOrder;
+        const aWifeId = typeof a.wife === 'string' ? a.wife : a.wife?._id;
+        const bWifeId = typeof b.wife === 'string' ? b.wife : b.wife?._id;
+
+        // Check if the common person is the wife
+        if (aWifeId === personId && bWifeId === personId) {
+            // We are sorting the husbands of a wife, so use husbandOrder
+            return (a.husbandOrder || 1) - (b.husbandOrder || 1);
         }
 
-        // Fallback: if one has wifeOrder and other doesn't?
-        if (aWifeOrder !== bWifeOrder) return aWifeOrder - bWifeOrder;
-        if (aHusbandOrder !== bHusbandOrder) return aHusbandOrder - bHusbandOrder;
+        // Fallback for mixed cases or if personId doesn't match
+        const orderA = a.wifeOrder || a.husbandOrder || 1;
+        const orderB = b.wifeOrder || b.husbandOrder || 1;
+        if (orderA !== orderB) return orderA - orderB;
 
         // Fall back to marriage date
         if (a.marriageDate && b.marriageDate) {

@@ -1,6 +1,7 @@
 import { Person, SpouseWithDetails, ParentChildWithDetails } from 'src/services';
 import { PERSON_WIDTH, HORIZONTAL_GAP } from '../constants/layoutConstants';
 import { sortSpouses, getChildId, getSpousePersonId, sortChildrenByBirthDate } from '../utils/treeHelpers';
+import { extractId } from '../Persons/types';
 
 interface PositionMaps {
     nodeXPositions: Map<string, number>;
@@ -56,7 +57,7 @@ export const calculateNodePositions = (
         visited.add(personId);
 
         const personSpouses = spouseMap.get(personId) || [];
-        const sortedSpouses = sortSpouses(personSpouses);
+        const sortedSpouses = sortSpouses(personSpouses, personId);
 
         // Base case: No spouses
         if (sortedSpouses.length === 0) {
