@@ -13,7 +13,7 @@ export class DataImportService {
     @InjectModel('ParentChild') private parentChildModel: Model<any>,
     @InjectModel('Spouse') private spouseModel: Model<any>,
   ) {}
-
+  
   async importFamilyData(fileBuffer: Buffer) {
     const rows: any[] = [];
     const stream = Readable.from(fileBuffer).pipe(csv());    
