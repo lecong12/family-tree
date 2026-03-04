@@ -3,7 +3,7 @@
 
 # Hướng dẫn Triển khai (Deployment Guide)
 
-Tài liệu này liệt kê các cấu hình cần thiết để triển khai ứng dụng Family Tree lên server...,,,
+Tài liệu này liệt kê các cấu hình cần thiết để triển khai ứng dụng Family Tree lên server.
 
 ## 1. Backend (NestJS)
 
@@ -59,4 +59,4 @@ Tạo file `.env.local` (hoặc set biến môi trường trên server) trong th
 
 ## 4. Docker. (Tùy chọn)
 
-Nếu bạn muốn đóng gói cả ứng dụng, bạn có thể viết thêm `Dockerfile` cho Backend và Frontend.2.3 On dinh
+Nếu bạn muốn đóng gói cả ứng dụng, bạn có thể viết thêm `Dockerfile` cho Backend và Frontend.
