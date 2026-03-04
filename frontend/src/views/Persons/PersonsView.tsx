@@ -18,6 +18,7 @@ import PersonList from './components/PersonList';
 import Pagination from './components/Pagination';
 import { FilterMode, PageSize, SortDirection, SortField } from './types';
 import { buildConnectedIds } from './utils';
+import FamilyTree from './components/FamilyTree';
 
 export default function PersonsView() {
     const router = useRouter();
@@ -48,6 +49,7 @@ export default function PersonsView() {
     const [filterMode, setFilterMode] = useState<FilterMode>('all');
     const [sortField, setSortField] = useState<SortField>('name');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+    const [viewMode, setViewMode] = useState<'list' | 'tree'>('list');
 
     // Relationship index
     const connectedIds = useMemo(() => buildConnectedIds(spouses, parentChilds), [spouses, parentChilds]);
@@ -209,24 +211,48 @@ export default function PersonsView() {
 
             <Toolbar search={search} onSearchChange={handleSearch} pageSize={pageSize} onPageSizeChange={handlePageSizeChange} onAddPerson={() => setAddPersonModalOpen(true)} />
 
-            <LoadingOverlay isLoading={isLoading} />
-
-            <div className="flex-1 overflow-auto bg-gray-50 p-4">
-                <div className="max-w-[900px] mx-auto bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
-                    <PersonList
-                        paginated={paginated}
-                        connectedIds={connectedIds}
-                        currentPage={currentPage}
-                        pageSize={pageSize}
-                        sortField={sortField}
-                        sortDirection={sortDirection}
-                        onSort={handleSort}
-                        onPersonClick={handlePersonClick}
-                    />
+            {/* View Switcher */}
+            <div className="flex justify-center my-2">
+                <div className="bg-white p-1 rounded-lg shadow-sm border border-gray-200 inline-flex">
+                    <button
+                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'list' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                        onClick={() => setViewMode('list')}
+                    >
+                        Danh sách
+                    </button>
+                    <button
+                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'tree' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                        onClick={() => setViewMode('tree')}
+                    >
+                        Cây gia phả
+                    </button>
                 </div>
             </div>
 
-            <Pagination currentPage={currentPage} totalPages={totalPages} pageSize={pageSize} totalItems={filtered.length} onPageChange={setCurrentPage} />
+            <LoadingOverlay isLoading={isLoading} />
+
+            <div className="flex-1 overflow-auto bg-gray-50 p-4">
+                {viewMode === 'list' ? (
+                    <div className="max-w-[900px] mx-auto bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
+                        <PersonList
+                            paginated={paginated}
+                            connectedIds={connectedIds}
+                            currentPage={currentPage}
+                            pageSize={pageSize}
+                            sortField={sortField}
+                            sortDirection={sortDirection}
+                            onSort={handleSort}
+                            onPersonClick={handlePersonClick}
+                        />
+                    </div>
+                ) : (
+                    <FamilyTree persons={persons} spouses={spouses} parentChilds={parentChilds} onPersonClick={handlePersonClick} />
+                )}
+            </div>
+
+            {viewMode === 'list' && (
+                <Pagination currentPage={currentPage} totalPages={totalPages} pageSize={pageSize} totalItems={filtered.length} onPageChange={setCurrentPage} />
+            )}
 
             {/* Modals */}
             <PersonDetailModal
