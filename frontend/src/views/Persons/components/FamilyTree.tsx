@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { Person } from 'src/services/personService';
+import { isMale } from 'src/utils/genderUtils';
 
 interface FamilyTreeProps {
     persons: Person[];
@@ -113,7 +114,7 @@ export default function FamilyTree({ persons, spouses, parentChilds, onPersonCli
             <div className="flex flex-col items-center">
                 <div className="flex items-center gap-2 bg-white p-2 rounded shadow border border-gray-200 hover:shadow-md transition-shadow cursor-pointer"
                      onClick={() => onPersonClick(node.person)}>
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${node.person.gender === 'male' ? 'bg-blue-500' : 'bg-pink-500'}`}>
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${isMale(node.person.gender) ? 'bg-blue-500' : 'bg-pink-500'}`}>
                         {node.person.name.charAt(0)}
                     </div>
                     <div className="text-left">
