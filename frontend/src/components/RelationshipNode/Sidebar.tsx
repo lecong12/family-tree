@@ -33,7 +33,7 @@ const AdminSidebar = () => {
             <Sidebar.Item 
               href="/admin/import"
               icon={HiUpload}
-              className="font-medium"
+              className="bg-blue-50 text-blue-700 hover:bg-blue-100"
             >
               Nạp dữ liệu (CSV)
             </Sidebar.Item>
