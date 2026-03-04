@@ -9,7 +9,7 @@ import { SpouseModule } from './modules/spouse/spouse.module';
 import { ParentChildModule } from './modules/parent-child/parent-child.module';
 import { GalleryModule } from './modules/gallery/gallery.module';
 import { AuthModule } from './modules/auth/auth.module';
-import { AdminModule } from './modules/admin/admin.module';
+import { AdminModule } from './admin.module';
 
 @Module({
     imports: [
