@@ -36,7 +36,7 @@ export default function Home() {
                     });
                 } else if (err.response) {
                     // Server có phản hồi (dù là 404, 401...) nghĩa là đã thông mạng
-                    setStatus({ type: 'success', msg: `Kết nối Backend OK (Status: ${err.response.status})` });
+                    setStatus({ type: err.response.status === 200 ? 'success' : 'error', msg: `Kết nối Backend OK (Status: ${err.response.status})` });
                 } else {
                     setStatus({ type: 'error', msg: `Lỗi: ${err.message}` });
                 }
