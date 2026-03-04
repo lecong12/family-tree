@@ -16,7 +16,7 @@ const AdminSidebar = () => {
   return (
     <div className="h-screen border-r border-gray-200">
       <Sidebar aria-label="Admin sidebar">
-        {/* The <Sidebar.Items> wrapper is removed to fix a potential version conflict with flowbite-react */}
+        {/* FIX: Loại bỏ Sidebar.Items để sửa lỗi build, đặt Sidebar.ItemGroup trực tiếp */}
         <Sidebar.ItemGroup>
           {/* Mục Tổng quan */}
           <Sidebar.Item href="/admin" icon={HiChartPie}>
@@ -28,7 +28,7 @@ const AdminSidebar = () => {
             Quản lý thành viên
           </Sidebar.Item>
 
-          {/* NÚT IMPORT CSV - CHÚNG TA THÊM Ở ĐÂY */}
+          {/* NÚT IMPORT CSV */}
           <Sidebar.Item 
             href="/admin/import"
             icon={HiUpload}
