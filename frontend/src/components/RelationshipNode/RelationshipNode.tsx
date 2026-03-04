@@ -1,8 +1,8 @@
 'use client';
 import { Handle, Node, NodeProps, Position } from '@xyflow/react';
 import React from 'react';
-import { Gender, RelationshipNodeSize } from 'src/constants';
-import { SpouseInfo } from 'src/schema/Spouse';
+import { Gender } from '@/constants';
+import { SpouseInfo } from '@/schema/Spouse';
 
 export type TRelationshipNode = Omit<Node, 'data' | 'type'> & {
     data: SpouseInfo;
