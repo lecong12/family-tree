@@ -1,8 +1,13 @@
 'use client';
 
 import React from 'react';
-import ImportCsv from '@/components/admin/ImportCsv';
-import { useAuth } from '../context/AuthContext';
+// SỬA LỖI 1: 'Module not found: Can't resolve '@/components/admin/ImportCsv'
+// Nguyên nhân: Component ImportCsv vẫn đang nằm ở file `src/components/RelationshipNode/page.tsx`.
+// Đường dẫn đúng phải là trỏ đến file đó.
+import ImportCsv from '@/components/RelationshipNode/page';
+// SỬA LỖI 2: 'Module not found: Can't resolve '../context/AuthContext''
+// Nguyên nhân: Đường dẫn tương đối '../' không đúng. Dùng alias '@/' để trỏ từ gốc `src` sẽ ổn định hơn.
+import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 
 export default function AdminPage() {
