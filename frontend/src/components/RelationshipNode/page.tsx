@@ -33,14 +33,29 @@ export default function ImportCsv() {
         method: 'POST',
         body: formData,
       });
-      const data = await res.json();
+
       if (res.ok) {
+        const data = await res.json();
         setStatus({ loading: false, message: 'Thành công! Đã nạp dữ liệu gia phả.', type: 'success' });
       } else {
-        setStatus({ loading: false, message: data.message || 'Lỗi nạp file', type: 'failure' });
+        // Xử lý lỗi HTTP chi tiết hơn
+        let errorMessage = `Lỗi từ server: ${res.status} ${res.statusText}`;
+        if (res.status === 404) {
+          errorMessage = "Lỗi 404: Không tìm thấy API. Vui lòng kiểm tra lại cấu hình Controller và Module ở Backend.";
+        } else {
+          try {
+            const errorData = await res.json();
+            errorMessage = errorData.message || JSON.stringify(errorData);
+          } catch (jsonError) {
+            // Giữ lại thông báo lỗi gốc nếu response không phải là JSON
+          }
+        }
+        setStatus({ loading: false, message: errorMessage, type: 'failure' });
       }
     } catch (error) {
-      setStatus({ loading: false, message: 'Không kết nối được đến máy chủ Backend!', type: 'failure' });
+      console.error("Fetch error:", error);
+      const message = error instanceof Error ? error.message : 'Lỗi không xác định';
+      setStatus({ loading: false, message: `Lỗi mạng: Không thể gửi yêu cầu đến Backend. (${message})`, type: 'failure' });
     }
   };
 
