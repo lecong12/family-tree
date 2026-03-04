@@ -125,46 +125,95 @@ const FamilyTreeFlow: React.FC<FamilyTreeFlowProps> = ({ persons, spouses, paren
             });
         }
 
-        // --- STEP 3: CALCULATE POSITIONS ---
+        // --- STEP 3: CALCULATE POSITIONS (with parent-child alignment) ---
         const nodePositions = new Map<string, { x: number; y: number }>();
         const relationshipPositions = new Map<string, { x: number; y: number }>();
+        const xPositions = new Map<string, number>(); // Simplified map for sorting and centering
+
+        // Create a map of parent to their children for easier lookup
+        const childrenByParent = new Map<string, string[]>();
+        personMap.forEach((_, pId) => {
+            const kids = new Set<string>();
+            (childrenMap.get(pId) || []).forEach(c => {
+                const childId = c.child?._id || c.child;
+                if (childId) kids.add(childId);
+            });
+            if (kids.size > 0) {
+                childrenByParent.set(pId, Array.from(kids));
+            }
+        });
 
         generations.forEach((genIds, genIndex) => {
             const y = genIndex * (NODE_HEIGHT + Y_SPACING);
             let currentX = 0;
             const processedInGen = new Set<string>();
 
+            // Sort individuals in the current generation based on their parents' horizontal position
+            // This keeps family units vertically aligned.
+            if (genIndex > 0) {
+                genIds.sort((a, b) => {
+                    const getParentX = (childId: string) => {
+                        for (const [pId, kids] of childrenByParent.entries()) {
+                            if (kids.includes(childId) && personGeneration.get(pId) === genIndex - 1) {
+                                return xPositions.get(pId) || 0;
+                            }
+                        }
+                        return 0;
+                    };
+                    return getParentX(a) - getParentX(b);
+                });
+            }
+
             genIds.forEach((personId) => {
                 if (processedInGen.has(personId)) return;
 
+                // Group person with their spouse(s) in the same generation
                 const group = [personId];
                 const spouseRels = spouseMap.get(personId) || [];
                 spouseRels.forEach((rel) => {
                     const husbandId = rel.husband?._id || rel.husband;
                     const wifeId = rel.wife?._id || rel.wife;
                     const spouseId = husbandId === personId ? wifeId : husbandId;
-                    if (spouseId && genIds.includes(spouseId) && !processedInGen.has(spouseId)) {
+                    if (spouseId && personGeneration.get(spouseId) === genIndex && !processedInGen.has(spouseId)) {
                         group.push(spouseId);
                     }
                 });
 
-                const groupWidth = group.length * NODE_WIDTH + (group.length - 1) * X_SPACING;
-                let groupCurrentX = currentX;
+                // Attempt to center the parent group over their children
+                const allChildrenOfGroup = new Set<string>();
+                group.forEach(pId => {
+                    (childrenByParent.get(pId) || []).forEach(cId => allChildrenOfGroup.add(cId));
+                });
+
+                let desiredX = currentX;
+                if (allChildrenOfGroup.size > 0) {
+                    const childrenXs = Array.from(allChildrenOfGroup).map(cId => xPositions.get(cId)).filter((x): x is number => x !== undefined);
+                    if (childrenXs.length > 0) {
+                        const minChildX = Math.min(...childrenXs);
+                        const maxChildX = Math.max(...childrenXs);
+                        const childrenCenter = (minChildX + maxChildX + NODE_WIDTH) / 2;
+                        const groupWidth = group.length * NODE_WIDTH + (group.length - 1) * X_SPACING;
+                        desiredX = Math.max(currentX, childrenCenter - groupWidth / 2);
+                    }
+                }
+
+                let groupCurrentX = desiredX;
 
                 for (let i = 0; i < group.length; i++) {
                     const pId = group[i];
                     nodePositions.set(pId, { x: groupCurrentX, y });
+                    xPositions.set(pId, groupCurrentX);
                     processedInGen.add(pId);
 
                     if (i < group.length - 1) {
                         const nextPId = group[i + 1];
                         const relId = [pId, nextPId].sort().join('_');
                         const relX = groupCurrentX + NODE_WIDTH + X_SPACING / 2 - 20;
-                        relationshipPositions.set(relId, { x: relX, y: y + NODE_HEIGHT / 2 - 20 });
+                        relationshipPositions.set(relId, { x: relX, y: y + NODE_HEIGHT / 2 - 10 }); // Adjust Y for better alignment
                     }
                     groupCurrentX += NODE_WIDTH + X_SPACING;
                 }
-                currentX += groupWidth + X_SPACING * 2;
+                currentX = groupCurrentX;
             });
         });
 
@@ -188,15 +237,15 @@ const FamilyTreeFlow: React.FC<FamilyTreeFlowProps> = ({ persons, spouses, paren
                     processedRels.add(relId);
 
                     finalNodes.push({ id: relId, type: 'relationship', position: relationshipPositions.get(relId)!, data: { ...rel } });
-                    finalEdges.push({ id: `e-${husbandId}-${relId}`, source: husbandId, target: relId, type: 'smoothstep', style: { stroke: '#FFC0CB' } });
-                    finalEdges.push({ id: `e-${wifeId}-${relId}`, source: wifeId, target: relId, type: 'smoothstep', style: { stroke: '#FFC0CB' } });
+                    finalEdges.push({ id: `e-${husbandId}-${relId}`, source: husbandId, target: relId, type: 'smoothstep', style: { stroke: '#cbd5e1' } });
+                    finalEdges.push({ id: `e-${wifeId}-${relId}`, source: wifeId, target: relId, type: 'smoothstep', style: { stroke: '#cbd5e1' } });
 
                     const husbandChildIds = new Set((childrenMap.get(husbandId) || []).map((c) => c.child?._id || c.child));
                     const wifeChildren = childrenMap.get(wifeId) || [];
                     wifeChildren.forEach((c) => {
                         const childId = c.child?._id || c.child;
                         if (childId && husbandChildIds.has(childId)) {
-                            finalEdges.push({ id: `e-${relId}-${childId}`, source: relId, target: childId, type: 'smoothstep', style: { stroke: '#a1a1aa' } });
+                            finalEdges.push({ id: `e-${relId}-${childId}`, source: relId, target: childId, type: 'smoothstep', style: { stroke: '#94a3b8' } });
                         }
                     });
                 });
