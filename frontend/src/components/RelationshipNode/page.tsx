@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Button, Card, FileInput, Label, Alert, Spinner } from 'flowbite-react';
+import { Button, Card, FileInput, Label, Alert, Spinner, type AlertProps } from 'flowbite-react';
 import { HiInformationCircle, HiCheckCircle } from 'react-icons/hi';
 
-export default function ImportCSVPage() {
+// Định nghĩa kiểu cho trạng thái để code an toàn và rõ ràng hơn
+type Status = { loading: boolean; message: string; type: AlertProps['color'] };
+
+export default function ImportCsv() {
   const [file, setFile] = useState<File | null>(null);
-  const [status, setStatus] = useState({ loading: false, message: '', type: '' });
+  const [status, setStatus] = useState<Partial<Status>>({ loading: false, message: '' });
 
   const handleUpload = async () => {
     if (!file) return;
@@ -40,7 +43,7 @@ export default function ImportCSVPage() {
         <div className="flex flex-col space-y-4">
           <div>
             <div className="mb-2 block">
-              <Label htmlFor="file-upload">Chọn file CSV của bạn (Gop_2_sheet_Sieu_Sach)</Label>
+              <Label htmlFor="file-upload">Chọn file CSV của bạn</Label>
             </div>
             <FileInput id="file-upload" accept=".csv" onChange={(e) => setFile(e.target.files?.[0] || null)} />
           </div>
@@ -49,8 +52,8 @@ export default function ImportCSVPage() {
             {status.loading ? <><Spinner size="sm" className="mr-2" /> Đang xử lý...</> : 'Bắt đầu Import'}
           </Button>
 
-          {status.message && (
-            <Alert color={status.type as any} icon={status.type === 'success' ? HiCheckCircle : HiInformationCircle}>
+          {status.message && status.type && (
+            <Alert color={status.type} icon={status.type === 'success' ? HiCheckCircle : HiInformationCircle}>
               <span>{status.message}</span>
             </Alert>
           )}

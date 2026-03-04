@@ -12,7 +12,8 @@ export default function AdminPage() {
     // Nếu đang tải thì hiện loading
     if (loading) return <div className="p-10 text-center">Đang kiểm tra quyền truy cập...</div>;
 
-    // Bảo mật: Nếu không phải admin thì không cho xem trang này (Tùy chọn)
+    // Bảo mật phía client: Nếu không phải admin thì không cho xem trang này.
+    // Lưu ý: Để bảo mật triệt để, cần kiểm tra quyền ở cả phía server (ví dụ: dùng middleware hoặc trong API routes).
     if (!user) {
         return (
             <div className="p-10 text-center">
@@ -37,7 +38,7 @@ export default function AdminPage() {
 
                 <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
                     <h2 className="text-xl font-semibold mb-4 text-blue-600 border-b pb-2">
-                        Công cụ Nạp dữ liệu CSV (964 người)
+                        Công cụ Nạp dữ liệu CSV
                     </h2>
                     {/* Đây là linh kiện bạn đã tạo trong thư mục components/admin */}
                     <ImportCsv />
