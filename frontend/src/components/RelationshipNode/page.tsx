@@ -22,8 +22,14 @@ export default function ImportCsv() {
       // Sử dụng biến môi trường NEXT_PUBLIC_API_URL.
       // Fallback về port 9999 của backend nếu biến môi trường không được set.
       // Lỗi "Cannot POST" thường xảy ra nếu URL này trỏ sai (ví dụ: trỏ về port 3000 của frontend).
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9999/api/v1';
-      const res = await fetch(`${apiUrl}/admin/import/csv`, {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9999/api/v1';
+      // Loại bỏ dấu gạch chéo cuối nếu có để tránh lỗi "//" (ví dụ: .../api/v1//admin...)
+      const apiUrl = baseUrl.replace(/\/$/, '');
+      const fullUrl = `${apiUrl}/admin/import/csv`;
+
+      console.log('Đang gửi request tới:', fullUrl); // Log để kiểm tra chính xác URL
+
+      const res = await fetch(fullUrl, {
         method: 'POST',
         body: formData,
       });
