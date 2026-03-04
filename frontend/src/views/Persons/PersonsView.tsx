@@ -18,7 +18,7 @@ import PersonList from './components/PersonList';
 import Pagination from './components/Pagination';
 import { FilterMode, PageSize, SortDirection, SortField } from './types';
 import { buildConnectedIds } from './utils';
-import FamilyTree from './components/FamilyTree';
+import FamilyTreeFlow from 'src/components/FamilyTree/FamilyTreeFlow';
 
 export default function PersonsView() {
     const router = useRouter();
@@ -163,6 +163,11 @@ export default function PersonsView() {
         setPersonDetailModalOpen(true);
     }, []);
 
+    const handleRelationshipClick = useCallback((relationship: any) => {
+        console.log('Relationship clicked:', relationship);
+        // TODO: Implement relationship detail view
+    }, []);
+
     const handleAddSpouseFromPerson = useCallback((person: Person) => {
         setSelectedPerson(person);
         setPersonDetailModalOpen(false);
@@ -194,6 +199,7 @@ export default function PersonsView() {
 
     const handleOpenGuestCodeModal = useCallback(() => setGuestCodeModalOpen(true), []);
     const handleCloseGuestCodeModal = useCallback(() => setGuestCodeModalOpen(false), []);
+
     const handleClosePersonDetailModal = useCallback(() => setPersonDetailModalOpen(false), []);
     const handleCloseAddSpouseModal = useCallback(() => setAddSpouseModalOpen(false), []);
     const handleCloseAddChildModal = useCallback(() => setAddChildModalOpen(false), []);
@@ -207,7 +213,12 @@ export default function PersonsView() {
 
     return (
         <div className="w-screen h-screen flex flex-col bg-gray-50">
-            <Header isolatedCount={isolatedCount} filterMode={filterMode} onFilterModeChange={handleFilterMode} onOpenGuestCodeModal={handleOpenGuestCodeModal} />
+            <Header
+                isolatedCount={isolatedCount}
+                filterMode={filterMode}
+                onFilterModeChange={handleFilterMode}
+                onOpenGuestCodeModal={handleOpenGuestCodeModal}
+            />
 
             <Toolbar search={search} onSearchChange={handleSearch} pageSize={pageSize} onPageSizeChange={handlePageSizeChange} onAddPerson={() => setAddPersonModalOpen(true)} />
 
@@ -231,7 +242,7 @@ export default function PersonsView() {
 
             <LoadingOverlay isLoading={isLoading} />
 
-            <div className="flex-1 overflow-auto bg-gray-50 p-4">
+            <div className={`flex-1 overflow-auto bg-gray-50 ${viewMode === 'list' ? 'p-4' : ''}`}>
                 {viewMode === 'list' ? (
                     <div className="max-w-[900px] mx-auto bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
                         <PersonList
@@ -246,7 +257,15 @@ export default function PersonsView() {
                         />
                     </div>
                 ) : (
-                    <FamilyTree persons={persons} spouses={spouses} parentChilds={parentChilds} onPersonClick={handlePersonClick} />
+                    <FamilyTreeFlow
+                        persons={persons}
+                        spouses={spouses}
+                        parentChilds={parentChilds}
+                        searchRootPersonId={null} // TODO: Add UI to select root person
+                        searchGenerations={null} // TODO: Add UI to select generation depth
+                        onPersonNodeClick={handlePersonClick}
+                        onRelationshipNodeClick={handleRelationshipClick}
+                    />
                 )}
             </div>
 
