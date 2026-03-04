@@ -6,8 +6,7 @@ import {
   HiChartPie, 
   HiUser, 
   HiUpload, 
-  HiLogout, 
-  HiDatabase 
+  HiLogout
 } from 'react-icons/hi';
 import { useAuth } from '@/context/AuthContext';
 
