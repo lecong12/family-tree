@@ -209,4 +209,19 @@ export class PersonService {
             treeData: treeData,
         };
     }
+
+    async searchByName(name: string) {
+        if (!name || name.trim().length < 2) {
+            return [];
+        }
+        // Tìm kiếm không phân biệt hoa thường
+        const persons = await this.personModel
+            .find({
+                name: { $regex: name, $options: 'i' },
+            })
+            .select('name cccd slug') // Chỉ lấy các trường cần thiết
+            .limit(10) // Giới hạn 10 kết quả
+            .exec();
+        return persons;
+    }
 }
