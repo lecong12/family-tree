@@ -63,10 +63,18 @@ export class PersonService {
             throw new NotFoundException(`Invalid person ID: ${id}`);
         }
 
-        const person = await this.personModel.findById(id).exec();
+        const person = await this.personModel.findById(id).lean().exec();
 
         if (!person) {
             throw new NotFoundException(`Person with ID ${id} not found`);
+        }
+
+        // Đảm bảo người này luôn có avatar, ngay cả khi trong DB là null hoặc rỗng
+        if (!person.avatar || person.avatar.trim() === '') {
+            const isMale = Number(person.gender) === 0 || (person.gender as any) === 'MALE' || person.gender === Gender.MALE;
+            person.avatar = isMale
+                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=0D8ABC&color=fff&size=128`
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=E91E63&color=fff&size=128`;
         }
 
         return person;
