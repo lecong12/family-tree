@@ -6,6 +6,7 @@ import { Person } from './schemas/person.schema';
 import { HydratedDocument, Model, Types } from 'mongoose';
 import { SpouseService } from '../spouse/spouse.service';
 import { ParentChildService } from '../parent-child/parent-child.service';
+import { Gender } from '../../constants';
 
 @Injectable()
 export class PersonService {
@@ -17,6 +18,13 @@ export class PersonService {
 
     async create(createPersonDto: CreatePersonDto) {
         console.log(createPersonDto);
+
+        if (!createPersonDto.avatar) {
+            const isMale = Number(createPersonDto.gender) === 0 || createPersonDto.gender === 'MALE' || createPersonDto.gender === Gender.MALE;
+            createPersonDto.avatar = isMale
+                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(createPersonDto.name)}&background=0D8ABC&color=fff&size=128`
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(createPersonDto.name)}&background=E91E63&color=fff&size=128`;
+        }
 
         // Check if CCCD already exists
         const existingPerson = await this.personModel.findOne({ cccd: createPersonDto.cccd }).exec();
@@ -69,6 +77,18 @@ export class PersonService {
 
             if (existingPerson) {
                 throw new ConflictException(`CCCD ${updatePersonDto.cccd} đã tồn tại trong hệ thống`);
+            }
+        }
+
+        if (updatePersonDto.avatar === "") {
+            const person = await this.personModel.findById(id).exec();
+            if (person) {
+                const name = updatePersonDto.name || person.name;
+                const gender = updatePersonDto.gender !== undefined ? updatePersonDto.gender : person.gender;
+                const isMale = Number(gender) === 0 || gender === 'MALE' || gender === Gender.MALE;
+                updatePersonDto.avatar = isMale
+                    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff&size=128`
+                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=E91E63&color=fff&size=128`;
             }
         }
 
