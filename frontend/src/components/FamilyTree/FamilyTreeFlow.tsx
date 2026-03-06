@@ -1,5 +1,6 @@
 import { Background, BackgroundVariant, MiniMap, ReactFlow } from '@xyflow/react';
-import { useMemo } from 'react';
+import { useMemo, useCallback } from 'react';
+import { useReactFlow } from '@xyflow/react';
 import PersonNode from 'src/components/PersonNode/PersonNode';
 import RelationshipNode from 'src/components/RelationshipNode/RelationshipNode';
 import { Person } from 'src/services/personService';
@@ -9,6 +10,7 @@ import { buildGenerations, buildChildrenByParentMap } from 'src/views/utils/gene
 import { calculateNodePositions } from 'src/views/utils/positionCalculator';
 import { renderFamilyTree } from 'src/views/utils/nodeRenderer';
 import { extractId } from 'src/views/Persons/types';
+import { SearchBar } from './SearchBar';
 
 interface FamilyTreeFlowProps {
     persons: Person[];
@@ -18,6 +20,33 @@ interface FamilyTreeFlowProps {
     searchGenerations: number | null;
     onPersonNodeClick: (personData: any) => void;
     onRelationshipNodeClick: (spouseData: any) => void;
+}
+
+// Component nội bộ để có thể sử dụng hook useReactFlow
+const FlowWithSearch = ({ nodes, edges, nodeTypes }: { nodes: any[], edges: any[], nodeTypes: any }) => {
+    const { setCenter, getNode } = useReactFlow();
+
+    // Hàm để di chuyển và phóng to vào một node trên cây
+    const focusNode = useCallback((nodeId: string) => {
+        const node = getNode(nodeId);
+        if (node) {
+            const x = node.position.x + (node.width ?? 0) / 2;
+            const y = node.position.y + (node.height ?? 0) / 2;
+            setCenter(x, y, { zoom: 1.2, duration: 800 });
+        } else {
+            console.warn(`Không tìm thấy node với ID: ${nodeId} để focus.`);
+        }
+    }, [getNode, setCenter]);
+
+    return (
+        <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+            <SearchBar onNodeSelect={focusNode} />
+            <ReactFlow nodeTypes={nodeTypes} nodes={nodes} edges={edges}>
+                <MiniMap />
+                <Background variant={BackgroundVariant.Lines} gap={12} size={1} />
+            </ReactFlow>
+        </div>
+    );
 }
 
 const FamilyTreeFlow: React.FC<FamilyTreeFlowProps> = ({ persons, spouses, parentChilds, searchRootPersonId, searchGenerations, onPersonNodeClick, onRelationshipNodeClick }) => {
@@ -91,10 +120,7 @@ const FamilyTreeFlow: React.FC<FamilyTreeFlowProps> = ({ persons, spouses, paren
                     display: none !important;
                 }
             `}</style>
-            <ReactFlow nodeTypes={nodeTypes} nodes={nodes} edges={edges}>
-                <MiniMap />
-                <Background variant={BackgroundVariant.Lines} gap={12} size={1} />
-            </ReactFlow>
+            <FlowWithSearch nodes={nodes} edges={edges} nodeTypes={nodeTypes} />
         </>
     );
 };
