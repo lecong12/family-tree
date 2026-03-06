@@ -40,8 +40,8 @@ async function seed() {
 
             // Fix Avatar: Nam theo nam, Nữ theo nữ chuẩn 100%
             const avatarUrl = isMale 
-                ? 'https://www.cartoonize.net/wp-content/uploads/2024/05/avatar-maker-photo-to-cartoon.png'
-                : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ3rzFZs0tioVeqNH0BKGWxnzfGNevCLpvoXN-vWtjvsjUl5gjNW6lXGyuD7AwJltJgoKk&usqp=CAU';
+                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(row.full_name)}&background=0D8ABC&color=fff&size=128`
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(row.full_name)}&background=E91E63&color=fff&size=128`;
 
             // Tạo trực tiếp bằng Model để lách lỗi 409
             const pId = new Types.ObjectId();
