@@ -37,7 +37,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
                     const data = await res.json();
                     setResults(data);
                     // Chỉ hiện dropdown nếu có kết quả và người dùng đang focus (hoặc vừa gõ)
-                    if (data.length > 0) setShowDropdown(true);
+                    if (data.length > 0 && (searchTerm.length > 0 || showDropdown)) setShowDropdown(true);
                 }
             } catch (error) {
                 console.error("Lỗi khi tìm kiếm:", error);
@@ -97,47 +97,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
             {showDropdown && results.length > 0 && (
                 <ul className="mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto divide-y divide-gray-100">
                     {results.map((person) => (
-                        <li 
-                            key={person._id} 
-                            onClick={() => handleSelect(person)} 
-                            className="p-3 hover:bg-blue-50 cursor-pointer transition-colors duration-150"
-                        >
-                            <div className="font-semibold">{person.name}</div>
-                            <div className="text-xs text-gray-500">
-                                {person.cccd || person.slug}
-                            </div>
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </div>
-    );
-};                  placeholder="Tìm kiếm thành viên..."
-                    className="block w-full p-3 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 shadow-md transition-all duration-200 ease-in-out"
-                />
-                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                    {loading ? (
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-                    ) : query ? (
-                        <button
-                            onClick={() => {
-                                setQuery('');
-                                setResults([]);
-                                setShowDropdown(false);
-                            }}
-                            className="text-gray-400 hover:text-gray-600 focus:outline-none"
-                        >
-                            <HiX className="w-5 h-5" />
-                        </button>
-                    ) : null}
-                </div>
-            </div>
-
-            {showDropdown && results.length > 0 && (
-                <ul className="mt-2 border rounded bg-white max-h-60 overflow-y-auto">
-                <ul className="mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto divide-y divide-gray-100">
-                    {results.map((person) => (
-                        <li key={person._id} onClick={() => handleSelect(person)} className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0">
                         <li 
                             key={person._id} 
                             onClick={() => handleSelect(person)} 
