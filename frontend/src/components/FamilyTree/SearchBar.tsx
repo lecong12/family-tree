@@ -20,35 +20,37 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
     const [loading, setLoading] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
 
+    const search = async (searchTerm: string) => {
+        setLoading(true);
+        try {
+            // Sử dụng biến môi trường hoặc fallback về localhost:9999
+            const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9999/api/v1';
+            const apiUrl = baseUrl.replace(/\/$/, ''); // Xóa dấu / cuối nếu có
+            
+            // Gọi API search. Nếu searchTerm rỗng, backend sẽ trả về danh sách mặc định.
+            const res = await fetch(`${apiUrl}/person/search?name=${encodeURIComponent(searchTerm)}`);
+            
+            if (res.ok) {
+                const data = await res.json();
+                setResults(data);
+                // Chỉ hiện dropdown nếu có kết quả và người dùng đang focus (hoặc vừa gõ)
+                // Logic này sẽ được xử lý ở nơi gọi hàm hoặc useEffect
+            }
+        } catch (error) {
+            console.error("Lỗi khi tìm kiếm:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         const searchTerm = query.trim();
 
-        const search = async () => {
-            setLoading(true);
-            try {
-                // Sử dụng biến môi trường hoặc fallback về localhost:9999
-                const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9999/api/v1';
-                const apiUrl = baseUrl.replace(/\/$/, ''); // Xóa dấu / cuối nếu có
-                
-                // Gọi API search. Nếu searchTerm rỗng, backend sẽ trả về danh sách mặc định.
-                const res = await fetch(`${apiUrl}/person/search?name=${encodeURIComponent(searchTerm)}`);
-                
-                if (res.ok) {
-                    const data = await res.json();
-                    setResults(data);
-                    // Chỉ hiện dropdown nếu có kết quả và người dùng đang focus (hoặc vừa gõ)
-                    if (data.length > 0 && (searchTerm.length > 0 || showDropdown)) setShowDropdown(true);
-                }
-            } catch (error) {
-                console.error("Lỗi khi tìm kiếm:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         // Debounce: Chờ 300ms sau khi ngừng gõ mới gọi API
         // Gọi search() ngay cả khi query rỗng để lấy danh sách mặc định
-        const debounceSearch = setTimeout(search, 300);
+        const debounceSearch = setTimeout(() => {
+            search(searchTerm);
+        }, 300);
 
         return () => clearTimeout(debounceSearch);
     }, [query]);
@@ -72,7 +74,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
                     // Khi focus, nếu đã có kết quả (từ lần load trước hoặc mặc định) thì hiện dropdown
                     // Nếu chưa có, useEffect sẽ chạy (do query không đổi nhưng component render lại) hoặc ta có thể kích hoạt search tại đây nếu cần thiết logic phức tạp hơn.
                     // Với logic useEffect hiện tại, nó sẽ tự động fetch khi mount, nên results thường đã có dữ liệu.
-                    onFocus={() => setShowDropdown(true)}
+                    onFocus={() => {
+                        setShowDropdown(true);
+                        if (results.length === 0) search(''); // Gọi search rỗng để lấy list mặc định nếu chưa có
+                    }}
                     placeholder="Tìm kiếm thành viên..."
                     className="block w-full p-3 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 shadow-md transition-all duration-200 ease-in-out"
                 />
