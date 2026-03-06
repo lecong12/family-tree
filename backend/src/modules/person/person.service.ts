@@ -211,11 +211,10 @@ export class PersonService {
     }
 
     async searchByName(name: string) {
-        if (!name || name.trim().length === 0) {
-            return [];
+        const filter: any = {};
+        if (name && name.trim().length > 0) {
+            filter.name = { $regex: name.trim(), $options: 'i' };
         }
-        
-        const filter: any = { name: { $regex: name.trim(), $options: 'i' } };
         
         // Tìm kiếm gần đúng, không phân biệt hoa thường
         const persons = await this.personModel
