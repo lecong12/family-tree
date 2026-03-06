@@ -40,6 +40,19 @@ export class PersonController {
         return this.personService.findAll();
     }
 
+    @Get('search')
+    @ApiOperation({ summary: 'Search for persons by name' })
+    @ApiQuery({ name: 'name', required: false, description: 'The name to search for' }) // required: false để cho phép search rỗng
+    @ApiResponse({
+        status: HttpStatus.OK,
+        description: 'Return a list of persons matching the name',
+        type: [Person],
+    })
+    // Bỏ qua Guard nếu muốn cho phép khách tìm kiếm, hoặc giữ nguyên nếu yêu cầu đăng nhập
+    searchByName(@Query('name') name: string) {
+        return this.personService.searchByName(name);
+    }
+
     @Get(':id')
     @ApiOperation({ summary: 'Get a person by id' })
     @ApiParam({ name: 'id', description: 'Person ID' })

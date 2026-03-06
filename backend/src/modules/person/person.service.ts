@@ -211,12 +211,13 @@ export class PersonService {
     }
 
     async searchByName(name: string) {
-        let filter = {};
+        const filter: any = {};
         if (name && name.trim().length > 0) {
-            filter = { name: { $regex: name, $options: 'i' } };
+            // Tìm kiếm gần đúng, không phân biệt hoa thường
+            filter.name = { $regex: name, $options: 'i' };
         }
         
-        // Tìm kiếm không phân biệt hoa thường, nếu name rỗng thì trả về 10 người đầu tiên
+        // Nếu name rỗng, filter sẽ là {}, trả về 10 người đầu tiên trong DB
         const persons = await this.personModel
             .find(filter)
             .select('name cccd slug') // Chỉ lấy các trường cần thiết
