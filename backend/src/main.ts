@@ -7,19 +7,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
-    // SỬA LỖI: Đặt cấu hình CORS lên đầu tiên.
-    // Điều này đảm bảo mọi yêu cầu (bao gồm cả yêu cầu 'OPTIONS' phức tạp khi upload file)
-    // đều được xử lý đúng quy tắc CORS trước khi đi vào các logic khác.
-    // Đây là giải pháp cho lỗi "lỗi mạng" (Failed to fetch) khi frontend gọi API.
-    app.enableCors({
-        origin: [
-            'https://family-tree-frontend-mu.vercel.app', // Domain production của Frontend
-            'http://localhost:3000', // Domain khi chạy Frontend ở máy local
-        ],
-        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-        credentials: true,
-    });
-
     const configService = app.get(ConfigService);
     const port = configService.get<number>('PORT') || 9999;
 
@@ -35,6 +22,18 @@ async function bootstrap() {
             { path: '/', method: RequestMethod.GET },
             { path: 'api/v1', method: RequestMethod.GET }, // Exclude the health check
         ],
+    });
+
+    //Config Cors
+    // const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+    app.enableCors({
+        origin: [
+            'https://family-tree-frontend-mu.vercel.app', // Domain production của Frontend
+            'https://family-tree-beryl-zeta.vercel.app', // Domain khác từ logs
+            'http://localhost:3000', // Domain khi chạy Frontend ở máy local
+        ],
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+        credentials: true,
     });
 
     // Swagger setup

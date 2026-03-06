@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { HiSearch, HiX } from 'react-icons/hi';
 
 interface PersonSearchResult {
