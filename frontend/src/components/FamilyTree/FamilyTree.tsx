@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useCallback } from 'react';
 import {
     ReactFlow,
     useNodesState,
@@ -8,16 +8,17 @@ import {
     useReactFlow,
     Node,
     Edge,
+    NodeTypes,
 } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
 
-import PersonNode, { TPersionNode } from '@/components/PersonNode/PersonNode';
-import RelationshipNode, { TRelationshipNode } from '@/components/RelationshipNode/RelationshipNode';
+import PersonNode from '@/components/PersonNode/PersonNode';
+import RelationshipNode from '@/components/RelationshipNode/RelationshipNode';
 import { buildTree } from '@/utils/buildTree';
 import { Person } from '@/schema/Person';
 
-const nodeTypes = {
+const nodeTypes: NodeTypes = {
     person: PersonNode,
     relationship: RelationshipNode,
 };
@@ -27,8 +28,8 @@ interface FamilyTreeProps {
 }
 
 export default function FamilyTree({ person }: FamilyTreeProps) {
-    const [nodes, setNodes, onNodesChange] = useNodesState([]);
-    const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+    const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
     const { fitView } = useReactFlow();
 
     const { initialNodes, initialEdges } = useMemo(() => {
@@ -51,14 +52,14 @@ export default function FamilyTree({ person }: FamilyTreeProps) {
         return () => clearTimeout(timeout);
     }, [nodes, fitView]);
 
-    const onNodeClick = (event: React.MouseEvent, node: Node) => {
+    const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
         console.log('Clicked node', node);
         // You can add logic here to show details of the person
-    };
+    }, []);
 
     return (
         <ReactFlow
-            nodes={nodes as (TPersonNode | TRelationshipNode)[]}
+            nodes={nodes}
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}

@@ -64,11 +64,11 @@ export const buildGenerations = (
 
 // This function creates a map of a person to their direct children
 export const buildChildrenByParentMap = (
-    generations: string[][],
-    lastGenIndex: number,
-    spouseMap: Map<string, SpouseWithDetails[]>,
-    childrenMap: Map<string, ParentChildWithDetails[]>, // Key is spouse-relationship-ID
-    personMap: Map<string, Person>
+    _generations: string[][],
+    _lastGenIndex: number,
+    _spouseMap: Map<string, SpouseWithDetails[]>,
+    _childrenMap: Map<string, ParentChildWithDetails[]>, // Key is spouse-relationship-ID
+    _personMap: Map<string, Person>
 ) => {
     const map = new Map<string, string[]>();
     // This function is primarily for the layout algorithm to find children of a person.

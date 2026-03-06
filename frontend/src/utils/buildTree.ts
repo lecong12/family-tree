@@ -1,6 +1,7 @@
 import { Node, Edge } from '@xyflow/react';
+import { Person } from '../schema/Person';
 
-export const buildTree = (person: any) => {
+export const buildTree = (person: Person) => {
     const initialNodes: Node[] = [];
     const initialEdges: Edge[] = [];
 

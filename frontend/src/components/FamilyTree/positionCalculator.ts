@@ -10,8 +10,8 @@ export const calculateNodePositions = (
     spouseMap: Map<string, SpouseWithDetails[]>,
     childrenMap: Map<string, ParentChildWithDetails[]>,
     personGeneration: Map<string, number>,
-    childrenByParent: Map<string, string[]>,
-    personMap: Map<string, Person>
+    _childrenByParent: Map<string, string[]>,
+    _personMap: Map<string, Person>
 ) => {
     const nodeXPositions = new Map<string, number>();
     const relationshipXPositions = new Map<string, number>();
@@ -33,7 +33,6 @@ export const calculateNodePositions = (
             // Sort spouses by order to handle polygamy consistently (v1, v2, etc.)
             spouseRels.sort((a, b) => (a.husbandOrder || a.wifeOrder || 1) - (b.husbandOrder || b.wifeOrder || 1));
 
-            let familyUnitX = currentX;
             currentX += NODE_WIDTH + X_SPACING;
 
             spouseRels.forEach(rel => {
@@ -49,7 +48,6 @@ export const calculateNodePositions = (
                     const relId = rel._id;
                     if (relId) {
                         const x1 = nodeXPositions.get(pId)!;
-                        const x2 = nodeXPositions.get(spouseId)!;
                         // Place it exactly in the middle of the space between them
                         relationshipXPositions.set(relId, x1 + NODE_WIDTH + X_SPACING / 2 - 20); // 20 is half rel node width
                     }

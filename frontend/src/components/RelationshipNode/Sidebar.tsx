@@ -11,6 +11,7 @@ const AdminSidebar = () => {
   
   // Ép kiểu Sidebar sang any để tránh lỗi TypeScript: Property 'Items' does not exist...
   // Đây là workaround cho vấn đề type definition của thư viện flowbite-react
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const SidebarComponent = Sidebar as any;
 
   return (

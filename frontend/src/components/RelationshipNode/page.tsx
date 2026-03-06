@@ -35,7 +35,7 @@ export default function ImportCsv() {
       });
 
       if (res.ok) {
-        const data = await res.json();
+        await res.json();
         setStatus({ loading: false, message: 'Thành công! Đã nạp dữ liệu gia phả.', type: 'success' });
       } else {
         // Xử lý lỗi HTTP chi tiết hơn
@@ -46,7 +46,7 @@ export default function ImportCsv() {
           try {
             const errorData = await res.json();
             errorMessage = errorData.message || JSON.stringify(errorData);
-          } catch (jsonError) {
+          } catch (_jsonError) {
             // Giữ lại thông báo lỗi gốc nếu response không phải là JSON
           }
         }

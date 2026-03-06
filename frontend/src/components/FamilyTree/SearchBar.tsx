@@ -16,7 +16,7 @@ interface SearchBarProps {
 export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<PersonSearchResult[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [, setLoading] = useState(false);
 
     useEffect(() => {
         if (query.length < 2) {
