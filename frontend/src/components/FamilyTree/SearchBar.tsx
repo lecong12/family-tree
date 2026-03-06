@@ -31,7 +31,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
             const token = localStorage.getItem('token');
 
             // Gọi API search. Nếu searchTerm rỗng, backend sẽ trả về danh sách mặc định.
-            const res = await fetch(`${apiUrl}/person/search?name=${encodeURIComponent(searchTerm)}`);
             const res = await fetch(`${apiUrl}/person/search?name=${encodeURIComponent(searchTerm)}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`, // Gửi kèm token xác thực
