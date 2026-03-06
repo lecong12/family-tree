@@ -211,14 +211,14 @@ export class PersonService {
     }
 
     async searchByName(name: string) {
-        if (!name || name.trim().length < 2) {
-            return [];
+        let filter = {};
+        if (name && name.trim().length > 0) {
+            filter = { name: { $regex: name, $options: 'i' } };
         }
-        // Tìm kiếm không phân biệt hoa thường
+        
+        // Tìm kiếm không phân biệt hoa thường, nếu name rỗng thì trả về 10 người đầu tiên
         const persons = await this.personModel
-            .find({
-                name: { $regex: name, $options: 'i' },
-            })
+            .find(filter)
             .select('name cccd slug') // Chỉ lấy các trường cần thiết
             .limit(10) // Giới hạn 10 kết quả
             .exec();

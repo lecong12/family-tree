@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { HiSearch, HiX } from 'react-icons/hi';
 
 interface PersonSearchResult {
     _id: string;
@@ -16,34 +17,27 @@ interface SearchBarProps {
 export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<PersonSearchResult[]>([]);
-    const [, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [showDropdown, setShowDropdown] = useState(false);
 
     useEffect(() => {
-        // Nếu query rỗng, ta vẫn có thể fetch danh sách mặc định (ví dụ 10 người đầu tiên)
-        // Hoặc chỉ tìm khi có query. Ở đây tôi sẽ sửa để hỗ trợ cả 2:
-        // Nếu query rỗng -> fetch danh sách mặc định (hoặc không làm gì tùy logic bạn muốn).
-        // Nhưng theo yêu cầu "droplist", ta nên fetch danh sách ban đầu.
         const searchTerm = query.trim();
 
         const search = async () => {
             setLoading(true);
             try {
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9999/api/v1';
-                // Nếu không có query, gọi API lấy danh sách mặc định (hoặc search rỗng để lấy all/limit)
-                // Lưu ý: Backend cần xử lý trường hợp name rỗng nếu muốn trả về list mặc định.
-                // Hiện tại backend check if (!name || name.trim().length < 2) return [];
-                // Nên ta chỉ search khi có query >= 2 ký tự, HOẶC ta sửa backend để hỗ trợ empty search.
-                // Để an toàn với backend hiện tại, ta chỉ search khi có query.
+                // Sử dụng biến môi trường hoặc fallback về localhost:9999
+                const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9999/api/v1';
+                const apiUrl = baseUrl.replace(/\/$/, ''); // Xóa dấu / cuối nếu có
                 
-                if (searchTerm.length >= 1) {
-                     const res = await fetch(`${apiUrl}/person/search?name=${searchTerm}`);
-                     const data = await res.json();
-                     setResults(data);
-                     setShowDropdown(true);
-                } else {
-                    setResults([]);
-                    setShowDropdown(false);
+                // Gọi API search. Nếu searchTerm rỗng, backend sẽ trả về danh sách mặc định.
+                const res = await fetch(`${apiUrl}/person/search?name=${encodeURIComponent(searchTerm)}`);
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    setResults(data);
+                    // Chỉ hiện dropdown nếu có kết quả và người dùng đang focus (hoặc vừa gõ)
+                    if (data.length > 0) setShowDropdown(true);
                 }
             } catch (error) {
                 console.error("Lỗi khi tìm kiếm:", error);
@@ -52,7 +46,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
             }
         };
 
-        const debounceSearch = setTimeout(() => search(), 300);
+        // Debounce: Chờ 300ms sau khi ngừng gõ mới gọi API
+        // Gọi search() ngay cả khi query rỗng để lấy danh sách mặc định
+        const debounceSearch = setTimeout(search, 300);
 
         return () => clearTimeout(debounceSearch);
     }, [query]);
@@ -64,21 +60,89 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
     };
 
     return (
-        <div className="absolute top-4 left-4 z-50 bg-white p-2 rounded shadow-lg w-64">
-            <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onFocus={() => {
-                    if (results.length > 0) setShowDropdown(true);
-                }}
-                placeholder="Tìm kiếm thành viên..."
-                className="w-full p-2 border rounded"
-            />
+        <div className="absolute top-4 left-4 z-50 w-72">
+            <div className="relative">
+                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <HiSearch className="w-5 h-5 text-gray-500" />
+                </div>
+                <input
+                    type="text"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    // Khi focus, nếu đã có kết quả (từ lần load trước hoặc mặc định) thì hiện dropdown
+                    // Nếu chưa có, useEffect sẽ chạy (do query không đổi nhưng component render lại) hoặc ta có thể kích hoạt search tại đây nếu cần thiết logic phức tạp hơn.
+                    // Với logic useEffect hiện tại, nó sẽ tự động fetch khi mount, nên results thường đã có dữ liệu.
+                    onFocus={() => setShowDropdown(true)}
+                    placeholder="Tìm kiếm thành viên..."
+                    className="block w-full p-3 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 shadow-md transition-all duration-200 ease-in-out"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                    {loading ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                    ) : query ? (
+                        <button
+                            onClick={() => {
+                                setQuery('');
+                                setResults([]);
+                                setShowDropdown(false);
+                            }}
+                            className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                        >
+                            <HiX className="w-5 h-5" />
+                        </button>
+                    ) : null}
+                </div>
+            </div>
+
+            {showDropdown && results.length > 0 && (
+                <ul className="mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto divide-y divide-gray-100">
+                    {results.map((person) => (
+                        <li 
+                            key={person._id} 
+                            onClick={() => handleSelect(person)} 
+                            className="p-3 hover:bg-blue-50 cursor-pointer transition-colors duration-150"
+                        >
+                            <div className="font-semibold">{person.name}</div>
+                            <div className="text-xs text-gray-500">
+                                {person.cccd || person.slug}
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
+};                  placeholder="Tìm kiếm thành viên..."
+                    className="block w-full p-3 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 shadow-md transition-all duration-200 ease-in-out"
+                />
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                    {loading ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                    ) : query ? (
+                        <button
+                            onClick={() => {
+                                setQuery('');
+                                setResults([]);
+                                setShowDropdown(false);
+                            }}
+                            className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                        >
+                            <HiX className="w-5 h-5" />
+                        </button>
+                    ) : null}
+                </div>
+            </div>
+
             {showDropdown && results.length > 0 && (
                 <ul className="mt-2 border rounded bg-white max-h-60 overflow-y-auto">
+                <ul className="mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto divide-y divide-gray-100">
                     {results.map((person) => (
                         <li key={person._id} onClick={() => handleSelect(person)} className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0">
+                        <li 
+                            key={person._id} 
+                            onClick={() => handleSelect(person)} 
+                            className="p-3 hover:bg-blue-50 cursor-pointer transition-colors duration-150"
+                        >
                             <div className="font-semibold">{person.name}</div>
                             <div className="text-xs text-gray-500">
                                 {person.cccd || person.slug}
