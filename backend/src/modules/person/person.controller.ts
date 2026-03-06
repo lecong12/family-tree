@@ -53,19 +53,6 @@ export class PersonController {
         return this.personService.searchByName(name);
     }
 
-    @Get('search')
-    @ApiOperation({ summary: 'Search for persons by name' })
-    @ApiQuery({ name: 'name', required: true, description: 'The name to search for' })
-    @ApiResponse({
-        status: HttpStatus.OK,
-        description: 'Return a list of persons matching the name',
-        type: [Person],
-    })
-    // Sử dụng Guard đã có ở cấp class, yêu cầu người dùng phải đăng nhập để tìm kiếm
-    searchByName(@Query('name') name: string) {
-        return this.personService.searchByName(name);
-    }
-
     @Get(':id')
     @ApiOperation({ summary: 'Get a person by id' })
     @ApiParam({ name: 'id', description: 'Person ID' })
