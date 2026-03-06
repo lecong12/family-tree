@@ -83,7 +83,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
                     // Với logic useEffect hiện tại, nó sẽ tự động fetch khi mount, nên results thường đã có dữ liệu.
                     onFocus={() => {
                         setShowDropdown(true);
-                        if (results.length === 0) search(''); // Gọi search rỗng để lấy list mặc định nếu chưa có
+                        // Nếu chưa có kết quả nào (lần đầu focus), gọi search với từ khóa hiện tại (hoặc rỗng)
+                        if (results.length === 0) search(query.trim());
                     }}
                     placeholder="Tìm kiếm thành viên..."
                     className="block w-full p-3 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 shadow-md transition-all duration-200 ease-in-out"
