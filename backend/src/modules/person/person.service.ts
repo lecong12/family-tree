@@ -20,7 +20,7 @@ export class PersonService {
         console.log(createPersonDto);
 
         if (!createPersonDto.avatar) {
-            const isMale = Number(createPersonDto.gender) === 0 || createPersonDto.gender === 'MALE' || createPersonDto.gender === Gender.MALE;
+            const isMale = Number(createPersonDto.gender) === 0 || (createPersonDto.gender as any) === 'MALE' || createPersonDto.gender === Gender.MALE;
             createPersonDto.avatar = isMale
                 ? `https://ui-avatars.com/api/?name=${encodeURIComponent(createPersonDto.name)}&background=0D8ABC&color=fff&size=128`
                 : `https://ui-avatars.com/api/?name=${encodeURIComponent(createPersonDto.name)}&background=E91E63&color=fff&size=128`;
@@ -85,7 +85,7 @@ export class PersonService {
             if (person) {
                 const name = updatePersonDto.name || person.name;
                 const gender = updatePersonDto.gender !== undefined ? updatePersonDto.gender : person.gender;
-                const isMale = Number(gender) === 0 || gender === 'MALE' || gender === Gender.MALE;
+                const isMale = Number(gender) === 0 || (gender as any) === 'MALE' || gender === Gender.MALE;
                 updatePersonDto.avatar = isMale
                     ? `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff&size=128`
                     : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=E91E63&color=fff&size=128`;
