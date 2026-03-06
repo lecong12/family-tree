@@ -215,6 +215,7 @@ export class PersonService {
         if (name && name.trim().length > 0) {
             // Tìm kiếm gần đúng, không phân biệt hoa thường
             filter.name = { $regex: name, $options: 'i' };
+            filter.name = { $regex: name.trim(), $options: 'i' };
         }
         
         // Nếu name rỗng, filter sẽ là {}, trả về 10 người đầu tiên trong DB
