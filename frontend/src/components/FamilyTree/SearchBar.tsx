@@ -45,7 +45,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
 
     const handleSelect = (person: PersonSearchResult) => {
         onNodeSelect(person._id); // Dùng _id làm ID cho node để khớp với ReactFlow
-        setQuery('');
+        setQuery(person.name);
         setResults([]);
     };
 
@@ -61,8 +61,11 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
             {results.length > 0 && (
                 <ul className="mt-2 border rounded bg-white max-h-60 overflow-y-auto">
                     {results.map((person) => (
-                        <li key={person._id} onClick={() => handleSelect(person)} className="p-2 hover:bg-gray-100 cursor-pointer">
-                            {person.name}
+                        <li key={person._id} onClick={() => handleSelect(person)} className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0">
+                            <div className="font-semibold">{person.name}</div>
+                            <div className="text-xs text-gray-500">
+                                {person.cccd || person.slug}
+                            </div>
                         </li>
                     ))}
                 </ul>
