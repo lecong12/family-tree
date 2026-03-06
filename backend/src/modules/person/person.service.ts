@@ -205,40 +205,48 @@ export class PersonService {
     }
 
     async getNGenerations(personId: string, generations: number) {
-        let personData = {};
-        const treeData = [];
-
-        let firstGeneration = await this.getGenerationByPerson(personId);
-        personData = firstGeneration.personData;
-
-        treeData.push([firstGeneration.tree]);
-
-        let allPousesInGeneration = firstGeneration.tree.spouses;
-        for (let i = 1; i < generations; i++) {
-            if (allPousesInGeneration.length > 0) {
-                const queryNextGenFn = [];
-
-                for (const spouse of allPousesInGeneration) {
-                    if (spouse.children.length > 0) {
-                        for (const child of spouse.children) {
-                            queryNextGenFn.push(this.getGenerationByPerson(child));
-                        }
-                    }
-                }
-
-                const generationData = await Promise.all(queryNextGenFn);
-
-                const subtree = [];
-                allPousesInGeneration = [];
-                for (const subFamily of generationData) {
-                    personData = { ...personData, ...subFamily.personData };
-                    subtree.push([subFamily.tree]);
-                    allPousesInGeneration.push(...subFamily.tree.spouses);
-                }
-                treeData.push(subtree);
-            }
+        if (!Types.ObjectId.isValid(personId)) {
+            throw new NotFoundException(`Invalid person ID: ${personId}`);
         }
 
+        const personData: Record<string, any> = {};
+        const treeData: any[] = [];
+        let idsToProcess = new Set<string>([personId]);
+        const processedIds = new Set<string>();
+
+        for (let i = 0; i < generations && idsToProcess.size > 0; i++) {
+            const generationResult = [];
+            const nextGenerationIds = new Set<string>();
+
+            // Lấy dữ liệu cho tất cả các person trong thế hệ hiện tại
+            const generationPromises = Array.from(idsToProcess).map(id => {
+                if (processedIds.has(id)) return null;
+                processedIds.add(id);
+                return this.getGenerationByPerson(id);
+            });
+
+            const results = (await Promise.all(generationPromises)).filter(Boolean);
+
+            for (const subFamily of results) {
+                 // Hợp nhất personData
+                 Object.assign(personData, subFamily.personData);
+                 generationResult.push(subFamily.tree);
+ 
+                 // Thu thập ID của thế hệ tiếp theo (con cái)
+                 subFamily.tree.spouses.forEach(spouse => {
+                     if (spouse.children && spouse.children.length > 0) {
+                         spouse.children.forEach(childId => nextGenerationIds.add(childId));
+                     }
+                 });
+            }
+
+            if (generationResult.length > 0) {
+                treeData.push(generationResult);
+            }
+
+            // Chuẩn bị cho vòng lặp tiếp theo
+            idsToProcess = new Set([...nextGenerationIds].filter(id => !processedIds.has(id)));
+        }
         return {
             personData: personData,
             treeData: treeData,
