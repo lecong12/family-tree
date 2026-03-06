@@ -24,19 +24,22 @@ interface FamilyTreeFlowProps {
 
 // Component nội bộ để có thể sử dụng hook useReactFlow
 const FlowWithSearch = ({ nodes, edges, nodeTypes }: { nodes: any[], edges: any[], nodeTypes: any }) => {
-    const { setCenter, getNode } = useReactFlow();
+    const { fitView, getNode } = useReactFlow();
 
     // Hàm để di chuyển và phóng to vào một node trên cây
     const focusNode = useCallback((nodeId: string) => {
         const node = getNode(nodeId);
         if (node) {
-            const x = node.position.x + (node.width ?? 0) / 2;
-            const y = node.position.y + (node.height ?? 0) / 2;
-            setCenter(x, y, { zoom: 1.2, duration: 800 });
+            fitView({
+                nodes: [{ id: nodeId }], // Chỉ định node cần focus
+                duration: 1000,          // Thời gian bay (ms)
+                padding: 0.5,            // Khoảng cách lề
+                maxZoom: 1.5,            // Mức zoom tối đa
+            });
         } else {
             console.warn(`Không tìm thấy node với ID: ${nodeId} để focus.`);
         }
-    }, [getNode, setCenter]);
+    }, [getNode, fitView]);
 
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
