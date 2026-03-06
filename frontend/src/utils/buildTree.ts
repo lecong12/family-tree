@@ -49,26 +49,3 @@ export const buildTree = (persons: Person[] | Person) => {
 
     return { initialNodes, initialEdges };
 };
-                    initialEdges.push({
-                        id: `e-${p.parentId}-${personId}`,
-                        source: p.parentId,
-                        target: personId,
-                        animated: true,
-                        style: { stroke: '#2ecc71' },
-                    });
-                }
-            }
-        });
-    } 
-    // Trường hợp chỉ có 1 người duy nhất (người gốc)
-    else if (persons) {
-        initialNodes.push({
-            id: persons._id || 'root',
-            type: 'person',
-            data: persons as any,
-            position: { x: 0, y: 0 },
-        });
-    }
-
-    return { initialNodes, initialEdges };
-};
