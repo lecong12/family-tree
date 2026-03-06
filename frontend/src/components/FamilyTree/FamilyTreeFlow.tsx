@@ -1,4 +1,4 @@
-import { Background, BackgroundVariant, MiniMap, ReactFlow } from '@xyflow/react';
+import { Background, BackgroundVariant, MiniMap, ReactFlow, ReactFlowProvider } from '@xyflow/react';
 import { useMemo, useCallback } from 'react';
 import { useReactFlow } from '@xyflow/react';
 import PersonNode from 'src/components/PersonNode/PersonNode';
@@ -120,7 +120,9 @@ const FamilyTreeFlow: React.FC<FamilyTreeFlowProps> = ({ persons, spouses, paren
                     display: none !important;
                 }
             `}</style>
-            <FlowWithSearch nodes={nodes} edges={edges} nodeTypes={nodeTypes} />
+            <ReactFlowProvider>
+                <FlowWithSearch nodes={nodes} edges={edges} nodeTypes={nodeTypes} />
+            </ReactFlowProvider>
         </>
     );
 };
