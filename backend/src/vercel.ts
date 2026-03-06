@@ -17,6 +17,9 @@ async function bootstrap() {
         app.enableCors({
             origin: [
                 'https://family-tree-frontend-mu.vercel.app', // Domain production của Frontend
+                'https://family-tree-frontend-lecong12s-projects.vercel.app', // Domain mới của bạn
+                'https://family-tree-frontend-git-main-lecong12s-projects.vercel.app',
+                'https://lecong-treef.vercel.app',
                 'http://localhost:3000', // Domain khi chạy Frontend ở máy local
             ],
             methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
