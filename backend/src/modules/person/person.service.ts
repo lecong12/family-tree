@@ -181,7 +181,31 @@ export class PersonService {
             }
         }
 
-        console.log('119', personInFamily);
+        // WORKAROUND: Dữ liệu vợ/chồng được populate từ spouseService có thể thiếu trường `avatar`.
+        // Ta sẽ thực hiện một truy vấn bổ sung để đảm bảo tất cả mọi người trong thế hệ này đều có avatar.
+        const allPersonIds = Object.keys(personInFamily);
+        const personsWithAvatar = await this.personModel
+            .find({
+                _id: { $in: allPersonIds },
+            })
+            .select('_id avatar')
+            .lean()
+            .exec();
+
+        // Tạo một map từ ID sang avatar
+        const avatarMap = personsWithAvatar.reduce((map, p) => {
+            if (p.avatar) {
+                map[p._id.toString()] = p.avatar;
+            }
+            return map;
+        }, {});
+
+        // Cập nhật lại avatar cho các đối tượng person trong family
+        for (const id in personInFamily) {
+            if (personInFamily[id] && avatarMap[id]) {
+                personInFamily[id].avatar = avatarMap[id];
+            }
+        }
 
         return {
             personData: personInFamily,
