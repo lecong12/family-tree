@@ -22,11 +22,33 @@ export const buildTree = (persons: Person[] | Person) => {
             });
 
             // 2. Tạo Edge (đường nối) nếu tìm thấy cha hợp lệ
-            if (p.parentId) {
-                // Kiểm tra ID cha có tồn tại trong danh sách không
-                const parentExists = persons.some((parent: any) => parent._id === p.parentId);
-                
-                if (parentExists) {
+            if (p.tree && Array.isArray(p.tree.spouses)) {
+                p.tree.spouses.forEach((spouse: any) => {
+                    // Đảm bảo spouse.user và spouse.user.id tồn tại và là một chuỗi
+                    if (spouse.user && typeof spouse.user.id === 'string') {
+                        initialEdges.push({
+                            id: `e-${personId}-${spouse.user.id}`,
+                            source: personId,
+                            target: spouse.user.id,
+                            type: 'smoothstep', // hoặc 'default'
+                        });
+                    }
+                });
+            }
+        });
+    } 
+    // Trường hợp chỉ có 1 người duy nhất (người gốc)
+    else if (persons) {
+        initialNodes.push({
+            id: persons._id || 'root',
+            type: 'person',
+            data: persons as any,
+            position: { x: 0, y: 0 },
+        });
+    }
+
+    return { initialNodes, initialEdges };
+};
                     initialEdges.push({
                         id: `e-${p.parentId}-${personId}`,
                         source: p.parentId,
