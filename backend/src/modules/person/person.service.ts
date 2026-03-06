@@ -63,18 +63,10 @@ export class PersonService {
             throw new NotFoundException(`Invalid person ID: ${id}`);
         }
 
-        const person = await this.personModel.findById(id).lean().exec();
+        const person = await this.personModel.findById(id).exec();
 
         if (!person) {
             throw new NotFoundException(`Person with ID ${id} not found`);
-        }
-
-        // Đảm bảo người này luôn có avatar, ngay cả khi trong DB là null hoặc rỗng
-        if (!person.avatar || person.avatar.trim() === '') {
-            const isMale = Number(person.gender) === 0 || (person.gender as any) === 'MALE' || person.gender === Gender.MALE;
-            person.avatar = isMale
-                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=0D8ABC&color=fff&size=128`
-                : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=E91E63&color=fff&size=128`;
         }
 
         return person;
@@ -156,30 +148,55 @@ export class PersonService {
             throw new NotFoundException(`Invalid person ID: ${personId}`);
         }
 
-        const person = await this.personModel.findById(personId).exec();
+        const person = await this.personModel.findById(personId).lean().exec();
         if (!person) {
             throw new NotFoundException(`Person with ID ${personId} not found`);
         }
 
-        const personObject = person.toObject();
-        // Create a map to store person objects by their IDs
-        let personInFamily: Record<string, any> = {
-            [personId]: personObject,
+        // Đảm bảo người gốc của thế hệ này có avatar
+        if (!person.avatar || person.avatar.trim() === '') {
+            const isMale = Number(person.gender) === 0 || (person.gender as any) === 'MALE' || person.gender === Gender.MALE;
+            person.avatar = isMale
+                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=0D8ABC&color=fff&size=128`
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=E91E63&color=fff&size=128`;
+        }
+
+        const personInFamily: Record<string, any> = {
+            [personId]: person,
         };
+
         const spouseRelationships = await this.spouseService.findByPerson(personId);
+
+        // 1. Lấy ID của tất cả vợ/chồng
+        const spouseIds = spouseRelationships.map((rel) =>
+            rel.husband.toString() === personId ? rel.wife.toString() : rel.husband.toString(),
+        );
+
+        // 2. Lấy toàn bộ thông tin của các vợ/chồng đó trong 1 query
+        if (spouseIds.length > 0) {
+            const spousesData = await this.personModel.find({ _id: { $in: spouseIds } }).lean().exec();
+            for (const spouse of spousesData) {
+                // Đảm bảo vợ/chồng cũng có avatar
+                if (!spouse.avatar || spouse.avatar.trim() === '') {
+                    const isMale = Number(spouse.gender) === 0 || (spouse.gender as any) === 'MALE' || spouse.gender === Gender.MALE;
+                    spouse.avatar = isMale
+                        ? `https://ui-avatars.com/api/?name=${encodeURIComponent(spouse.name)}&background=0D8ABC&color=fff&size=128`
+                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(spouse.name)}&background=E91E63&color=fff&size=128`;
+                }
+                personInFamily[spouse._id.toString()] = spouse;
+            }
+        }
 
         const tree = {
             user: personId,
             spouses: [],
         };
-        // Get generation 1st is spouse relationships
+
+        // 3. Dựng cấu trúc cây với dữ liệu đầy đủ
         for (const relationship of spouseRelationships) {
-            const spouseObject = relationship.toJSON();
             const children = await this.parentChildService.findAllChildIdsByParent(relationship._id.toString());
             if (personId === relationship.husband.toString()) {
-                const wifeId = (relationship.wife as any)._id.toString();
-                personInFamily[wifeId] = spouseObject.wife;
-                // console.log(personInFamily);
+                const wifeId = relationship.wife.toString();
                 tree.spouses.push({
                     user: { id: wifeId, spouseOrder: relationship.husbandOrder },
                     spouseOrder: relationship.wifeOrder,
@@ -188,8 +205,7 @@ export class PersonService {
                     children: children,
                 });
             } else {
-                const husbandId = (relationship.husband as any)._id.toString();
-                personInFamily[husbandId] = spouseObject.husband;
+                const husbandId = relationship.husband.toString();
                 tree.spouses.push({
                     user: { id: husbandId, spouseOrder: relationship.wifeOrder },
                     spouseOrder: relationship.husbandOrder,
@@ -197,32 +213,6 @@ export class PersonService {
                     divorceDate: relationship.divorceDate,
                     children: children,
                 });
-            }
-        }
-
-        // WORKAROUND: Dữ liệu vợ/chồng được populate từ spouseService có thể thiếu trường `avatar`.
-        // Ta sẽ thực hiện một truy vấn bổ sung để đảm bảo tất cả mọi người trong thế hệ này đều có avatar.
-        const allPersonIds = Object.keys(personInFamily);
-        const personsWithAvatar = await this.personModel
-            .find({
-                _id: { $in: allPersonIds },
-            })
-            .select('_id avatar')
-            .lean()
-            .exec();
-
-        // Tạo một map từ ID sang avatar
-        const avatarMap = personsWithAvatar.reduce((map, p) => {
-            if (p.avatar) {
-                map[p._id.toString()] = p.avatar;
-            }
-            return map;
-        }, {});
-
-        // Cập nhật lại avatar cho các đối tượng person trong family
-        for (const id in personInFamily) {
-            if (personInFamily[id] && avatarMap[id]) {
-                personInFamily[id].avatar = avatarMap[id];
             }
         }
 
@@ -291,7 +281,18 @@ export class PersonService {
             .find(filter)
             .select('_id name cccd slug avatar') // Chỉ lấy các trường cần thiết
             .limit(10) // Giới hạn 10 kết quả
+            .lean() // Sử dụng lean để có kết quả nhanh hơn và dễ chỉnh sửa
             .exec();
+
+        // Đảm bảo mọi người trong kết quả tìm kiếm đều có avatar
+        for (const person of persons) {
+            if (!person.avatar || person.avatar.trim() === '') {
+                const isMale = Number(person.gender) === 0 || (person.gender as any) === 'MALE' || person.gender === Gender.MALE;
+                person.avatar = isMale
+                    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=0D8ABC&color=fff&size=128`
+                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=E91E63&color=fff&size=128`;
+            }
+        }
         return persons;
     }
 }
