@@ -24,14 +24,19 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
         setLoading(true);
         try {
             // Sử dụng biến môi trường hoặc fallback về localhost:9999
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9999/api/v1';
-            const apiUrl = baseUrl.replace(/\/$/, ''); // Xóa dấu / cuối nếu có
+            let baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9999/api/v1';
+            baseUrl = baseUrl.replace(/\/$/, ''); // Xóa dấu / cuối
+
+            // Đảm bảo URL có chứa /api/v1 (nếu biến môi trường chỉ là domain gốc)
+            if (!baseUrl.endsWith('/api/v1')) {
+                baseUrl = `${baseUrl}/api/v1`;
+            }
             
             // Lấy token từ localStorage
             const token = localStorage.getItem('token');
 
             // Gọi API search. Nếu searchTerm rỗng, backend sẽ trả về danh sách mặc định.
-            const res = await fetch(`${apiUrl}/person/search?name=${encodeURIComponent(searchTerm)}`, {
+            const res = await fetch(`${baseUrl}/person/search?name=${encodeURIComponent(searchTerm)}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`, // Gửi kèm token xác thực
                 },
@@ -40,11 +45,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
             if (res.ok) {
                 const data = await res.json();
                 setResults(data);
-                // Chỉ hiện dropdown nếu có kết quả và người dùng đang focus (hoặc vừa gõ)
-                // Logic này sẽ được xử lý ở nơi gọi hàm hoặc useEffect
+                setShowDropdown(true);
+            } else {
+                console.error("Search failed:", res.status, res.statusText);
+                setResults([]);
             }
         } catch (error) {
             console.error("Lỗi khi tìm kiếm:", error);
+            setResults([]);
         } finally {
             setLoading(false);
         }
@@ -82,9 +90,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
                     // Nếu chưa có, useEffect sẽ chạy (do query không đổi nhưng component render lại) hoặc ta có thể kích hoạt search tại đây nếu cần thiết logic phức tạp hơn.
                     // Với logic useEffect hiện tại, nó sẽ tự động fetch khi mount, nên results thường đã có dữ liệu.
                     onFocus={() => {
-                        setShowDropdown(true);
-                        // Nếu chưa có kết quả nào (lần đầu focus), gọi search với từ khóa hiện tại (hoặc rỗng)
-                        if (results.length === 0) search(query.trim());
+                        if (results.length > 0 || query.trim().length === 0) {
+                            setShowDropdown(true);
+                            if (results.length === 0) search(query.trim());
+                        }
                     }}
                     placeholder="Tìm kiếm thành viên..."
                     className="block w-full p-3 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 shadow-md transition-all duration-200 ease-in-out"
@@ -107,20 +116,26 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
                 </div>
             </div>
 
-            {showDropdown && results.length > 0 && (
+            {showDropdown && (
                 <ul className="mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto divide-y divide-gray-100">
-                    {results.map((person) => (
-                        <li 
-                            key={person._id} 
-                            onClick={() => handleSelect(person)} 
-                            className="p-3 hover:bg-blue-50 cursor-pointer transition-colors duration-150"
-                        >
-                            <div className="font-semibold">{person.name}</div>
-                            <div className="text-xs text-gray-500">
-                                {person.cccd || person.slug}
-                            </div>
+                    {results.length > 0 ? (
+                        results.map((person) => (
+                            <li 
+                                key={person._id} 
+                                onClick={() => handleSelect(person)} 
+                                className="p-3 hover:bg-blue-50 cursor-pointer transition-colors duration-150"
+                            >
+                                <div className="font-semibold">{person.name}</div>
+                                <div className="text-xs text-gray-500">
+                                    {person.cccd || person.slug}
+                                </div>
+                            </li>
+                        ))
+                    ) : (
+                        <li className="p-3 text-gray-500 text-center text-sm">
+                            {loading ? "Đang tìm kiếm..." : "Không tìm thấy kết quả"}
                         </li>
-                    ))}
+                    )}
                 </ul>
             )}
         </div>
