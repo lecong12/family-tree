@@ -213,8 +213,14 @@ export class PersonService {
     async searchByName(name: string) {
         let filter: any = {};
         if (name && name.trim().length > 0) {
-            // Tìm kiếm gần đúng, không phân biệt hoa thường
-            filter = { name: { $regex: name.trim(), $options: 'i' } };
+            // Tìm kiếm gần đúng, không phân biệt hoa thường.
+            // Sử dụng regex an toàn hơn bằng cách escape các ký tự đặc biệt nếu cần (tạm thời giữ nguyên logic cơ bản)
+            filter = { 
+                name: { 
+                    $regex: name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 
+                    $options: 'i' 
+                } 
+            };
         }
         
         // Nếu name rỗng, filter là {}, trả về 10 người đầu tiên
