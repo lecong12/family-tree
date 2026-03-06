@@ -27,8 +27,16 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
             const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9999/api/v1';
             const apiUrl = baseUrl.replace(/\/$/, ''); // Xóa dấu / cuối nếu có
             
+            // Lấy token từ localStorage
+            const token = localStorage.getItem('token');
+
             // Gọi API search. Nếu searchTerm rỗng, backend sẽ trả về danh sách mặc định.
             const res = await fetch(`${apiUrl}/person/search?name=${encodeURIComponent(searchTerm)}`);
+            const res = await fetch(`${apiUrl}/person/search?name=${encodeURIComponent(searchTerm)}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`, // Gửi kèm token xác thực
+                },
+            });
             
             if (res.ok) {
                 const data = await res.json();
