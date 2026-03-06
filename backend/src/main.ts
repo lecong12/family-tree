@@ -28,8 +28,8 @@ async function bootstrap() {
     // const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
     app.enableCors({
         origin: [
-            'https://family-tree-frontend-mu.vercel.app', // Domain production của Frontend
-            'https://family-tree-beryl-zeta.vercel.app', // Domain khác từ logs
+            'https://lecong-treef.vercel.app/', // Domain production của Frontend
+            'https://family-tree-frontend-git-main-lecong12s-projects.vercel.app', // Domain khác từ logs
             'http://localhost:3000', // Domain khi chạy Frontend ở máy local
         ],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
