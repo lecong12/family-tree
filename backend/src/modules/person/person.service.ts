@@ -226,7 +226,7 @@ export class PersonService {
         // Nếu name rỗng, filter là {}, trả về 10 người đầu tiên
         const persons = await this.personModel
             .find(filter)
-            .select('name cccd slug') // Chỉ lấy các trường cần thiết
+            .select('_id name cccd slug') // Chỉ lấy các trường cần thiết
             .limit(10) // Giới hạn 10 kết quả
             .exec();
         return persons;

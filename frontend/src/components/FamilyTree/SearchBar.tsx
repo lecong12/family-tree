@@ -44,6 +44,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
             
             if (res.ok) {
                 const data = await res.json();
+                console.log("Search API response:", data); // Log dữ liệu nhận được
                 setResults(data);
                 setShowDropdown(true);
             } else {
