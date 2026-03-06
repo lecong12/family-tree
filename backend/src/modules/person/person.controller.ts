@@ -12,11 +12,11 @@ import { UserRoles } from '../../constants';
 @ApiTags('Person')
 @ApiBearerAuth()
 @Controller('person')
-@UseGuards(AuthGuard('jwt'), RolesGuard)
 export class PersonController {
     constructor(private readonly personService: PersonService) {}
 
     @Post()
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(UserRoles.ADMIN, UserRoles.EDITOR)
     @ApiOperation({ summary: 'Create a new person' })
     @ApiResponse({
@@ -30,6 +30,7 @@ export class PersonController {
     }
 
     @Get()
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
     @ApiOperation({ summary: 'Get all persons' })
     @ApiResponse({
         status: HttpStatus.OK,
@@ -54,6 +55,7 @@ export class PersonController {
     }
 
     @Get(':id')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
     @ApiOperation({ summary: 'Get a person by id' })
     @ApiParam({ name: 'id', description: 'Person ID' })
     @ApiResponse({
@@ -70,6 +72,7 @@ export class PersonController {
     }
 
     @Patch(':id')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(UserRoles.ADMIN, UserRoles.EDITOR)
     @ApiOperation({ summary: 'Update a person' })
     @ApiParam({ name: 'id', description: 'Person ID' })
@@ -87,6 +90,7 @@ export class PersonController {
     }
 
     @Delete(':id')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(UserRoles.ADMIN, UserRoles.EDITOR)
     @ApiOperation({ summary: 'Delete a person' })
     @ApiParam({ name: 'id', description: 'Person ID' })
@@ -103,6 +107,7 @@ export class PersonController {
     }
 
     @Get(':id/generations/:generations')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
     @ApiOperation({ summary: 'Get N generations of a person including spouse relationships and children' })
     @ApiParam({ name: 'id', description: 'Person ID' })
     @ApiParam({ name: 'generations', required: true, type: Number, description: 'Number of generations to get' })
