@@ -17,13 +17,8 @@ export class PersonService {
     ) {}
 
     async create(createPersonDto: CreatePersonDto) {
-        console.log(createPersonDto);
-
-        if (!createPersonDto.avatar) {
-            const isMale = Number(createPersonDto.gender) === 0 || (createPersonDto.gender as any) === 'MALE' || createPersonDto.gender === Gender.MALE;
-            createPersonDto.avatar = isMale
-                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(createPersonDto.name)}&background=0D8ABC&color=fff&size=128`
-                : `https://ui-avatars.com/api/?name=${encodeURIComponent(createPersonDto.name)}&background=E91E63&color=fff&size=128`;
+        if (!createPersonDto.avatar || createPersonDto.avatar.trim() === '') {
+            this._ensureAvatar(createPersonDto);
         }
 
         // Check if CCCD already exists
@@ -47,13 +42,7 @@ export class PersonService {
         const persons = await this.personModel.find().lean().exec();
         // Đảm bảo mọi người đều có avatar
         for (const person of persons) {
-            // Nếu không có avatar hoặc avatar là chuỗi rỗng, tạo avatar mặc định
-            if (!person.avatar || person.avatar.trim() === '') {
-                const isMale = Number(person.gender) === 0 || (person.gender as any) === 'MALE' || person.gender === Gender.MALE;
-                person.avatar = isMale
-                    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=0D8ABC&color=fff&size=128`
-                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=E91E63&color=fff&size=128`;
-            }
+            this._ensureAvatar(person);
         }
         return persons;
     }
@@ -70,12 +59,7 @@ export class PersonService {
         }
 
         // Đảm bảo người này luôn có avatar, ngay cả khi trong DB là null hoặc rỗng
-        if (!person.avatar || person.avatar.trim() === '') {
-            const isMale = Number(person.gender) === 0 || (person.gender as any) === 'MALE' || person.gender === Gender.MALE;
-            person.avatar = isMale
-                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=0D8ABC&color=fff&size=128`
-                : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=E91E63&color=fff&size=128`;
-        }
+        this._ensureAvatar(person);
 
         return person;
     }
@@ -100,14 +84,14 @@ export class PersonService {
         }
 
         if (updatePersonDto.avatar === "") {
-            const person = await this.personModel.findById(id).exec();
-            if (person) {
-                const name = updatePersonDto.name || person.name;
-                const gender = updatePersonDto.gender !== undefined ? updatePersonDto.gender : person.gender;
-                const isMale = Number(gender) === 0 || (gender as any) === 'MALE' || gender === Gender.MALE;
-                updatePersonDto.avatar = isMale
-                    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0D8ABC&color=fff&size=128`
-                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=E91E63&color=fff&size=128`;
+            const existingPerson = await this.personModel.findById(id).select('name gender').lean().exec();
+            if (existingPerson) {
+                const tempPerson = {
+                    name: updatePersonDto.name || existingPerson.name,
+                    gender: updatePersonDto.gender !== undefined ? updatePersonDto.gender : existingPerson.gender,
+                };
+                this._ensureAvatar(tempPerson);
+                updatePersonDto.avatar = (tempPerson as any).avatar;
             }
         }
 
@@ -162,12 +146,7 @@ export class PersonService {
         }
 
         // Đảm bảo người gốc của thế hệ này có avatar
-        if (!person.avatar || person.avatar.trim() === '') {
-            const isMale = Number(person.gender) === 0 || (person.gender as any) === 'MALE' || person.gender === Gender.MALE;
-            person.avatar = isMale
-                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=0D8ABC&color=fff&size=128`
-                : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=E91E63&color=fff&size=128`;
-        }
+        this._ensureAvatar(person);
 
         const personInFamily: Record<string, any> = {
             [personId]: person,
@@ -185,12 +164,7 @@ export class PersonService {
             const spousesData = await this.personModel.find({ _id: { $in: spouseIds } }).lean().exec();
             for (const spouse of spousesData) {
                 // Đảm bảo vợ/chồng cũng có avatar
-                if (!spouse.avatar || spouse.avatar.trim() === '') {
-                    const isMale = Number(spouse.gender) === 0 || (spouse.gender as any) === 'MALE' || spouse.gender === Gender.MALE;
-                    spouse.avatar = isMale
-                        ? `https://ui-avatars.com/api/?name=${encodeURIComponent(spouse.name)}&background=0D8ABC&color=fff&size=128`
-                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(spouse.name)}&background=E91E63&color=fff&size=128`;
-                }
+                this._ensureAvatar(spouse);
                 personInFamily[spouse._id.toString()] = spouse;
             }
         }
@@ -294,13 +268,22 @@ export class PersonService {
 
         // Đảm bảo mọi người trong kết quả tìm kiếm đều có avatar
         for (const person of persons) {
-            if (!person.avatar || person.avatar.trim() === '') {
-                const isMale = Number(person.gender) === 0 || (person.gender as any) === 'MALE' || person.gender === Gender.MALE;
-                person.avatar = isMale
-                    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=0D8ABC&color=fff&size=128`
-                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=E91E63&color=fff&size=128`;
-            }
+            this._ensureAvatar(person);
         }
         return persons;
+    }
+
+    /**
+     * A private helper to ensure a person object has a default avatar if one isn't set.
+     * This method mutates the person object.
+     * @param person - A person-like object with at least `name` and `gender` properties.
+     */
+    private _ensureAvatar(person: { name: string; gender: Gender | number; avatar?: string }): void {
+        if (!person.avatar || person.avatar.trim() === '') {
+            const isMale = Number(person.gender) === 0 || (person.gender as any) === 'MALE' || person.gender === Gender.MALE;
+            person.avatar = isMale
+                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=0D8ABC&color=fff&size=128`
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=E91E63&color=fff&size=128`;
+        }
     }
 }
