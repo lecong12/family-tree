@@ -4,9 +4,13 @@ const nextConfig: NextConfig = {
     eslint: {
         ignoreDuringBuilds: true,
     },
-    /* config options here */
     images: {
-        remotePatterns: [{ hostname: '*' }],
+        remotePatterns: [
+            { protocol: 'https', hostname: 'res.cloudinary.com' },
+            { protocol: 'https', hostname: 'www.cartoonize.net' },
+            { protocol: 'https', hostname: 'encrypted-tbn0.gstatic.com' },
+            { protocol: 'https', hostname: '**.googleusercontent.com' },
+        ],
     },
 };
 
