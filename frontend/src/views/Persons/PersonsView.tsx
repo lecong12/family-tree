@@ -74,7 +74,7 @@ export default function PersonsView() {
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
         
-        const result = persons.filter((p) => {
+        const result = (persons as any[]).filter((p) => {
             // 1. Tìm kiếm theo Tên hoặc CCCD (Ngữ cảnh)
             if (q) {
                 const nameMatch = p.name.toLowerCase().includes(q);
