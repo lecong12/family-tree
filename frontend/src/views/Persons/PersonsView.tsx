@@ -51,13 +51,15 @@ export default function PersonsView() {
     const [sortField, setSortField] = useState<SortField>('name');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
+    const validPersons = useMemo(() => (persons || []).filter(p => p._id), [persons]);
+
     const personById = useMemo(() => {
         const map = new Map<string, Person>();
-        persons.forEach((p) => {
-            if (p._id) map.set(p._id, p);
+        validPersons.forEach((p) => {
+            map.set(p._id, p);
         });
         return map;
-    }, [persons]);
+    }, [validPersons]);
 
     // --- FIX: Tự động Populate dữ liệu quan hệ (Biến ID thành Object) ---
     const richSpouses = useMemo(() => {
@@ -102,7 +104,7 @@ export default function PersonsView() {
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
         
-        const result = (persons as any[]).filter((p) => {
+        const result = (validPersons as any[]).filter((p) => {
             // 1. Tìm kiếm theo Tên hoặc CCCD (Ngữ cảnh)
             if (q) {
                 const nameMatch = p.name.toLowerCase().includes(q);
@@ -144,11 +146,11 @@ export default function PersonsView() {
             }
             return sortDirection === 'asc' ? res : -res;
         });
-    }, [persons, search, filterMode, connectedIds, sortField, sortDirection]);
+    }, [validPersons, search, filterMode, connectedIds, sortField, sortDirection]);
 
     const isolatedCount = useMemo(() => 
-        persons.filter((p) => p._id && !connectedIds.has(p._id)).length, 
-    [persons, connectedIds]);
+        validPersons.filter((p) => !connectedIds.has(p._id)).length, 
+    [validPersons, connectedIds]);
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
 
@@ -268,7 +270,7 @@ export default function PersonsView() {
                     </div>
                 ) : (
                     <FamilyTreeFlow
-                        persons={persons as any}
+                        persons={validPersons as any}
                         spouses={richSpouses as any}
                         parentChilds={richParentChilds as any}
                         filterMode={filterMode}
