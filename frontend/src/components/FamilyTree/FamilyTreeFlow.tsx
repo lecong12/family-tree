@@ -1,3 +1,5 @@
+'use client';
+
 import { Background, BackgroundVariant, MiniMap, ReactFlow, ReactFlowProvider } from '@xyflow/react';
 import { useMemo, useCallback } from 'react';
 import { useReactFlow } from '@xyflow/react';
@@ -22,23 +24,18 @@ interface FamilyTreeFlowProps {
     onRelationshipNodeClick: (spouseData: any) => void;
 }
 
-// Component nội bộ để có thể sử dụng hook useReactFlow
 const FlowWithSearch = ({ nodes, edges, nodeTypes }: { nodes: any[], edges: any[], nodeTypes: any }) => {
     const { setCenter, getNode } = useReactFlow();
 
-    // Hàm để di chuyển và phóng to vào một node trên cây
     const focusNode = useCallback((nodeId: string) => {
         const node = getNode(nodeId);
         if (node) {
-            // Tính toán tâm của node (fallback kích thước mặc định nếu chưa render xong)
             const width = node.measured?.width ?? node.width ?? 220;
             const height = node.measured?.height ?? node.height ?? 100;
             const x = node.position.x + width / 2;
             const y = node.position.y + height / 2;
 
             setCenter(x, y, { zoom: 0.8, duration: 1000 });
-        } else {
-            console.warn(`Không tìm thấy node với ID: ${nodeId} để focus.`);
         }
     }, [getNode, setCenter]);
 
@@ -63,35 +60,39 @@ const FamilyTreeFlow: React.FC<FamilyTreeFlowProps> = ({ persons, spouses, paren
     );
 
     const { nodes, edges } = useMemo(() => {
-        if (persons.length === 0) {
-            return { nodes: [], edges: [] };
-        }
+        if (persons.length === 0) return { nodes: [], edges: [] };
 
-        // Find ROOT_PERSON_ID
         const ROOT_PERSON_ID = searchRootPersonId || persons.find((p) => p.cccd == '0x00001')?._id || persons[0]?._id;
-        if (!ROOT_PERSON_ID) {
-            console.error('Could not determine a root person for the family tree. Check if data is available and has IDs.');
-            return { nodes: [], edges: [] };
-        }
-
-        // Build maps
+        
         const personMap = new Map<string, Person>();
         const spouseMap = new Map<string, SpouseWithDetails[]>();
         const childrenMap = new Map<string, ParentChildWithDetails[]>();
 
         persons.forEach((p) => p._id && personMap.set(p._id, p));
 
+        // LOGIC SỬA ĐỔI: Xử lý nhãn V1, V2, C1, C2 để xóa bỏ undefined
         spouses.forEach((spouse) => {
             const husbandId = extractId(spouse.husband as Person | string);
             const wifeId = extractId(spouse.wife as Person | string);
 
+            // Xử lý cho người chồng (để gán nhãn cho các bà vợ)
             if (husbandId) {
                 if (!spouseMap.has(husbandId)) spouseMap.set(husbandId, []);
-                spouseMap.get(husbandId)!.push(spouse);
+                const currentSpouses = spouseMap.get(husbandId)!;
+                // Gán nhãn V (Vợ) kèm số thứ tự
+                spouse.label = `V${currentSpouses.length + 1}`;
+                currentSpouses.push(spouse);
             }
+            
+            // Xử lý cho người vợ (để gán nhãn cho các ông chồng - nếu có trường hợp đa phu hoặc hiển thị ngược)
             if (wifeId) {
                 if (!spouseMap.has(wifeId)) spouseMap.set(wifeId, []);
-                spouseMap.get(wifeId)!.push(spouse);
+                const currentSpouses = spouseMap.get(wifeId)!;
+                // Nếu nhãn chưa được gán bởi chồng, gán nhãn C (Chồng)
+                if (!husbandId) {
+                    spouse.label = `C${currentSpouses.length + 1}`;
+                }
+                currentSpouses.push(spouse);
             }
         });
 
@@ -103,17 +104,11 @@ const FamilyTreeFlow: React.FC<FamilyTreeFlowProps> = ({ persons, spouses, paren
             }
         });
 
-        // Build generations
         const { generations, personGeneration } = buildGenerations(ROOT_PERSON_ID!, personMap, spouseMap, childrenMap, searchGenerations || undefined);
-
-        // Build children by parent map
         const lastGenIndex = generations.length - 1;
         const childrenByParent = buildChildrenByParentMap(generations, lastGenIndex, spouseMap, childrenMap, personMap);
-
-        // Calculate positions
         const { nodeXPositions, relationshipXPositions, spouseNodeXPositions } = calculateNodePositions(generations, spouseMap, childrenMap, personGeneration, childrenByParent, personMap);
 
-        // Render tree
         return renderFamilyTree(generations, spouseMap, childrenMap, personGeneration, nodeXPositions, relationshipXPositions, spouseNodeXPositions);
     }, [persons, spouses, parentChilds, searchRootPersonId, searchGenerations]);
 
