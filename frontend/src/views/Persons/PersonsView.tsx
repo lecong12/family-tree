@@ -87,10 +87,11 @@ export default function PersonsView() {
         });
     }, [parentChilds, personById]);
 
-    // Chỉ số quan hệ (Sử dụng dữ liệu đã được làm giàu - rich data)
+    // FIX: Sử dụng dữ liệu gốc (spouses, parentChilds) để tính toán ID,
+    // vì hàm buildConnectedIds được thiết kế để làm việc với ID dạng chuỗi.
     const connectedIds = useMemo(() => 
-        buildConnectedIds(richSpouses as any, richParentChilds as any), 
-    [richSpouses, richParentChilds]);
+        buildConnectedIds(spouses as any, parentChilds as any), 
+    [spouses, parentChilds]);
 
     // Đồng bộ người dùng được chọn sau khi refetch
     useEffect(() => {
@@ -201,13 +202,28 @@ export default function PersonsView() {
         setAddChildModalOpen(true);
     }, []);
 
-    const handleModalSuccess = useCallback(() => {
+    const handleAddSpouseSuccess = useCallback(() => {
         refetchAll();
         setAddSpouseModalOpen(false);
-        setAddChildModalOpen(false);
-        setAddPersonModalOpen(false);
-        setPersonDetailModalOpen(true);
+        setPersonDetailModalOpen(true); // Quay lại modal chi tiết để xem vợ/chồng mới
     }, [refetchAll]);
+
+    const handleAddChildSuccess = useCallback(() => {
+        refetchAll();
+        setAddChildModalOpen(false);
+        setPersonDetailModalOpen(true); // Quay lại modal chi tiết
+    }, [refetchAll]);
+
+    const handleAddPersonSuccess = useCallback(() => {
+        refetchAll();
+        setAddPersonModalOpen(false);
+    }, [refetchAll]);
+
+    // Handler chuyên dụng cho việc chuyển đổi giao diện
+    const handleViewChange = useCallback((view: 'list' | 'tree') => {
+        setCurrentView(view);
+        setCurrentPage(1); // Reset lại trang khi chuyển view
+    }, []);
 
     const handleRelationshipClick = useCallback((data: any) => {
         // Xử lý khi click vào đường nối (nếu cần)
@@ -238,13 +254,13 @@ export default function PersonsView() {
             <div className="px-4 py-2 flex justify-center">
                 <div className="bg-white p-1 rounded-lg shadow-sm border border-gray-200 inline-flex">
                     <button
-                        onClick={() => setCurrentView('list')}
+                        onClick={() => handleViewChange('list')}
                         className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${currentView === 'list' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
                     >
                         Danh sách
                     </button>
                     <button
-                        onClick={() => setCurrentView('tree')}
+                        onClick={() => handleViewChange('tree')}
                         className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${currentView === 'tree' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
                     >
                         Cây phả hệ
@@ -301,21 +317,21 @@ export default function PersonsView() {
             <AddSpouseModal 
                 isOpen={addSpouseModalOpen} 
                 onClose={() => setAddSpouseModalOpen(false)} 
-                onSuccess={handleModalSuccess} 
+                onSuccess={handleAddSpouseSuccess} 
                 person={selectedPerson} 
             />
             
             <AddChildModal 
                 isOpen={addChildModalOpen} 
                 onClose={() => setAddChildModalOpen(false)} 
-                onSuccess={handleModalSuccess} 
+                onSuccess={handleAddChildSuccess} 
                 spouseId={selectedSpouseIdForChild} 
             />
             
             <AddPersonModal 
                 isOpen={addPersonModalOpen} 
                 onClose={() => setAddPersonModalOpen(false)} 
-                onSuccess={() => { refetchAll(); setAddPersonModalOpen(false); }} 
+                onSuccess={handleAddPersonSuccess} 
             />
             
             <GuestCodeModal 
