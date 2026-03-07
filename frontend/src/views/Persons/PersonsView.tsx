@@ -11,6 +11,7 @@ import AddSpouseModal from 'src/components/AddSpouseModal/AddSpouseModal';
 import AddChildModal from 'src/components/AddChildModal/AddChildModal';
 import AddPersonModal from 'src/components/AddPersonModal/AddPersonModal';
 import GuestCodeModal from 'src/components/GuestCodeModal/GuestCodeModal';
+import FamilyTreeFlow from 'src/components/FamilyTree/FamilyTreeFlow';
 
 import Header from './components/Header';
 import Toolbar from './components/Toolbar';
@@ -46,13 +47,9 @@ export default function PersonsView() {
     const [pageSize, setPageSize] = useState<PageSize>(30);
     const [currentPage, setCurrentPage] = useState(1);
     const [filterMode, setFilterMode] = useState<FilterMode>('all');
+    const [currentView, setCurrentView] = useState<'list' | 'tree'>('list');
     const [sortField, setSortField] = useState<SortField>('name');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-
-    // Chỉ số quan hệ (Dùng as any để tránh lỗi type _id undefined từ service)
-    const connectedIds = useMemo(() => 
-        buildConnectedIds(spouses as any, parentChilds as any), 
-    [spouses, parentChilds]);
 
     const personById = useMemo(() => {
         const map = new Map<string, Person>();
@@ -61,6 +58,37 @@ export default function PersonsView() {
         });
         return map;
     }, [persons]);
+
+    // --- FIX: Tự động Populate dữ liệu quan hệ (Biến ID thành Object) ---
+    const richSpouses = useMemo(() => {
+        return (spouses || []).map((s: any) => {
+            // Lấy ID dù nó là string hay object
+            const hId = typeof s.husband === 'string' ? s.husband : s.husband?._id;
+            const wId = typeof s.wife === 'string' ? s.wife : s.wife?._id;
+            
+            return {
+                ...s,
+                husband: personById.get(hId) || { _id: hId, name: 'Unknown', gender: 'MALE' },
+                wife: personById.get(wId) || { _id: wId, name: 'Unknown', gender: 'FEMALE' }
+            };
+        });
+    }, [spouses, personById]);
+
+    const richParentChilds = useMemo(() => {
+        return (parentChilds || []).map((pc: any) => {
+            const childId = typeof pc.child === 'string' ? pc.child : pc.child?._id;
+            // Parent thường là ID của mối quan hệ Spouse, giữ nguyên hoặc xử lý nếu cần
+            return {
+                ...pc,
+                child: personById.get(childId) || { _id: childId, name: 'Unknown' }
+            };
+        });
+    }, [parentChilds, personById]);
+
+    // Chỉ số quan hệ (Sử dụng dữ liệu đã được làm giàu - rich data)
+    const connectedIds = useMemo(() => 
+        buildConnectedIds(richSpouses as any, richParentChilds as any), 
+    [richSpouses, richParentChilds]);
 
     // Đồng bộ người dùng được chọn sau khi refetch
     useEffect(() => {
@@ -179,6 +207,10 @@ export default function PersonsView() {
         setPersonDetailModalOpen(true);
     }, [refetchAll]);
 
+    const handleRelationshipClick = useCallback((data: any) => {
+        // Xử lý khi click vào đường nối (nếu cần)
+    }, []);
+
     if (authLoading || !user) return null;
 
     return (
@@ -200,21 +232,50 @@ export default function PersonsView() {
                 onAddPerson={() => setAddPersonModalOpen(true)} 
             />
 
+            {/* Bộ chuyển đổi giao diện List / Tree */}
+            <div className="px-4 py-2 flex justify-center">
+                <div className="bg-white p-1 rounded-lg shadow-sm border border-gray-200 inline-flex">
+                    <button
+                        onClick={() => setCurrentView('list')}
+                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${currentView === 'list' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        Danh sách
+                    </button>
+                    <button
+                        onClick={() => setCurrentView('tree')}
+                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${currentView === 'tree' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
+                    >
+                        Cây phả hệ
+                    </button>
+                </div>
+            </div>
+
             <LoadingOverlay isLoading={isLoading} />
 
             <div className="flex-1 overflow-auto bg-gray-50 p-4">
-                <div className="max-w-[900px] mx-auto bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
-                    <PersonList
-                        paginated={paginated as any} // Ép kiểu để tránh lỗi Gender/CCCD trên Vercel
-                        connectedIds={connectedIds}
-                        currentPage={currentPage}
-                        pageSize={pageSize}
-                        sortField={sortField}
-                        sortDirection={sortDirection}
-                        onSort={handleSort}
+                {currentView === 'list' ? (
+                    <div className="max-w-[900px] mx-auto bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
+                        <PersonList
+                            paginated={paginated as any}
+                            connectedIds={connectedIds}
+                            currentPage={currentPage}
+                            pageSize={pageSize}
+                            sortField={sortField}
+                            sortDirection={sortDirection}
+                            onSort={handleSort}
+                            onPersonClick={handlePersonClick}
+                        />
+                    </div>
+                ) : (
+                    <FamilyTreeFlow
+                        persons={persons as any}
+                        spouses={richSpouses as any}
+                        parentChilds={richParentChilds as any}
+                        filterMode={filterMode}
                         onPersonClick={handlePersonClick}
+                        onRelationshipClick={handleRelationshipClick}
                     />
-                </div>
+                )}
             </div>
 
             <Pagination 
