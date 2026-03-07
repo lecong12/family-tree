@@ -219,7 +219,7 @@ export default function PersonsView() {
                 ) : (
                     <div className="max-w-[900px] mx-auto bg-white shadow-sm rounded-b-lg">
                         <PersonList 
-                            paginated={paginatedPersons}
+                            paginated={paginatedPersons as any}
                             connectedIds={connectedIds}
                             currentPage={listState.currentPage}
                             pageSize={listState.pageSize}
