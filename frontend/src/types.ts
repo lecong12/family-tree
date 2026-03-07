@@ -45,6 +45,6 @@ export interface SpouseWithDetails {
  */
 export interface ParentChild {
     _id: string;
-    parent: Person;
+    parent: string; // This should be the ID of the Spouse relationship
     child: Person;
 }

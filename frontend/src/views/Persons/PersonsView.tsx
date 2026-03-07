@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Person } from 'src/services/personService';
+import { Person, SpouseWithDetails, ParentChild } from 'src/types';
 import { useAuth } from 'src/context/AuthContext';
 import { useFamilyData } from 'src/hooks/useFamilyData';
 import LoadingOverlay from 'src/components/LoadingOverlay/LoadingOverlay';
@@ -63,34 +63,37 @@ export default function PersonsView() {
 
     // --- FIX: Tự động Populate dữ liệu quan hệ (Biến ID thành Object) ---
     const richSpouses = useMemo(() => {
-        return (spouses || []).map((s: any) => {
-            // Lấy ID dù nó là string hay object
-            const hId = typeof s.husband === 'string' ? s.husband : s.husband?._id;
-            const wId = typeof s.wife === 'string' ? s.wife : s.wife?._id;
-            
-            return {
-                ...s,
-                husband: personById.get(hId) || { _id: hId, name: 'Unknown', gender: 'MALE' },
-                wife: personById.get(wId) || { _id: wId, name: 'Unknown', gender: 'FEMALE' }
-            };
-        });
+        return (spouses || [])
+            .map(s => {
+                const hId = typeof s.husband === 'string' ? s.husband : s.husband?._id;
+                const wId = typeof s.wife === 'string' ? s.wife : s.wife?._id;
+                const husband = personById.get(hId);
+                const wife = personById.get(wId);
+
+                if (!husband || !wife) return null; // Đánh dấu để xóa nếu không tìm thấy người
+
+                return { ...s, husband, wife } as SpouseWithDetails;
+            })
+            .filter((s): s is SpouseWithDetails => s !== null); // Lọc bỏ các mối quan hệ không hợp lệ
     }, [spouses, personById]);
 
     const richParentChilds = useMemo(() => {
-        return (parentChilds || []).map((pc: any) => {
-            const childId = typeof pc.child === 'string' ? pc.child : pc.child?._id;
-            // Parent thường là ID của mối quan hệ Spouse, giữ nguyên hoặc xử lý nếu cần
-            return {
-                ...pc,
-                child: personById.get(childId) || { _id: childId, name: 'Unknown' }
-            };
-        });
+        return (parentChilds || [])
+            .map(pc => {
+                const childId = typeof pc.child === 'string' ? pc.child : pc.child?._id;
+                const child = personById.get(childId);
+
+                if (!child) return null; // Đánh dấu để xóa nếu không tìm thấy con
+
+                return { ...pc, child, parent: pc.parent } as ParentChild;
+            })
+            .filter((pc): pc is ParentChild => pc !== null);
     }, [parentChilds, personById]);
 
     // FIX: Sử dụng dữ liệu gốc (spouses, parentChilds) để tính toán ID,
     // vì hàm buildConnectedIds được thiết kế để làm việc với ID dạng chuỗi.
     const connectedIds = useMemo(() => 
-        buildConnectedIds(spouses as any, parentChilds as any), 
+        buildConnectedIds(spouses, parentChilds), 
     [spouses, parentChilds]);
 
     // Đồng bộ người dùng được chọn sau khi refetch
@@ -105,7 +108,7 @@ export default function PersonsView() {
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
         
-        const result = (validPersons as any[]).filter((p) => {
+        const result = validPersons.filter((p) => {
             // 1. Tìm kiếm theo Tên hoặc CCCD (Ngữ cảnh)
             if (q) {
                 const nameMatch = p.name.toLowerCase().includes(q);
@@ -274,7 +277,7 @@ export default function PersonsView() {
                 {currentView === 'list' ? (
                     <div className="max-w-[900px] mx-auto bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
                         <PersonList
-                            paginated={paginated as any}
+                            paginated={paginated}
                             connectedIds={connectedIds}
                             currentPage={currentPage}
                             pageSize={pageSize}
@@ -286,9 +289,9 @@ export default function PersonsView() {
                     </div>
                 ) : (
                     <FamilyTreeFlow
-                        persons={validPersons as any}
-                        spouses={richSpouses as any}
-                        parentChilds={richParentChilds as any}
+                        persons={validPersons}
+                        spouses={richSpouses}
+                        parentChilds={richParentChilds}
                         filterMode={filterMode}
                         onPersonClick={handlePersonClick}
                         onRelationshipClick={handleRelationshipClick}
