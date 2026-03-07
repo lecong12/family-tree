@@ -1,4 +1,4 @@
-import { Person } from 'src/services/personService';
+import { Person } from '../../types';
 
 export type PageSize = 15 | 30 | 50;
 export const PAGE_SIZE_OPTIONS: PageSize[] = [15, 30, 50];

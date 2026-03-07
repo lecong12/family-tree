@@ -1,6 +1,4 @@
-import { Person } from 'src/services/personService';
-import { SpouseWithDetails } from 'src/services/spouseService';
-import { ParentChildWithDetails } from 'src/services/parentChildService';
+import { Person, SpouseWithDetails, ParentChildWithDetails } from '../../types';
 
 const NODE_WIDTH = 220;
 const X_SPACING = 40;

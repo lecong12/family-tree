@@ -1,34 +1,55 @@
-import { Person } from 'src/services/personService';
-import { SpouseWithDetails } from 'src/services/spouseService';
-import { ParentChildWithDetails } from 'src/services/parentChildService';
+import { Person, SpouseWithDetails, ParentChildWithDetails } from '../../types';
 import { extractId } from './types';
 
-export const getBirthYear = (person: Person): string => {
-    if (!person.birth) return '';
-    const y = new Date(person.birth).getFullYear();
-    return isNaN(y) ? '' : String(y);
+export const buildConnectedIds = (
+    persons: Person[],
+    spouses: SpouseWithDetails[],
+    parentChilds: ParentChildWithDetails[]
+): Set<string> => {
+    const connectedIds = new Set<string>();
+
+    const add = (id: string | undefined) => {
+        if (id) connectedIds.add(id);
+    };
+
+    // 1. Thêm những người có quan hệ vợ chồng
+    if (spouses) {
+        spouses.forEach((spouse) => {
+            add(extractId(spouse.husband));
+            add(extractId(spouse.wife));
+        });
+    }
+
+    // 2. Thêm những người là con trong quan hệ cha-con
+    if (parentChilds) {
+        parentChilds.forEach((pc) => {
+            add(extractId(pc.child));
+        });
+    }
+
+    // 3. Fallback: Kiểm tra các trường dữ liệu cũ trong Person (nếu có)
+    if (persons) {
+        persons.forEach((person) => {
+            if (
+                person.parentId ||
+                (person.children && person.children.length > 0) ||
+                (person.spouses && person.spouses.length > 0)
+            ) {
+                add(person._id);
+            }
+        });
+    }
+
+    return connectedIds;
 };
 
-/** Build set of person IDs that have at least one relationship */
-export function buildConnectedIds(spouses: SpouseWithDetails[], parentChilds: ParentChildWithDetails[]): Set<string> {
-    const ids = new Set<string>();
-    for (const s of spouses) {
-        const hId = extractId(s.husband as Person | string);
-        const wId = extractId(s.wife as Person | string);
-        if (hId) ids.add(hId);
-        if (wId) ids.add(wId);
-    }
-    for (const pc of parentChilds) {
-        const childId = extractId(pc.child as Person | string);
-        if (childId) ids.add(childId);
-        // The parent is a SpouseWithDetails — husband and wife are already covered via spouses loop
-        if (typeof pc.parent === 'object' && pc.parent) {
-            const pcSpouse = pc.parent as SpouseWithDetails;
-            const hId = extractId(pcSpouse.husband as Person | string);
-            const wId = extractId(pcSpouse.wife as Person | string);
-            if (hId) ids.add(hId);
-            if (wId) ids.add(wId);
-        }
-    }
-    return ids;
-}
+/**
+ * Extracts the year from a date string.
+ * @param dateString The date string (e.g., "2023-10-27T00:00:00.000Z")
+ * @returns The year as a number, or 'N/A' if the date is invalid.
+ */
+export const getBirthYear = (dateString?: string): number | string => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return !isNaN(date.getTime()) ? date.getFullYear() : 'N/A';
+};

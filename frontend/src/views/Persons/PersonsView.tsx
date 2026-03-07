@@ -20,7 +20,7 @@ import Header from './components/Header';
 import Toolbar from './components/Toolbar';
 import PersonList from './components/PersonList';
 import Pagination from './components/Pagination';
-import { FilterMode, PageSize, SortDirection, SortField } from './types';
+import { FilterMode, PageSize, SortDirection, SortField, PersonListState } from './types';
 import { buildConnectedIds } from './utils';
 import FamilyTreeFlow from '../../components/FamilyTree/FamilyTreeFlow';
 
@@ -41,7 +41,7 @@ export default function PersonsView() {
     const [selectedSpouseForChild, setSelectedSpouseForChild] = useState<string | null>(null);
 
     // State for list view management
-    const [listState, setListState] = useState<any>({
+    const [listState, setListState] = useState<PersonListState>({
         search: '',
         pageSize: 15,
         currentPage: 1,
@@ -66,12 +66,12 @@ export default function PersonsView() {
         }
     }, []);
 
-    const handlePersonClick = useCallback((person: Person) => {
+    const handlePersonClick = useCallback((person: any) => {
         setSelectedPerson(person);
         setPersonDetailModalOpen(true);
     }, []);
 
-    const handleAddSpouseFromPerson = useCallback((person: Person) => {
+    const handleAddSpouseFromPerson = useCallback((person: any) => {
         setSelectedPerson(person);
         setPersonDetailModalOpen(false);
         setAddSpouseModalOpen(true);
@@ -83,7 +83,7 @@ export default function PersonsView() {
         setAddChildModalOpen(true);
     }, []);
 
-    const connectedIds = useMemo(() => buildConnectedIds(persons, spouses, parentChilds), [persons, spouses, parentChilds]);
+    const connectedIds = useMemo(() => buildConnectedIds(persons as any, spouses as any, parentChilds as any), [persons, spouses, parentChilds]);
     const isolatedCount = useMemo(() => persons.length - connectedIds.size, [persons, connectedIds]);
 
     const { filteredAndSortedPersons, totalPages } = useMemo(() => {
@@ -92,7 +92,7 @@ export default function PersonsView() {
         let tempPersons = [...persons];
 
         if (listState.filterMode === 'isolated') {
-            tempPersons = tempPersons.filter(p => !connectedIds.has(p._id));
+            tempPersons = tempPersons.filter(p => p._id && !connectedIds.has(p._id));
         }
 
         if (listState.search) {
@@ -150,9 +150,9 @@ export default function PersonsView() {
             <main className="flex-1 overflow-y-auto">
                 {currentView === 'tree' ? (
                     <FamilyTreeFlow 
-                        persons={persons} 
-                        spouses={spouses}
-                        parentChilds={parentChilds}
+                        persons={persons as any} 
+                        spouses={spouses as any}
+                        parentChilds={parentChilds as any}
                         filterMode={listState.filterMode} 
                         onRelationshipClick={handleRelationshipClick}
                         onPersonClick={handlePersonClick}
@@ -183,11 +183,11 @@ export default function PersonsView() {
                 />
             )}
 
-            <PersonDetailModal isOpen={personDetailModalOpen} onClose={() => setPersonDetailModalOpen(false)} person={selectedPerson} onAddSpouse={handleAddSpouseFromPerson} onAddChild={handleAddChildFromSpouse} onUpdate={refetchAll} />
-            <AddSpouseModal isOpen={addSpouseModalOpen} onClose={() => setAddSpouseModalOpen(false)} onSuccess={() => { refetchAll(); setAddSpouseModalOpen(false); }} person={selectedPerson} />
-            <AddChildModal isOpen={addChildModalOpen} onClose={() => setAddChildModalOpen(false)} onSuccess={() => { refetchAll(); setAddChildModalOpen(false); }} spouseId={selectedSpouseForChild} />
+            <PersonDetailModal isOpen={personDetailModalOpen} onClose={() => setPersonDetailModalOpen(false)} person={selectedPerson as any} onAddSpouse={handleAddSpouseFromPerson} onAddChild={handleAddChildFromSpouse} onUpdate={refetchAll} />
+            <AddSpouseModal isOpen={addSpouseModalOpen} onClose={() => setAddSpouseModalOpen(false)} onSuccess={() => { refetchAll(); setAddSpouseModalOpen(false); }} person={selectedPerson as any} />
+            <AddChildModal isOpen={addChildModalOpen} onClose={() => setAddChildModalOpen(false)} onSuccess={() => { refetchAll(); setAddChildModalOpen(false); }} spouseId={selectedSpouseForChild as any} />
             <AddPersonModal isOpen={addPersonModalOpen} onClose={() => setAddPersonModalOpen(false)} onSuccess={() => { refetchAll(); setAddPersonModalOpen(false); }} />
-            <RelationshipDetailModal isOpen={relDetailModalOpen} onClose={() => setRelDetailModalOpen(false)} spouse={selectedSpouse} onUpdate={() => { refetchAll(); setRelDetailModalOpen(false); }} />
+            <RelationshipDetailModal isOpen={relDetailModalOpen} onClose={() => setRelDetailModalOpen(false)} spouse={selectedSpouse as any} />
             <GuestCodeModal isOpen={guestCodeModalOpen} onClose={() => setGuestCodeModalOpen(false)} />
         </div>
     );

@@ -148,9 +148,9 @@ export default function Root() {
             />
 
             <FamilyTreeFlow
-                persons={persons}
-                spouses={spouses}
-                parentChilds={parentChilds}
+                persons={persons as any}
+                spouses={spouses as any}
+                parentChilds={parentChilds as any}
                 searchRootPersonId={searchRootPersonId}
                 searchGenerations={searchGenerations}
                 onPersonNodeClick={handlePersonNodeClick}

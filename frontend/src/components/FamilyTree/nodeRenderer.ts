@@ -1,7 +1,5 @@
 import { Node, Edge } from '@xyflow/react';
-import { Person } from 'src/services/personService';
-import { SpouseWithDetails } from 'src/services/spouseService';
-import { ParentChildWithDetails } from 'src/services/parentChildService';
+import { Person, SpouseWithDetails, ParentChildWithDetails } from '../../types';
 
 const NODE_HEIGHT = 100;
 const Y_SPACING = 150;

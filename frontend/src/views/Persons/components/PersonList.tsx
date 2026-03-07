@@ -1,3 +1,6 @@
+'use client';
+
+import React from 'react';
 import Image from 'next/image';
 import { Person } from 'src/services/personService';
 import { isMale } from 'src/utils/genderUtils';
@@ -16,7 +19,17 @@ interface PersonListProps {
     onPersonClick: (person: Person) => void;
 }
 
-export default function PersonList({ paginated, connectedIds, currentPage, pageSize, sortField, sortDirection, onSort, onPersonClick }: PersonListProps) {
+export default function PersonList({ 
+    paginated, 
+    connectedIds, 
+    currentPage, 
+    pageSize, 
+    sortField, 
+    sortDirection, 
+    onSort, 
+    onPersonClick 
+}: PersonListProps) {
+
     if (paginated.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-16 text-gray-500">
@@ -34,12 +47,17 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
         );
     }
 
+    const renderSortIcon = (field: SortField) => {
+        if (sortField !== field) return <span className="text-gray-300 ml-1">↕</span>;
+        return sortDirection === 'asc' ? <span className="text-blue-600 ml-1">↑</span> : <span className="text-blue-600 ml-1">↓</span>;
+    };
+
     return (
         <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                     <tr>
-                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16 text-center">
                             #
                         </th>
                         <th
@@ -47,30 +65,21 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                             className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-blue-600 hover:bg-gray-100 transition-colors"
                             onClick={() => onSort('name')}
                         >
-                            <div className="flex items-center gap-1">
-                                Thành viên
-                                {sortField === 'name' && <span className="text-blue-600">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
-                            </div>
+                            Họ và tên {renderSortIcon('name')}
                         </th>
                         <th
                             scope="col"
                             className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32 cursor-pointer hover:text-blue-600 hover:bg-gray-100 transition-colors"
                             onClick={() => onSort('birth')}
                         >
-                            <div className="flex items-center justify-center gap-1">
-                                Năm sinh
-                                {sortField === 'birth' && <span className="text-blue-600">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
-                            </div>
+                            Năm sinh {renderSortIcon('birth')}
                         </th>
                         <th
                             scope="col"
                             className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32 cursor-pointer hover:text-blue-600 hover:bg-gray-100 transition-colors"
                             onClick={() => onSort('status')}
                         >
-                            <div className="flex items-center justify-center gap-1">
-                                Trạng thái
-                                {sortField === 'status' && <span className="text-blue-600">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
-                            </div>
+                            Trạng thái {renderSortIcon('status')}
                         </th>
                         <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
                             CCCD
@@ -82,7 +91,11 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                         const isIsolated = person._id ? !connectedIds.has(person._id) : false;
                         const isDeceased = person.isDead === true;
                         const avatarSrc = person.avatar?.trim() ? person.avatar : isMale(person.gender) ? Avatar_Male : Avatar_Female;
-                        const birthYear = getBirthYear(person);
+                        
+                        // SỬA TẠI ĐÂY: Truyền person.birth (hoặc person.birthDate tùy theo model của bạn)
+                        // Nếu model của bạn dùng trường 'birth', hãy dùng person.birth
+                        const birthYear = getBirthYear(person.birth as any);
+                        
                         const rowNum = (currentPage - 1) * pageSize + idx + 1;
                         const borderColor = isMale(person.gender) ? 'border-blue-400' : 'border-pink-400';
 
