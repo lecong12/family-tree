@@ -62,8 +62,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
     useEffect(() => {
         const searchTerm = query.trim();
 
-        // Debounce: Chờ 300ms sau khi ngừng gõ mới gọi API
-        // Gọi search() ngay cả khi query rỗng để lấy danh sách mặc định
+        // Chỉ tìm kiếm khi người dùng đã gõ gì đó. Không hiển thị danh sách mặc định.
+        if (searchTerm.length === 0) {
+            setResults([]);
+            return;
+        }
+
         const debounceSearch = setTimeout(() => {
             search(searchTerm);
         }, 300);
@@ -87,13 +91,10 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
                     type="text"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    // Khi focus, nếu đã có kết quả (từ lần load trước hoặc mặc định) thì hiện dropdown
-                    // Nếu chưa có, useEffect sẽ chạy (do query không đổi nhưng component render lại) hoặc ta có thể kích hoạt search tại đây nếu cần thiết logic phức tạp hơn.
-                    // Với logic useEffect hiện tại, nó sẽ tự động fetch khi mount, nên results thường đã có dữ liệu.
                     onFocus={() => {
-                        if (results.length > 0 || query.trim().length === 0) {
+                        // Khi focus, chỉ hiện lại dropdown nếu đã có kết quả từ trước.
+                        if (results.length > 0) {
                             setShowDropdown(true);
-                            if (results.length === 0) search(query.trim());
                         }
                     }}
                     placeholder="Tìm kiếm thành viên..."
