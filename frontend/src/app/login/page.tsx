@@ -89,17 +89,17 @@ export default function LoginPage() {
 
             <div className="mt-8 text-center text-gray-600 text-sm">
                 <p className="font-bold mb-2">Thông tin tác giả:</p>
-                <p>Họ tên: Lê Đình Quyền</p>
+                <p>Họ tên: Lê Công Kỷ</p>
                 <p>
                     Gmail:{' '}
-                    <a href="mailto:quyenld9699@gmail.com" className="text-blue-500 hover:underline">
-                        quyenld9699@gmail.com
+                    <a href="lecong12@gmail.com" className="text-blue-500 hover:underline">
+                        lecong12@gmail.com
                     </a>
                 </p>
                 <p>
                     SĐT:{' '}
-                    <a href="tel:0941158376" className="text-blue-500 hover:underline">
-                        0941158376
+                    <a href="tel:0982740159" className="text-blue-500 hover:underline">
+                        0982740159
                     </a>
                 </p>
             </div>
