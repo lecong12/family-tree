@@ -13,6 +13,10 @@ export interface Person {
     name: string;
     gender?: string | number;
     avatar?: string;
+    cccd?: string;
+    birth?: string | Date;
+    death?: string | Date;
+    isDead?: boolean;
     birthDate?: string;
     deathDate?: string;
     parentId?: string;

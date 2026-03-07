@@ -124,7 +124,10 @@ export default function PersonsView() {
 
         if (listState.search) {
             const searchTerm = listState.search.toLowerCase();
-            tempPersons = tempPersons.filter(p => p.name.toLowerCase().includes(searchTerm) || (p.cccd && p.cccd.includes(searchTerm)));
+            tempPersons = tempPersons.filter(p => {
+                const person = p as any;
+                return person.name.toLowerCase().includes(searchTerm) || (person.cccd && person.cccd.includes(searchTerm));
+            });
         }
 
         tempPersons.sort((a, b) => {
