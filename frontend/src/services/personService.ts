@@ -2,22 +2,8 @@ import api from './api';
 import authService from './authService';
 import personsData from '../data/persons.json';
 
-// Định nghĩa các interface
-// Gender enum from backend: MALE = 0, FEMALE = 1
-export type Gender = 0 | 1 | 'MALE' | 'FEMALE';
-
-export interface Person {
-    _id: string;
-    cccd?: string;
-    name: string;
-    avatar?: string;
-    gender: Gender;
-    birth?: Date;
-    death?: Date;
-    isDead?: boolean;
-    address?: string;
-    desc?: string;
-}
+// Import unified types from the single source of truth
+import { Person } from '../types';
 
 export interface PersonWithGenerations {
     personData: Record<string, Person>;

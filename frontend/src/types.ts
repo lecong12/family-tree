@@ -6,31 +6,34 @@
 export type FilterMode = 'all' | 'isolated';
 
 /**
- * Represents a person in the family tree.
+ * Defines the gender types used across the application.
+ * Corresponds to backend enum: MALE = 0, FEMALE = 1.
+ */
+export type Gender = 0 | 1 | 'MALE' | 'FEMALE';
+
+/**
+ * Represents a person in the family tree. This is the single source of truth.
  */
 export interface Person {
     _id: string;
     name: string;
-    gender?: string | number;
+    gender?: Gender;
     avatar?: string;
     cccd?: string;
     birth?: string | Date;
     death?: string | Date;
     isDead?: boolean;
-    birthDate?: string;
-    deathDate?: string;
-    parentId?: string;
-    children?: string[];
-    spouses?: string[];
+    address?: string;
+    desc?: string;
 }
 
 /**
- * Represents a spouse relationship, potentially populated with person details.
+ * Represents a spouse relationship, populated with person details.
  */
 export interface SpouseWithDetails {
     _id: string;
-    husband: Person | string;
-    wife: Person | string;
+    husband: Person;
+    wife: Person;
     marriageDate?: string;
     divorceDate?: string;
     husbandOrder?: number;
@@ -38,10 +41,10 @@ export interface SpouseWithDetails {
 }
 
 /**
- * Represents a parent-child relationship.
+ * Represents a parent-child relationship, with details.
  */
-export interface ParentChildWithDetails {
+export interface ParentChild {
     _id: string;
-    parent: string; // This is the ID of the spouse relationship
-    child: Person | string;
+    parent: Person;
+    child: Person;
 }

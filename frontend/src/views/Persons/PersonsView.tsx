@@ -2,9 +2,8 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
 // SỬA ĐƯỜNG DẪN IMPORT Ở ĐÂY
-import { Person, SpouseWithDetails } from '../../types';
+import { Person, SpouseWithDetails, ParentChild } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useFamilyData } from '../../hooks/useFamilyData';
 
@@ -64,12 +63,12 @@ export default function PersonsView() {
 
     // Lọc ra những người có _id hợp lệ và dùng type guard `is Person` để TypeScript hiểu rằng
     // mảng này chứa các đối tượng Person hợp lệ (từ `../../types`), giải quyết lỗi build.
-    const validPersons = useMemo(() => (persons || []).filter((p: any) => !!p._id) as unknown as Person[], [persons]);
+    const validPersons = useMemo(() => persons?.filter(p => !!p._id) || [], [persons]);
 
     const personById = useMemo(() => {
         const map = new Map<string, Person>();
         validPersons.forEach((p) => {
-            if (p._id) map.set(p._id, p as any);
+            if (p._id) map.set(p._id, p);
         });
         return map;
     }, [validPersons]);
@@ -110,7 +109,7 @@ export default function PersonsView() {
         setAddChildModalOpen(true);
     }, []);
 
-    const connectedIds = useMemo(() => buildConnectedIds(validPersons as any, spouses as any, parentChilds as any), [validPersons, spouses, parentChilds]);
+    const connectedIds = useMemo(() => buildConnectedIds(validPersons, spouses, parentChilds), [validPersons, spouses, parentChilds]);
     const isolatedCount = useMemo(() => validPersons.length - connectedIds.size, [validPersons, connectedIds]);
 
     const { filteredAndSortedPersons, totalPages } = useMemo(() => {
@@ -125,9 +124,8 @@ export default function PersonsView() {
         if (listState.search) {
             const searchTerm = listState.search.toLowerCase();
             tempPersons = tempPersons.filter(p => {
-                const person = p as any;
-                const nameMatch = person.name?.toLowerCase().includes(searchTerm);
-                const cccdMatch = person.cccd ? person.cccd.includes(searchTerm) : false;
+                const nameMatch = p.name?.toLowerCase().includes(searchTerm);
+                const cccdMatch = p.cccd ? p.cccd.includes(searchTerm) : false;
                 return nameMatch || cccdMatch;
             });
         }
@@ -209,9 +207,9 @@ export default function PersonsView() {
             <main className="flex-1 overflow-y-auto">
                 {currentView === 'tree' ? (
                     <FamilyTreeFlow 
-                        persons={validPersons as any} 
-                        spouses={spouses as any}
-                        parentChilds={parentChilds as any}
+                        persons={validPersons} 
+                        spouses={spouses}
+                        parentChilds={parentChilds}
                         filterMode={listState.filterMode} 
                         onRelationshipClick={handleRelationshipClick}
                         onPersonClick={handlePersonClick}
@@ -219,7 +217,7 @@ export default function PersonsView() {
                 ) : (
                     <div className="max-w-[900px] mx-auto bg-white shadow-sm rounded-b-lg">
                         <PersonList 
-                            paginated={paginatedPersons as any}
+                            paginated={paginatedPersons}
                             connectedIds={connectedIds}
                             currentPage={listState.currentPage}
                             pageSize={listState.pageSize}
