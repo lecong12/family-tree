@@ -50,10 +50,37 @@ export default function PersonsView() {
         sortDirection: 'asc',
     });
 
-    const { isAdmin, isEditor } = useAuth();
+    const { isAdmin, isEditor, user, loading: authLoading } = useAuth();
     const router = useRouter();
     
     const { persons, spouses, parentChilds, isLoading, refetchAll } = useFamilyData();
+
+    // Redirect non-logged-in users
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.replace('/login');
+        }
+    }, [authLoading, user, router]);
+
+    // Lọc ra những người có _id hợp lệ và dùng type guard `is Person` để TypeScript hiểu rằng
+    // mảng này chứa các đối tượng Person hợp lệ (từ `../../types`), giải quyết lỗi build.
+    const validPersons = useMemo(() => (persons || []).filter((p: any) => !!p._id) as unknown as Person[], [persons]);
+
+    const personById = useMemo(() => {
+        const map = new Map<string, Person>();
+        validPersons.forEach((p) => {
+            if (p._id) map.set(p._id, p);
+        });
+        return map;
+    }, [validPersons]);
+
+    // Sync selected person after refetch
+    useEffect(() => {
+        if (selectedPerson?._id) {
+            const updated = personById.get(selectedPerson._id);
+            if (updated && updated !== selectedPerson) setSelectedPerson(updated);
+        }
+    }, [personById, selectedPerson]);
 
     const handleViewChange = useCallback((view: 'list' | 'tree') => {
         setCurrentView(view);
@@ -66,12 +93,12 @@ export default function PersonsView() {
         }
     }, []);
 
-    const handlePersonClick = useCallback((person: any) => {
+    const handlePersonClick = useCallback((person: Person) => {
         setSelectedPerson(person);
         setPersonDetailModalOpen(true);
     }, []);
 
-    const handleAddSpouseFromPerson = useCallback((person: any) => {
+    const handleAddSpouseFromPerson = useCallback((person: Person) => {
         setSelectedPerson(person);
         setPersonDetailModalOpen(false);
         setAddSpouseModalOpen(true);
@@ -83,13 +110,13 @@ export default function PersonsView() {
         setAddChildModalOpen(true);
     }, []);
 
-    const connectedIds = useMemo(() => buildConnectedIds(persons as any, spouses as any, parentChilds as any), [persons, spouses, parentChilds]);
-    const isolatedCount = useMemo(() => persons.length - connectedIds.size, [persons, connectedIds]);
+    const connectedIds = useMemo(() => buildConnectedIds(validPersons, spouses, parentChilds), [validPersons, spouses, parentChilds]);
+    const isolatedCount = useMemo(() => validPersons.length - connectedIds.size, [validPersons, connectedIds]);
 
     const { filteredAndSortedPersons, totalPages } = useMemo(() => {
-        if (!persons) return { filteredAndSortedPersons: [], totalPages: 0 };
+        if (!validPersons) return { filteredAndSortedPersons: [], totalPages: 0 };
 
-        let tempPersons = [...persons];
+        let tempPersons = [...validPersons];
 
         if (listState.filterMode === 'isolated') {
             tempPersons = tempPersons.filter(p => p._id && !connectedIds.has(p._id));
@@ -103,18 +130,43 @@ export default function PersonsView() {
         tempPersons.sort((a, b) => {
             const field = listState.sortField;
             const dir = listState.sortDirection === 'asc' ? 1 : -1;
-            const valA = (a as any)[field] || '';
-            const valB = (b as any)[field] || '';
-            if (valA < valB) return -1 * dir;
-            if (valA > valB) return 1 * dir;
-            return 0;
+            let res = 0;
+
+            switch (field) {
+                case 'name': {
+                    const getName = (name: string) => {
+                        const parts = name.trim().split(/\s+/);
+                        return parts.length > 0 ? parts[parts.length - 1] : '';
+                    };
+                    const nameA = getName(a.name || '');
+                    const nameB = getName(b.name || '');
+                    res = nameA.localeCompare(nameB, 'vi');
+                    if (res === 0) res = (a.name || '').localeCompare(b.name || '', 'vi');
+                    break;
+                }
+                case 'birth': {
+                    const getYear = (d?: string | Date) => (d ? new Date(d).getFullYear() : (listState.sortDirection === 'asc' ? 9999 : -9999));
+                    const yearA = getYear(a.birth);
+                    const yearB = getYear(b.birth);
+                    res = yearA - yearB;
+                    break;
+                }
+                case 'status': {
+                    const deadA = a.isDead ? 1 : 0;
+                    const deadB = b.isDead ? 1 : 0;
+                    res = deadA - deadB;
+                    break;
+                }
+            }
+
+            return res * dir;
         });
 
         const total = tempPersons.length;
         const pages = Math.ceil(total / listState.pageSize);
 
         return { filteredAndSortedPersons: tempPersons, totalPages: pages };
-    }, [persons, listState, connectedIds]);
+    }, [validPersons, listState, connectedIds]);
 
     const paginatedPersons = useMemo(() => {
         const start = (listState.currentPage - 1) * listState.pageSize;
@@ -122,9 +174,11 @@ export default function PersonsView() {
         return filteredAndSortedPersons.slice(start, end);
     }, [filteredAndSortedPersons, listState.currentPage, listState.pageSize]);
 
-    if (isLoading && !persons.length) {
+    if (isLoading && !validPersons.length) {
         return <LoadingOverlay isLoading={true} />;
     }
+
+    if (authLoading || !user) return null;
 
     return (
         <div className="flex flex-col h-screen bg-gray-100 font-sans">
@@ -150,9 +204,9 @@ export default function PersonsView() {
             <main className="flex-1 overflow-y-auto">
                 {currentView === 'tree' ? (
                     <FamilyTreeFlow 
-                        persons={persons as any} 
-                        spouses={spouses as any}
-                        parentChilds={parentChilds as any}
+                        persons={validPersons} 
+                        spouses={spouses}
+                        parentChilds={parentChilds}
                         filterMode={listState.filterMode} 
                         onRelationshipClick={handleRelationshipClick}
                         onPersonClick={handlePersonClick}
@@ -183,11 +237,11 @@ export default function PersonsView() {
                 />
             )}
 
-            <PersonDetailModal isOpen={personDetailModalOpen} onClose={() => setPersonDetailModalOpen(false)} person={selectedPerson as any} onAddSpouse={handleAddSpouseFromPerson} onAddChild={handleAddChildFromSpouse} onUpdate={refetchAll} />
-            <AddSpouseModal isOpen={addSpouseModalOpen} onClose={() => setAddSpouseModalOpen(false)} onSuccess={() => { refetchAll(); setAddSpouseModalOpen(false); }} person={selectedPerson as any} />
-            <AddChildModal isOpen={addChildModalOpen} onClose={() => setAddChildModalOpen(false)} onSuccess={() => { refetchAll(); setAddChildModalOpen(false); }} spouseId={selectedSpouseForChild as any} />
+            <PersonDetailModal isOpen={personDetailModalOpen} onClose={() => setPersonDetailModalOpen(false)} person={selectedPerson} onAddSpouse={handleAddSpouseFromPerson} onAddChild={handleAddChildFromSpouse} onUpdate={refetchAll} />
+            <AddSpouseModal isOpen={addSpouseModalOpen} onClose={() => setAddSpouseModalOpen(false)} onSuccess={() => { refetchAll(); setAddSpouseModalOpen(false); }} person={selectedPerson} />
+            <AddChildModal isOpen={addChildModalOpen} onClose={() => setAddChildModalOpen(false)} onSuccess={() => { refetchAll(); setAddChildModalOpen(false); }} spouseId={selectedSpouseForChild} />
             <AddPersonModal isOpen={addPersonModalOpen} onClose={() => setAddPersonModalOpen(false)} onSuccess={() => { refetchAll(); setAddPersonModalOpen(false); }} />
-            <RelationshipDetailModal isOpen={relDetailModalOpen} onClose={() => setRelDetailModalOpen(false)} spouse={selectedSpouse as any} />
+            <RelationshipDetailModal isOpen={relDetailModalOpen} onClose={() => setRelDetailModalOpen(false)} spouse={selectedSpouse} />
             <GuestCodeModal isOpen={guestCodeModalOpen} onClose={() => setGuestCodeModalOpen(false)} />
         </div>
     );
