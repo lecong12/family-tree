@@ -126,7 +126,9 @@ export default function PersonsView() {
             const searchTerm = listState.search.toLowerCase();
             tempPersons = tempPersons.filter(p => {
                 const person = p as any;
-                return person.name.toLowerCase().includes(searchTerm) || (person.cccd && person.cccd.includes(searchTerm));
+                const nameMatch = person.name?.toLowerCase().includes(searchTerm);
+                const cccdMatch = person.cccd ? person.cccd.includes(searchTerm) : false;
+                return nameMatch || cccdMatch;
             });
         }
 
@@ -207,9 +209,9 @@ export default function PersonsView() {
             <main className="flex-1 overflow-y-auto">
                 {currentView === 'tree' ? (
                     <FamilyTreeFlow 
-                        persons={validPersons} 
-                        spouses={spouses}
-                        parentChilds={parentChilds}
+                        persons={validPersons as any} 
+                        spouses={spouses as any}
+                        parentChilds={parentChilds as any}
                         filterMode={listState.filterMode} 
                         onRelationshipClick={handleRelationshipClick}
                         onPersonClick={handlePersonClick}
