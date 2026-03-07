@@ -27,7 +27,7 @@ export default function Toolbar({ search, onSearchChange, pageSize, onPageSizeCh
                         value={search}
                         onChange={onSearchChange}
                         placeholder="Tìm kiếm..."
-                        className="block w-full pl-9 pr-3 py-2 text-sm border-gray-200 rounded-full bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder-gray-400"
+                        className="block w-full pl-9 pr-3 py-1.5 text-sm border-gray-200 rounded-full bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder-gray-400"
                     />
                 </div>
 

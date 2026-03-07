@@ -19,8 +19,8 @@ export default function Header({ isolatedCount, filterMode, onFilterModeChange, 
             {/* Tree View Button */}
             <button
                 onClick={() => onChangeView('tree')}
-                className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-md transition-all ${
-                    currentView === 'tree' ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-600 hover:text-blue-600'
+                className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-md transition-all duration-150 ${
+                    currentView === 'tree' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
                 }`}
             >
                 <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -34,8 +34,8 @@ export default function Header({ isolatedCount, filterMode, onFilterModeChange, 
             {/* List View Button */}
             <button
                 onClick={() => onChangeView('list')}
-                className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-md transition-all ${
-                    currentView === 'list' ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-600 hover:text-blue-600'
+                className={`flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-md transition-all duration-150 ${
+                    currentView === 'list' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
                 }`}
             >
                 <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
