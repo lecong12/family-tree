@@ -218,27 +218,11 @@ export default function PersonsView() {
                 filterMode={filterMode}
                 onFilterModeChange={handleFilterMode}
                 onOpenGuestCodeModal={handleOpenGuestCodeModal}
+                currentView={viewMode}
+                onChangeView={setViewMode}
             />
 
             <Toolbar search={search} onSearchChange={handleSearch} pageSize={pageSize} onPageSizeChange={handlePageSizeChange} onAddPerson={() => setAddPersonModalOpen(true)} />
-
-            {/* View Switcher */}
-            <div className="flex justify-center my-2">
-                <div className="bg-white p-1 rounded-lg shadow-sm border border-gray-200 inline-flex">
-                    <button
-                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'list' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
-                        onClick={() => setViewMode('list')}
-                    >
-                        Danh sách
-                    </button>
-                    <button
-                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${viewMode === 'tree' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
-                        onClick={() => setViewMode('tree')}
-                    >
-                        Cây gia phả
-                    </button>
-                </div>
-            </div>
 
             <LoadingOverlay isLoading={isLoading} />
 
