@@ -36,7 +36,7 @@ const FlowWithSearch = ({ nodes, edges, nodeTypes }: { nodes: any[], edges: any[
             const x = node.position.x + width / 2;
             const y = node.position.y + height / 2;
 
-            setCenter(x, y, { zoom: 1.0, duration: 1000 });
+            setCenter(x, y, { zoom: 0.8, duration: 1000 });
         } else {
             console.warn(`Không tìm thấy node với ID: ${nodeId} để focus.`);
         }
