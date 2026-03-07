@@ -69,7 +69,7 @@ export default function PersonsView() {
     const personById = useMemo(() => {
         const map = new Map<string, Person>();
         validPersons.forEach((p) => {
-            if (p._id) map.set(p._id, p);
+            if (p._id) map.set(p._id, p as any);
         });
         return map;
     }, [validPersons]);
@@ -110,7 +110,7 @@ export default function PersonsView() {
         setAddChildModalOpen(true);
     }, []);
 
-    const connectedIds = useMemo(() => buildConnectedIds(validPersons, spouses, parentChilds), [validPersons, spouses, parentChilds]);
+    const connectedIds = useMemo(() => buildConnectedIds(validPersons as any, spouses as any, parentChilds as any), [validPersons, spouses, parentChilds]);
     const isolatedCount = useMemo(() => validPersons.length - connectedIds.size, [validPersons, connectedIds]);
 
     const { filteredAndSortedPersons, totalPages } = useMemo(() => {

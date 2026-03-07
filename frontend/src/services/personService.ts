@@ -7,7 +7,7 @@ import personsData from '../data/persons.json';
 export type Gender = 0 | 1 | 'MALE' | 'FEMALE';
 
 export interface Person {
-    _id?: string;
+    _id: string;
     cccd?: string;
     name: string;
     avatar?: string;
