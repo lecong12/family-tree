@@ -35,7 +35,6 @@ import GuestCodeModal from 'src/components/GuestCodeModal/GuestCodeModal';
 
 // Utils & Types
 import { FilterMode, PageSize, SortDirection, SortField } from './types';
-import { buildConnectedIds } from './utils';
 
 export default function PersonsView() {
     const router = useRouter();
@@ -62,7 +61,27 @@ export default function PersonsView() {
         if (!authLoading && !user) router.replace('/login');
     }, [authLoading, user, router]);
 
-    const connectedIds = useMemo(() => buildConnectedIds(spouses as any, parentChilds as any), [spouses, parentChilds]);
+    // FIX LOGIC: Tính toán danh sách ID đã liên kết trực tiếp tại đây để đảm bảo chính xác
+    const connectedIds = useMemo(() => {
+        const ids = new Set<string>();
+        const getId = (item: any) => {
+            if (!item) return null;
+            return typeof item === 'object' ? item._id : item;
+        };
+
+        if (Array.isArray(spouses)) {
+            spouses.forEach((s: any) => {
+                if (s.husband) ids.add(getId(s.husband));
+                if (s.wife) ids.add(getId(s.wife));
+            });
+        }
+        if (Array.isArray(parentChilds)) {
+            parentChilds.forEach((pc: any) => {
+                if (pc.child) ids.add(getId(pc.child));
+            });
+        }
+        return ids;
+    }, [spouses, parentChilds]);
 
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
