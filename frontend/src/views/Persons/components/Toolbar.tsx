@@ -7,10 +7,9 @@ interface ToolbarProps {
     pageSize: PageSize;
     onPageSizeChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
     onAddPerson: () => void;
-    viewMode: 'list' | 'tree';
 }
 
-export default function Toolbar({ search, onSearchChange, pageSize, onPageSizeChange, onAddPerson, viewMode }: ToolbarProps) {
+export default function Toolbar({ search, onSearchChange, pageSize, onPageSizeChange, onAddPerson }: ToolbarProps) {
     const { isAdmin, isEditor } = useAuth();
 
     return (
@@ -32,33 +31,31 @@ export default function Toolbar({ search, onSearchChange, pageSize, onPageSizeCh
                     />
                 </div>
 
-                {viewMode === 'list' && (
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                        <select
-                            value={pageSize}
-                            onChange={onPageSizeChange}
-                            className="block pl-2 pr-7 py-1.5 text-sm border-gray-200 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer hover:bg-white transition-colors"
-                        >
-                            {PAGE_SIZE_OPTIONS.map((s) => (
-                                <option key={s} value={s}>
-                                    {s}
-                                </option>
-                            ))}
-                        </select>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                    <select
+                        value={pageSize}
+                        onChange={onPageSizeChange}
+                        className="block pl-2 pr-7 py-1.5 text-sm border-gray-200 bg-gray-50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer hover:bg-white transition-colors"
+                    >
+                        {PAGE_SIZE_OPTIONS.map((s) => (
+                            <option key={s} value={s}>
+                                {s}
+                            </option>
+                        ))}
+                    </select>
 
-                        {(isAdmin || isEditor) && (
-                            <button
-                                onClick={onAddPerson}
-                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
-                            >
-                                <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                                </svg>
-                                <span className="hidden sm:inline">Thêm</span>
-                            </button>
-                        )}
-                    </div>
-                )}
+                    {(isAdmin || isEditor) && (
+                        <button
+                            onClick={onAddPerson}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm"
+                        >
+                            <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            <span className="hidden sm:inline">Thêm</span>
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );

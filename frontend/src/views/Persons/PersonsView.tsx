@@ -44,6 +44,11 @@ export default function PersonsView() {
     const [viewMode, setViewMode] = useState<'list' | 'tree'>('list');
     const [search, setSearch] = useState('');
     const [pageSize, setPageSize] = useState<PageSize>(30);
+    
+    // State cho tìm kiếm trong Cây gia phả
+    const [treeSearch, setTreeSearch] = useState('');
+    const [isTreeSearchOpen, setIsTreeSearchOpen] = useState(false);
+
     const [currentPage, setCurrentPage] = useState(1);
     const [filterMode, setFilterMode] = useState<FilterMode>('all');
     const [sortField, setSortField] = useState<SortField>('name');
@@ -119,6 +124,13 @@ export default function PersonsView() {
         });
     }, [persons, isolatedPersons, search, filterMode, sortField, sortDirection]);
 
+    // Logic tìm kiếm cho Cây gia phả: Lấy 10 người đầu tiên khớp tên
+    const treeSearchResults = useMemo(() => {
+        if (!treeSearch.trim()) return [];
+        const q = treeSearch.toLowerCase();
+        return persons.filter(p => p.name.toLowerCase().includes(q)).slice(0, 10);
+    }, [persons, treeSearch]);
+
     const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
     const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
@@ -134,12 +146,13 @@ export default function PersonsView() {
                 viewMode={viewMode} onViewModeChange={setViewMode}
             />
 
-            <Toolbar 
-                search={search} onSearchChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} 
-                pageSize={pageSize} onPageSizeChange={(e) => { setPageSize(Number(e.target.value) as PageSize); setCurrentPage(1); }} 
-                onAddPerson={() => setAddPersonModalOpen(true)} 
-                viewMode={viewMode}
-            />
+            {viewMode === 'list' && (
+                <Toolbar 
+                    search={search} onSearchChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} 
+                    pageSize={pageSize} onPageSizeChange={(e) => { setPageSize(Number(e.target.value) as PageSize); setCurrentPage(1); }} 
+                    onAddPerson={() => setAddPersonModalOpen(true)} 
+                />
+            )}
 
             <LoadingOverlay isLoading={isLoading} />
 
@@ -158,6 +171,47 @@ export default function PersonsView() {
                     </div>
                 ) : (
                     <div className="w-full h-full bg-white relative">
+                        {/* Giao diện tìm kiếm riêng cho Cây gia phả */}
+                        <div className="absolute top-4 left-4 z-10 w-72">
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                </div>
+                                <input
+                                    type="text"
+                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm shadow-md transition-shadow"
+                                    placeholder="Tìm thành viên..."
+                                    value={treeSearch}
+                                    onChange={(e) => { setTreeSearch(e.target.value); setIsTreeSearchOpen(true); }}
+                                    onFocus={() => setIsTreeSearchOpen(true)}
+                                    onBlur={() => setTimeout(() => setIsTreeSearchOpen(false), 200)} // Delay để kịp nhận sự kiện click
+                                />
+                                {/* Dropdown kết quả */}
+                                {isTreeSearchOpen && treeSearchResults.length > 0 && (
+                                    <ul className="absolute z-20 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+                                        {treeSearchResults.map((person) => (
+                                            <li
+                                                key={person._id}
+                                                className="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-blue-50 text-gray-900 border-b border-gray-50 last:border-0"
+                                                onClick={() => {
+                                                    setSelectedPerson(person);
+                                                    setPersonDetailModalOpen(true);
+                                                    setIsTreeSearchOpen(false);
+                                                    setTreeSearch(person.name);
+                                                }}
+                                            >
+                                                <div className="flex items-center">
+                                                    <span className="ml-1 block truncate font-medium">{person.name}</span>
+                                                </div>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </div>
+                        </div>
+
                         <ReactFlowProvider>
                             <FamilyTreeFlow 
                                 persons={persons} 
