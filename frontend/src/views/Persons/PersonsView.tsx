@@ -65,57 +65,45 @@ const buildGenerationalTreeData = (rootId: string, persons: any[], spouses: any[
         if (currentGenIds.length === 0) break;
         
         const currentGenFamilies: any[] = [];
-        const nextGenIds: string[] = [];
+        const nextGenIds = new Set<string>(); // Sử dụng Set để tránh trùng lặp
 
         for (const userId of currentGenIds) {
-            const userSpouses = spouseMap.get(userId) || [];
-            userSpouses.sort((a, b) => (a.spouseOrder || 0) - (b.spouseOrder || 0));
+            const userSpousesRels = spouseMap.get(userId) || [];
+            userSpousesRels.sort((a, b) => (a.spouseOrder || 0) - (b.spouseOrder || 0));
 
-            const allMyChildren = childMap.get(userId) || [];
-            const assignedChildren = new Set<string>();
+            const spousesNode = userSpousesRels.map(spouseRel => {
+                const partnerId = spouseRel.partnerId;
+                // Lấy con cái cho mối quan hệ vợ/chồng cụ thể này
+                const childrenOfThisUnion = childMap.get(spouseRel._id) || [];
 
-            const spousesNode = userSpouses.map(s => {
-                const partnerId = s.partnerId;
-                const partnerChildren = childMap.get(partnerId) || [];
-                
-                // Tìm con chung của cặp vợ chồng này
-                const commonChildren = allMyChildren.filter(c => partnerChildren.includes(c));
-                
-                commonChildren.forEach(c => {
-                    assignedChildren.add(c);
-                    if (!visited.has(c)) {
-                        visited.add(c);
-                        nextGenIds.push(c);
+                // Thêm con cái vào danh sách thế hệ tiếp theo cần xử lý
+                childrenOfThisUnion.forEach(childId => {
+                    if (!visited.has(childId)) {
+                        nextGenIds.add(childId);
                     }
                 });
 
                 return {
-                    user: { id: partnerId, spouseOrder: s.spouseOrder || 1 },
-                    spouseOrder: s.spouseOrder || 1,
-                    children: commonChildren
+                    user: { id: partnerId, spouseOrder: spouseRel.spouseOrder || 1 },
+                    spouseOrder: spouseRel.spouseOrder || 1,
+                    children: childrenOfThisUnion
                 };
-            });
-
-            // Xử lý con cái không thuộc về vợ/chồng nào (Single Parent hoặc dữ liệu thiếu)
-            const unassignedChildren = allMyChildren.filter(c => !assignedChildren.has(c));
-            unassignedChildren.forEach(c => {
-                if (!visited.has(c)) {
-                    visited.add(c);
-                    nextGenIds.push(c);
-                }
             });
 
             currentGenFamilies.push({
                 user: userId,
                 spouses: spousesNode,
-                children: unassignedChildren
+                children: [] // Dựa trên schema, con cái luôn gắn với một cặp vợ chồng, nên không có con riêng lẻ ở đây
             });
         }
 
         if (currentGenFamilies.length > 0) {
             generations.push(currentGenFamilies);
         }
-        currentGenIds = nextGenIds;
+        // Chuẩn bị cho vòng lặp tiếp theo
+        currentGenIds = Array.from(nextGenIds);
+        // Đánh dấu tất cả thành viên của thế hệ tiếp theo là đã xử lý
+        currentGenIds.forEach(id => visited.add(id));
     }
 
     const personData: Record<string, any> = {};
