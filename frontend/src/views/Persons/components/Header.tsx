@@ -1,5 +1,7 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
+
 // Chú ý: Dùng đường dẫn tương đối chính xác từ vị trí file này
 import UserMenu from '../../../components/UserMenu/UserMenu'; 
 import { FilterMode } from '../types';
@@ -10,8 +12,8 @@ interface HeaderProps {
     filterMode: FilterMode;
     onFilterModeChange: (mode: FilterMode) => void;
     onOpenGuestCodeModal: () => void;
-    currentView: 'list' | 'tree';
-    onChangeView: (view: 'list' | 'tree') => void;
+    viewMode: 'list' | 'tree';
+    onViewModeChange: (view: 'list' | 'tree') => void;
 }
 
 export default function Header({ 
@@ -19,10 +21,11 @@ export default function Header({
     filterMode, 
     onFilterModeChange, 
     onOpenGuestCodeModal,
-    currentView,
-    onChangeView
+    viewMode,
+    onViewModeChange
 }: HeaderProps) {
     const { isAdmin, logout, user } = useAuth();
+    const router = useRouter();
 
     return (
         <header className="flex-shrink-0 flex items-center justify-between px-4 h-14 bg-white border-b border-gray-200 shadow-sm w-full font-sans">
@@ -30,7 +33,7 @@ export default function Header({
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
                 {/* NÚT TRANG CHỦ */}
                 <button 
-                    onClick={() => window.location.href = '/'} 
+                    onClick={() => router.push('/')} 
                     className="flex items-center justify-center p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,18 +44,18 @@ export default function Header({
                 <div className="h-6 w-[1px] bg-gray-200 mx-1"></div>
 
                 <button 
-                    onClick={() => onChangeView('tree')}
+                    onClick={() => onViewModeChange('tree')}
                     className={`whitespace-nowrap text-sm font-medium px-4 py-1.5 rounded-full transition-all ${
-                        currentView === 'tree' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+                        viewMode === 'tree' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
                     }`}
                 >
                     Cây gia phả
                 </button>
 
                 <button 
-                    onClick={() => onChangeView('list')}
+                    onClick={() => onViewModeChange('list')}
                     className={`whitespace-nowrap text-sm font-medium px-4 py-1.5 rounded-full transition-all ${
-                        currentView === 'list' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+                        viewMode === 'list' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
                     }`}
                 >
                     Danh sách
