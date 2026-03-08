@@ -2,345 +2,158 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Person, SpouseWithDetails, ParentChild } from 'src/types';
+import dynamic from 'next/dynamic';
+import { ReactFlowProvider } from '@xyflow/react';
+
+// Context & Hooks
 import { useAuth } from 'src/context/AuthContext';
 import { useFamilyData } from 'src/hooks/useFamilyData';
+
+// Components trong thư mục views
+import Header from './components/Header';
+import Toolbar from './components/Toolbar';
+import PersonList from './components/PersonList';
+import Pagination from './components/Pagination';
+
+// ĐƯỜNG DẪN ĐÚNG ĐẾN THƯ MỤC COMPONENTS CHUNG
+// Chúng ta trỏ ngược ra ngoài 3 cấp: src/views/Persons -> src/views -> src -> src/components
+const FamilyTreeFlow = dynamic(
+  () => import('../../components/FamilyTree/FamilyTreeFlow'),
+  { 
+    ssr: false,
+    loading: () => <div className="h-full w-full flex items-center justify-center text-gray-400">Đang tải sơ đồ...</div>
+  }
+);
+
+// Modals (Cũng nằm ở thư mục components chung)
 import LoadingOverlay from 'src/components/LoadingOverlay/LoadingOverlay';
 import PersonDetailModal from 'src/components/PersonDetailModal/PersonDetailModal';
 import AddSpouseModal from 'src/components/AddSpouseModal/AddSpouseModal';
 import AddChildModal from 'src/components/AddChildModal/AddChildModal';
 import AddPersonModal from 'src/components/AddPersonModal/AddPersonModal';
 import GuestCodeModal from 'src/components/GuestCodeModal/GuestCodeModal';
-import FamilyTreeFlow from 'src/components/FamilyTree/FamilyTreeFlow';
 
-import Header from './components/Header';
-import Toolbar from './components/Toolbar';
-import PersonList from './components/PersonList';
-import Pagination from './components/Pagination';
+// Utils & Types
 import { FilterMode, PageSize, SortDirection, SortField } from './types';
 import { buildConnectedIds } from './utils';
 
 export default function PersonsView() {
     const router = useRouter();
-    const { isAdmin, isEditor, logout, user, loading: authLoading } = useAuth();
-
-    // Điều hướng nếu chưa đăng nhập
-    useEffect(() => {
-        if (!authLoading && !user) {
-            router.replace('/login');
-        }
-    }, [authLoading, user, router]);
-
+    const { isAdmin, logout, user, loading: authLoading } = useAuth();
     const { persons, spouses, parentChilds, isLoading, refetchAll } = useFamilyData();
 
-    // State cho Modals
+    const [viewMode, setViewMode] = useState<'list' | 'tree'>('list');
+    const [search, setSearch] = useState('');
+    const [pageSize, setPageSize] = useState<PageSize>(30);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [filterMode, setFilterMode] = useState<FilterMode>('all');
+    const [sortField, setSortField] = useState<SortField>('name');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+
     const [personDetailModalOpen, setPersonDetailModalOpen] = useState(false);
     const [addSpouseModalOpen, setAddSpouseModalOpen] = useState(false);
     const [addChildModalOpen, setAddChildModalOpen] = useState(false);
     const [addPersonModalOpen, setAddPersonModalOpen] = useState(false);
     const [guestCodeModalOpen, setGuestCodeModalOpen] = useState(false);
-    const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
+    const [selectedPerson, setSelectedPerson] = useState<any>(null);
     const [selectedSpouseIdForChild, setSelectedSpouseIdForChild] = useState<string | null>(null);
 
-    // State cho danh sách
-    const [search, setSearch] = useState('');
-    const [pageSize, setPageSize] = useState<PageSize>(30);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [filterMode, setFilterMode] = useState<FilterMode>('all');
-    const [currentView, setCurrentView] = useState<'list' | 'tree'>('list');
-    const [sortField, setSortField] = useState<SortField>('name');
-    const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-
-    const validPersons = useMemo(() => (persons || []).filter(p => p._id), [persons]);
-
-    const personById = useMemo(() => {
-        const map = new Map<string, Person>();
-        validPersons.forEach((p) => {
-            map.set(p._id, p);
-        });
-        return map;
-    }, [validPersons]);
-
-    // --- FIX: Tự động Populate dữ liệu quan hệ (Biến ID thành Object) ---
-    const richSpouses = useMemo(() => {
-        return (spouses || [])
-            .map(s => {
-                const hId = typeof s.husband === 'string' ? s.husband : s.husband?._id;
-                const wId = typeof s.wife === 'string' ? s.wife : s.wife?._id;
-                const husband = personById.get(hId);
-                const wife = personById.get(wId);
-
-                if (!husband || !wife) return null; // Đánh dấu để xóa nếu không tìm thấy người
-
-                return { ...s, husband, wife } as SpouseWithDetails;
-            })
-            .filter((s): s is SpouseWithDetails => s !== null); // Lọc bỏ các mối quan hệ không hợp lệ
-    }, [spouses, personById]);
-
-    const richParentChilds = useMemo(() => {
-        return (parentChilds || [])
-            .map(pc => {
-                const childId = typeof pc.child === 'string' ? pc.child : pc.child?._id;
-                const child = personById.get(childId);
-
-                if (!child) return null; // Đánh dấu để xóa nếu không tìm thấy con
-
-                return { ...pc, child, parent: pc.parent } as ParentChild;
-            })
-            .filter((pc): pc is ParentChild => pc !== null);
-    }, [parentChilds, personById]);
-
-    // FIX: Sử dụng dữ liệu gốc (spouses, parentChilds) để tính toán ID,
-    // vì hàm buildConnectedIds được thiết kế để làm việc với ID dạng chuỗi.
-    const connectedIds = useMemo(() => 
-        buildConnectedIds(spouses, parentChilds), 
-    [spouses, parentChilds]);
-
-    // Đồng bộ người dùng được chọn sau khi refetch
     useEffect(() => {
-        if (selectedPerson?._id) {
-            const updated = personById.get(selectedPerson._id);
-            if (updated && updated !== selectedPerson) setSelectedPerson(updated);
-        }
-    }, [personById, selectedPerson]);
+        if (!authLoading && !user) router.replace('/login');
+    }, [authLoading, user, router]);
 
-    // Logic Lọc và Tìm kiếm theo ngữ cảnh (Contextual Search)
+    const connectedIds = useMemo(() => buildConnectedIds(spouses as any, parentChilds as any), [spouses, parentChilds]);
+
     const filtered = useMemo(() => {
         const q = search.trim().toLowerCase();
-        
-        const result = validPersons.filter((p) => {
-            // 1. Tìm kiếm theo Tên hoặc CCCD (Ngữ cảnh)
+        const res = (persons as any[]).filter((p) => {
             if (q) {
-                const nameMatch = p.name.toLowerCase().includes(q);
-                const cccdMatch = p.cccd && p.cccd.toLowerCase().includes(q);
-                if (!nameMatch && !cccdMatch) return false;
+                const n = p.name?.toLowerCase().includes(q);
+                const c = p.cccd?.toString().includes(q);
+                if (!n && !c) return false;
             }
-
-            // 2. Lọc theo trạng thái kết nối
             if (filterMode === 'isolated' && p._id && connectedIds.has(p._id)) return false;
-            
             return true;
         });
 
-        // 3. Sắp xếp Tiếng Việt chuẩn (Dựa trên tệp gốc)
-        return result.sort((a, b) => {
-            let res = 0;
-            switch (sortField) {
-                case 'name': {
-                    const getName = (name: string) => {
-                        const parts = name.trim().split(/\s+/);
-                        return parts.length > 0 ? parts[parts.length - 1] : '';
-                    };
-                    res = getName(a.name).localeCompare(getName(b.name), 'vi');
-                    if (res === 0) res = a.name.localeCompare(b.name, 'vi');
-                    break;
-                }
-                case 'birth': {
-                    // Xử lý năm sinh an toàn cho build
-                    const getYear = (d: any) => (d ? new Date(d).getFullYear() : (sortDirection === 'asc' ? 9999 : -9999));
-                    res = getYear(a.birth) - getYear(b.birth);
-                    break;
-                }
-                case 'status': {
-                    const deadA = a.isDead ? 1 : 0;
-                    const deadB = b.isDead ? 1 : 0;
-                    res = deadA - deadB;
-                    break;
-                }
+        return res.sort((a, b) => {
+            let val = 0;
+            if (sortField === 'name') {
+                const nA = (a.name || '').trim().split(' ').pop() || '';
+                const nB = (b.name || '').trim().split(' ').pop() || '';
+                val = nA.localeCompare(nB, 'vi');
+            } else if (sortField === 'birth') {
+                const yA = a.birth ? new Date(a.birth).getFullYear() : (sortDirection === 'asc' ? 9999 : -9999);
+                const yB = b.birth ? new Date(b.birth).getFullYear() : (sortDirection === 'asc' ? 9999 : -9999);
+                val = yA - yB;
             }
-            return sortDirection === 'asc' ? res : -res;
+            return sortDirection === 'asc' ? val : -val;
         });
-    }, [validPersons, search, filterMode, connectedIds, sortField, sortDirection]);
-
-    const isolatedCount = useMemo(() => 
-        validPersons.filter((p) => !connectedIds.has(p._id)).length, 
-    [validPersons, connectedIds]);
+    }, [persons, search, filterMode, connectedIds, sortField, sortDirection]);
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-
-    const paginated = useMemo(() => {
-        const start = (currentPage - 1) * pageSize;
-        return filtered.slice(start, start + pageSize);
-    }, [filtered, currentPage, pageSize]);
-
-    // Handlers (Giao tiếp với UI)
-    const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        setSearch(e.target.value);
-        setCurrentPage(1);
-    }, []);
-
-    const handlePageSizeChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-        setPageSize(Number(e.target.value) as PageSize);
-        setCurrentPage(1);
-    }, []);
-
-    const handleFilterMode = useCallback((mode: FilterMode) => {
-        setFilterMode(mode);
-        setCurrentPage(1);
-    }, []);
-
-    const handleSort = useCallback((field: SortField) => {
-        if (sortField === field) {
-            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortField(field);
-            setSortDirection('asc');
-        }
-    }, [sortField, sortDirection]);
-
-    const handlePersonClick = useCallback((person: Person) => {
-        setSelectedPerson(person);
-        setPersonDetailModalOpen(true);
-    }, []);
-
-    const handleAddSpouseFromPerson = useCallback((person: Person) => {
-        setSelectedPerson(person);
-        setPersonDetailModalOpen(false);
-        setAddSpouseModalOpen(true);
-    }, []);
-
-    const handleAddChildFromSpouse = useCallback((spouseId: string) => {
-        setSelectedSpouseIdForChild(spouseId);
-        setPersonDetailModalOpen(false);
-        setAddChildModalOpen(true);
-    }, []);
-
-    const handleAddSpouseSuccess = useCallback(() => {
-        refetchAll();
-        setAddSpouseModalOpen(false);
-        setPersonDetailModalOpen(true); // Quay lại modal chi tiết để xem vợ/chồng mới
-    }, [refetchAll]);
-
-    const handleAddChildSuccess = useCallback(() => {
-        refetchAll();
-        setAddChildModalOpen(false);
-        setPersonDetailModalOpen(true); // Quay lại modal chi tiết
-    }, [refetchAll]);
-
-    const handleAddPersonSuccess = useCallback(() => {
-        refetchAll();
-        setAddPersonModalOpen(false);
-    }, [refetchAll]);
-
-    // Handler chuyên dụng cho việc chuyển đổi giao diện
-    const handleViewChange = useCallback((view: 'list' | 'tree') => {
-        setCurrentView(view);
-        setCurrentPage(1); // Reset lại trang khi chuyển view
-    }, []);
-
-    const handleRelationshipClick = useCallback((data: any) => {
-        // Xử lý khi click vào đường nối (nếu cần)
-    }, []);
+    const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
     if (authLoading || !user) return null;
 
     return (
-        <div className="w-screen h-screen flex flex-col bg-gray-50">
-            {/* Header hiển thị số lượng người chưa liên hệ */}
+        <div className="w-screen h-screen flex flex-col bg-gray-50 overflow-hidden">
             <Header 
-                isolatedCount={isolatedCount} 
-                filterMode={filterMode} 
-                onFilterModeChange={handleFilterMode} 
-                onOpenGuestCodeModal={() => setGuestCodeModalOpen(true)} 
+                user={user} isAdmin={isAdmin} onLogout={logout}
+                isolatedCount={persons.filter((p: any) => p._id && !connectedIds.has(p._id)).length} 
+                filterMode={filterMode} onFilterModeChange={(m: any) => { setFilterMode(m); setCurrentPage(1); }}
+                onOpenGuestCodeModal={() => setGuestCodeModalOpen(true)}
+                viewMode={viewMode} onViewModeChange={setViewMode}
             />
 
-            {/* Thanh công cụ tìm kiếm ngữ cảnh */}
-            <Toolbar 
-                search={search} 
-                onSearchChange={handleSearch} 
-                pageSize={pageSize} 
-                onPageSizeChange={handlePageSizeChange} 
-                onAddPerson={() => setAddPersonModalOpen(true)} 
-            />
-
-            {/* Bộ chuyển đổi giao diện List / Tree */}
-            <div className="px-4 py-2 flex justify-center">
-                <div className="bg-white p-1 rounded-lg shadow-sm border border-gray-200 inline-flex">
-                    <button
-                        onClick={() => handleViewChange('list')}
-                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${currentView === 'list' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
-                    >
-                        Danh sách
-                    </button>
-                    <button
-                        onClick={() => handleViewChange('tree')}
-                        className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${currentView === 'tree' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-50'}`}
-                    >
-                        Cây phả hệ
-                    </button>
-                </div>
-            </div>
+            {viewMode === 'list' && (
+                <Toolbar 
+                    search={search} onSearchChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} 
+                    pageSize={pageSize} onPageSizeChange={(e) => { setPageSize(Number(e.target.value) as PageSize); setCurrentPage(1); }} 
+                    onAddPerson={() => setAddPersonModalOpen(true)} 
+                />
+            )}
 
             <LoadingOverlay isLoading={isLoading} />
 
-            <div className="flex-1 overflow-auto bg-gray-50 p-4">
-                {currentView === 'list' ? (
-                    <div className="max-w-[900px] mx-auto bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
-                        <PersonList
-                            paginated={paginated}
-                            connectedIds={connectedIds}
-                            currentPage={currentPage}
-                            pageSize={pageSize}
-                            sortField={sortField}
-                            sortDirection={sortDirection}
-                            onSort={handleSort}
-                            onPersonClick={handlePersonClick}
-                        />
+            <div className="flex-1 overflow-hidden relative">
+                {viewMode === 'list' ? (
+                    <div className="h-full overflow-auto p-4">
+                        <div className="max-w-[1200px] mx-auto bg-white shadow rounded-xl border border-gray-200">
+                            <PersonList
+                                paginated={paginated as any} connectedIds={connectedIds}
+                                currentPage={currentPage} pageSize={pageSize}
+                                sortField={sortField} sortDirection={sortDirection}
+                                onSort={(f) => { setSortField(f); setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc'); }}
+                                onPersonClick={(p) => { setSelectedPerson(p); setPersonDetailModalOpen(true); }}
+                            />
+                        </div>
                     </div>
                 ) : (
-                    <FamilyTreeFlow
-                        persons={validPersons}
-                        spouses={richSpouses}
-                        parentChilds={richParentChilds}
-                        filterMode={filterMode}
-                        onPersonClick={handlePersonClick}
-                        onRelationshipClick={handleRelationshipClick}
-                    />
+                    <div className="w-full h-full bg-white relative">
+                        <ReactFlowProvider>
+                            <FamilyTreeFlow 
+                                persons={persons} 
+                                spouses={spouses} 
+                                parentChilds={parentChilds}
+                                filterMode={filterMode}
+                                onPersonClick={(p: any) => { setSelectedPerson(p); setPersonDetailModalOpen(true); }}
+                            />
+                        </ReactFlowProvider>
+                    </div>
                 )}
             </div>
 
-            <Pagination 
-                currentPage={currentPage} 
-                totalPages={totalPages} 
-                pageSize={pageSize} 
-                totalItems={filtered.length} 
-                onPageChange={setCurrentPage} 
-            />
+            {viewMode === 'list' && (
+                <Pagination currentPage={currentPage} totalPages={totalPages} pageSize={pageSize} totalItems={filtered.length} onPageChange={setCurrentPage} />
+            )}
 
-            {/* Hệ thống Modals quản lý thành viên */}
-            <PersonDetailModal
-                isOpen={personDetailModalOpen}
-                onClose={() => setPersonDetailModalOpen(false)}
-                person={selectedPerson}
-                onAddSpouse={handleAddSpouseFromPerson}
-                onAddChild={handleAddChildFromSpouse}
-                onUpdate={refetchAll}
-            />
-            
-            <AddSpouseModal 
-                isOpen={addSpouseModalOpen} 
-                onClose={() => setAddSpouseModalOpen(false)} 
-                onSuccess={handleAddSpouseSuccess} 
-                person={selectedPerson} 
-            />
-            
-            <AddChildModal 
-                isOpen={addChildModalOpen} 
-                onClose={() => setAddChildModalOpen(false)} 
-                onSuccess={handleAddChildSuccess} 
-                spouseId={selectedSpouseIdForChild} 
-            />
-            
-            <AddPersonModal 
-                isOpen={addPersonModalOpen} 
-                onClose={() => setAddPersonModalOpen(false)} 
-                onSuccess={handleAddPersonSuccess} 
-            />
-            
-            <GuestCodeModal 
-                isOpen={guestCodeModalOpen} 
-                onClose={() => setGuestCodeModalOpen(false)} 
-            />
+            {/* Modals giữ nguyên */}
+            <PersonDetailModal isOpen={personDetailModalOpen} onClose={() => setPersonDetailModalOpen(false)} person={selectedPerson} onUpdate={refetchAll} onAddSpouse={(p: any) => { setSelectedPerson(p); setPersonDetailModalOpen(false); setAddSpouseModalOpen(true); }} onAddChild={(sid: string) => { setSelectedSpouseIdForChild(sid); setPersonDetailModalOpen(false); setAddChildModalOpen(true); }} />
+            <AddSpouseModal isOpen={addSpouseModalOpen} onClose={() => setAddSpouseModalOpen(false)} onSuccess={() => { refetchAll(); setAddSpouseModalOpen(false); setPersonDetailModalOpen(true); }} person={selectedPerson} />
+            <AddChildModal isOpen={addChildModalOpen} onClose={() => setAddChildModalOpen(false)} onSuccess={() => { refetchAll(); setAddChildModalOpen(false); setPersonDetailModalOpen(true); }} spouseId={selectedSpouseIdForChild} />
+            <AddPersonModal isOpen={addPersonModalOpen} onClose={() => setAddPersonModalOpen(false)} onSuccess={() => { refetchAll(); setAddPersonModalOpen(false); }} />
+            <GuestCodeModal isOpen={guestCodeModalOpen} onClose={() => setGuestCodeModalOpen(false)} />
         </div>
     );
 }
