@@ -145,10 +145,8 @@ export default function PersonsView() {
                     setCurrentPage(1); 
                 }}
                 onOpenGuestCodeModal={() => setGuestCodeModalOpen(true)}
-                viewMode={viewMode} 
-                onViewModeChange={(v) => {
-                    setViewMode(v);
-                }}
+                currentView={viewMode}
+                onChangeView={setViewMode}
             />
 
             {viewMode === 'list' && (
