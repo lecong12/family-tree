@@ -87,7 +87,9 @@ export default function PersonsPage() {
         }
 
         if (error) {
-            return <Alert color="failure" icon={HiExclamation} className="mt-4">{error}</Alert>;
+            return <Alert color="failure" className="mt-4">
+                <span className="font-medium">Lỗi!</span> {error}
+            </Alert>;
         }
 
         // --- FIX 2: Kích hoạt chức năng xem Cây gia phả ---
@@ -144,16 +146,16 @@ export default function PersonsPage() {
         <div className="p-4 sm:p-6">
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
                 <h1 className="text-2xl font-bold text-gray-800">Quản lý Thành viên</h1>
-                <Button.Group>
-                    <Button color="gray" onClick={() => setViewMode('list')} disabled={viewMode === 'list'}>
+                <div className="flex" role="group">
+                    <Button color="gray" onClick={() => setViewMode('list')} disabled={viewMode === 'list'} className="rounded-r-none">
                         <HiViewList className="mr-2 h-5 w-5" />
                         Danh sách
                     </Button>
-                    <Button color="gray" onClick={() => setViewMode('tree')} disabled={viewMode === 'tree'}>
+                    <Button color="gray" onClick={() => setViewMode('tree')} disabled={viewMode === 'tree'} className="rounded-l-none border-l-0">
                         <HiUserGroup className="mr-2 h-5 w-5" />
                         Cây gia phả
                     </Button>
-                </Button.Group>
+                </div>
             </div>
             {renderContent()}
         </div>
