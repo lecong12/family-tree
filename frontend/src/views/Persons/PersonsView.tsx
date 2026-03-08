@@ -125,13 +125,11 @@ export default function PersonsView() {
                 viewMode={viewMode} onViewModeChange={setViewMode}
             />
 
-            {viewMode === 'list' && (
-                <Toolbar 
-                    search={search} onSearchChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} 
-                    pageSize={pageSize} onPageSizeChange={(e) => { setPageSize(Number(e.target.value) as PageSize); setCurrentPage(1); }} 
-                    onAddPerson={() => setAddPersonModalOpen(true)} 
-                />
-            )}
+            <Toolbar 
+                search={search} onSearchChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }} 
+                pageSize={pageSize} onPageSizeChange={(e) => { setPageSize(Number(e.target.value) as PageSize); setCurrentPage(1); }} 
+                onAddPerson={() => setAddPersonModalOpen(true)} 
+            />
 
             <LoadingOverlay isLoading={isLoading} />
 
@@ -152,7 +150,7 @@ export default function PersonsView() {
                     <div className="w-full h-full bg-white relative">
                         <ReactFlowProvider>
                             <FamilyTreeFlow 
-                                persons={persons} 
+                                persons={filtered} 
                                 spouses={spouses} 
                                 parentChilds={parentChilds}
                                 filterMode={filterMode}
