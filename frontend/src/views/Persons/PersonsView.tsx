@@ -83,19 +83,28 @@ export default function PersonsView() {
         return ids;
     }, [spouses, parentChilds]);
 
+    const { isolatedPersons, isolatedCount } = useMemo(() => {
+        const isolated = (persons as any[]).filter(p => p._id && !connectedIds.has(p._id));
+        return { isolatedPersons: isolated, isolatedCount: isolated.length };
+    }, [persons, connectedIds]);
+
     const filtered = useMemo(() => {
+        // Bắt đầu với danh sách nguồn phù hợp (tất cả hoặc chỉ những người chưa có liên hệ)
+        const source = filterMode === 'isolated' ? isolatedPersons : (persons as any[]);
+
         const q = search.trim().toLowerCase();
-        const res = (persons as any[]).filter((p) => {
-            if (q) {
+        let res = source;
+
+        // Áp dụng bộ lọc tìm kiếm nếu có
+        if (q) {
+            res = res.filter((p) => {
                 const n = p.name?.toLowerCase().includes(q);
                 const c = p.cccd?.toString().includes(q);
-                if (!n && !c) return false;
-            }
-            if (filterMode === 'isolated' && p._id && connectedIds.has(p._id)) return false;
-            return true;
-        });
+                return n || c;
+            });
+        }
 
-        return res.sort((a, b) => {
+        return [...res].sort((a, b) => { // Sắp xếp trên một bản sao để tránh thay đổi `persons`
             let val = 0;
             if (sortField === 'name') {
                 const nA = (a.name || '').trim().split(' ').pop() || '';
@@ -108,7 +117,7 @@ export default function PersonsView() {
             }
             return sortDirection === 'asc' ? val : -val;
         });
-    }, [persons, search, filterMode, connectedIds, sortField, sortDirection]);
+    }, [persons, isolatedPersons, search, filterMode, sortField, sortDirection]);
 
     const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
     const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
@@ -119,7 +128,7 @@ export default function PersonsView() {
         <div className="w-screen h-screen flex flex-col bg-gray-50 overflow-hidden">
             <Header 
                 user={user} isAdmin={isAdmin} onLogout={logout}
-                isolatedCount={persons.filter((p: any) => p._id && !connectedIds.has(p._id)).length} 
+                isolatedCount={isolatedCount} 
                 filterMode={filterMode} onFilterModeChange={(m: any) => { setFilterMode(m); setCurrentPage(1); }}
                 onOpenGuestCodeModal={() => setGuestCodeModalOpen(true)}
                 viewMode={viewMode} onViewModeChange={setViewMode}
