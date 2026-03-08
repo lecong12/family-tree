@@ -46,7 +46,6 @@ export default function PersonsView() {
     // State cho tìm kiếm trong Cây gia phả
     const [treeSearch, setTreeSearch] = useState('');
     const [isTreeSearchOpen, setIsTreeSearchOpen] = useState(false);
-
     const [currentPage, setCurrentPage] = useState(1);
     const [filterMode, setFilterMode] = useState<FilterMode>('all');
     const [sortField, setSortField] = useState<SortField>('name');
@@ -136,7 +135,8 @@ export default function PersonsView() {
 
     return (
         <div className="w-screen h-screen flex flex-col bg-gray-50 overflow-hidden">
-            <Header
+            <Header 
+                user={user} isAdmin={isAdmin} onLogout={logout}
                 isolatedCount={isolatedCount} 
                 filterMode={filterMode} 
                 onFilterModeChange={(m: any) => { 
