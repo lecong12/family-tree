@@ -10,7 +10,7 @@ import { useAuth } from 'src/context/AuthContext';
 import { useFamilyData } from 'src/hooks/useFamilyData';
 
 // Components
-import Header from './components/Header';
+import Header from '../../components/Header';
 import Toolbar from './components/Toolbar';
 import PersonList from './components/PersonList';
 import Pagination from './components/Pagination';
@@ -136,8 +136,7 @@ export default function PersonsView() {
 
     return (
         <div className="w-screen h-screen flex flex-col bg-gray-50 overflow-hidden">
-            <Header 
-                user={user} isAdmin={isAdmin} onLogout={logout}
+            <Header
                 isolatedCount={isolatedCount} 
                 filterMode={filterMode} 
                 onFilterModeChange={(m: any) => { 
