@@ -2,8 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
-import { ReactFlowProvider } from '@xyflow/react';
+import axios from 'axios';
 
 // Context & Hooks
 import { useAuth } from 'src/context/AuthContext';
@@ -14,14 +13,7 @@ import Header from '../../components/Header';
 import Toolbar from './components/Toolbar';
 import PersonList from './components/PersonList';
 import Pagination from './components/Pagination';
-
-const FamilyTreeFlow = dynamic(
-  () => import('../../components/FamilyTree/FamilyTreeFlow'),
-  { 
-    ssr: false,
-    loading: () => <div className="h-full w-full flex items-center justify-center text-gray-400">Đang tải sơ đồ...</div>
-  }
-);
+import GenerationalTree from '../../components/GenerationalTree';
 
 // Modals (Cũng nằm ở thư mục components chung)
 import LoadingOverlay from 'src/components/LoadingOverlay/LoadingOverlay';
@@ -43,9 +35,11 @@ export default function PersonsView() {
     const [search, setSearch] = useState('');
     const [pageSize, setPageSize] = useState<PageSize>(30);
     
-    // State cho tìm kiếm trong Cây gia phả
-    const [treeSearch, setTreeSearch] = useState('');
-    const [isTreeSearchOpen, setIsTreeSearchOpen] = useState(false);
+    // State cho cây gia phả theo thế hệ
+    const [generationalTreeData, setGenerationalTreeData] = useState<any>(null);
+    const [treeLoading, setTreeLoading] = useState(false);
+    const [treeError, setTreeError] = useState<string | null>(null);
+
     const [currentPage, setCurrentPage] = useState(1);
     const [filterMode, setFilterMode] = useState<FilterMode>('all');
     const [sortField, setSortField] = useState<SortField>('name');
@@ -62,6 +56,45 @@ export default function PersonsView() {
     useEffect(() => {
         if (!authLoading && !user) router.replace('/login');
     }, [authLoading, user, router]);
+
+    // Effect để tải dữ liệu cây gia phả khi chuyển sang view 'tree'
+    useEffect(() => {
+        const fetchTreeData = async () => {
+            // Chỉ fetch khi ở chế độ 'tree' và chưa có dữ liệu
+            if (viewMode === 'tree' && !generationalTreeData) {
+                setTreeLoading(true);
+                setTreeError(null);
+
+                if (!persons || persons.length === 0) {
+                    // Đợi hook useFamilyData tải xong
+                    if (!isLoading) {
+                        setTreeError("Chưa có dữ liệu thành viên để dựng cây.");
+                    }
+                    setTreeLoading(false);
+                    return;
+                }
+
+                // Tìm người gốc, ưu tiên người có isRoot, nếu không thì lấy người đầu tiên
+                const rootPerson = persons.find((p: any) => p.isRoot) || persons[0];
+                if (!rootPerson) {
+                    setTreeError("Không tìm thấy người gốc để bắt đầu.");
+                    setTreeLoading(false);
+                    return;
+                }
+
+                try {
+                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+                    const response = await axios.get(`${apiUrl}/persons/${rootPerson._id}/tree?generations=10`);
+                    setGenerationalTreeData(response.data);
+                } catch (error: any) {
+                    setTreeError(error.response?.data?.message || "Lỗi khi tải dữ liệu cây gia phả.");
+                } finally {
+                    setTreeLoading(false);
+                }
+            }
+        };
+        fetchTreeData();
+    }, [viewMode, persons, generationalTreeData, isLoading]);
 
     // FIX LOGIC: Tính toán danh sách ID đã liên kết trực tiếp tại đây để đảm bảo chính xác
     const connectedIds = useMemo(() => {
@@ -121,13 +154,6 @@ export default function PersonsView() {
         });
     }, [persons, isolatedPersons, search, filterMode, sortField, sortDirection]);
 
-    // Logic tìm kiếm cho Cây gia phả: Lấy 10 người đầu tiên khớp tên
-    const treeSearchResults = useMemo(() => {
-        if (!treeSearch.trim()) return [];
-        const q = treeSearch.toLowerCase();
-        return persons.filter((p: any) => p.name.toLowerCase().includes(q)).slice(0, 10);
-    }, [persons, treeSearch]);
-
     const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
     const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
@@ -172,57 +198,22 @@ export default function PersonsView() {
                         </div>
                     </div>
                 ) : (
-                    <div className="w-full h-full bg-white relative">
-                        {/* Giao diện tìm kiếm riêng cho Cây gia phả */}
-                        <div className="absolute top-4 left-4 z-10 w-72">
-                            <div className="relative">
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                    </svg>
+                    <div className="w-full h-full relative">
+                        {treeLoading && (
+                            <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-20">
+                                <div className="text-center">
+                                    <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                                    <p className="mt-2 text-gray-600">Đang dựng cây gia phả...</p>
                                 </div>
-                                <input
-                                    type="text"
-                                    className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm shadow-md transition-shadow"
-                                    placeholder="Tìm thành viên..."
-                                    value={treeSearch}
-                                    onChange={(e) => { setTreeSearch(e.target.value); setIsTreeSearchOpen(true); }}
-                                    onFocus={() => setIsTreeSearchOpen(true)}
-                                    onBlur={() => setTimeout(() => setIsTreeSearchOpen(false), 200)}
-                                />
-                                {/* Dropdown kết quả */}
-                                {isTreeSearchOpen && treeSearchResults.length > 0 && (
-                                    <ul className="absolute z-20 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
-                                        {treeSearchResults.map((person: any) => (
-                                            <li
-                                                key={person._id}
-                                                className="cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-blue-50 text-gray-900 border-b border-gray-50 last:border-0"
-                                                onClick={() => {
-                                                    setSelectedPerson(person);
-                                                    setPersonDetailModalOpen(true);
-                                                    setIsTreeSearchOpen(false);
-                                                    setTreeSearch(person.name);
-                                                }}
-                                            >
-                                                <div className="flex items-center">
-                                                    <span className="ml-1 block truncate font-medium">{person.name}</span>
-                                                </div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
                             </div>
-                        </div>
-
-                        <ReactFlowProvider>
-                            <FamilyTreeFlow 
-                                persons={persons} 
-                                spouses={spouses} 
-                                parentChilds={parentChilds}
-                                filterMode={filterMode}
+                        )}
+                        {treeError && <div className="p-8 text-center text-red-500">{treeError}</div>}
+                        {generationalTreeData && !treeError && (
+                            <GenerationalTree 
+                                data={generationalTreeData}
                                 onPersonClick={(p: any) => { setSelectedPerson(p); setPersonDetailModalOpen(true); }}
                             />
-                        </ReactFlowProvider>
+                        )}
                     </div>
                 )}
             </div>
@@ -233,10 +224,20 @@ export default function PersonsView() {
             )}
 
             {/* Modals giữ nguyên */}
-            <PersonDetailModal isOpen={personDetailModalOpen} onClose={() => setPersonDetailModalOpen(false)} person={selectedPerson} onUpdate={refetchAll} onAddSpouse={(p: any) => { setSelectedPerson(p); setPersonDetailModalOpen(false); setAddSpouseModalOpen(true); }} onAddChild={(sid: string) => { setSelectedSpouseIdForChild(sid); setPersonDetailModalOpen(false); setAddChildModalOpen(true); }} />
-            <AddSpouseModal isOpen={addSpouseModalOpen} onClose={() => setAddSpouseModalOpen(false)} onSuccess={() => { refetchAll(); setAddSpouseModalOpen(false); setPersonDetailModalOpen(true); }} person={selectedPerson} />
-            <AddChildModal isOpen={addChildModalOpen} onClose={() => setAddChildModalOpen(false)} onSuccess={() => { refetchAll(); setAddChildModalOpen(false); setPersonDetailModalOpen(true); }} spouseId={selectedSpouseIdForChild} />
-            <AddPersonModal isOpen={addPersonModalOpen} onClose={() => setAddPersonModalOpen(false)} onSuccess={() => { refetchAll(); setAddPersonModalOpen(false); }} />
+            <PersonDetailModal isOpen={personDetailModalOpen} onClose={() => setPersonDetailModalOpen(false)} person={selectedPerson} onUpdate={() => { refetchAll(); setGenerationalTreeData(null); }} onAddSpouse={(p: any) => { setSelectedPerson(p); setPersonDetailModalOpen(false); setAddSpouseModalOpen(true); }} onAddChild={(sid: string) => { setSelectedSpouseIdForChild(sid); setPersonDetailModalOpen(false); setAddChildModalOpen(true); }} />
+            <AddSpouseModal isOpen={addSpouseModalOpen} onClose={() => setAddSpouseModalOpen(false)} onSuccess={() => { 
+                refetchAll(); 
+                setGenerationalTreeData(null); 
+                setAddSpouseModalOpen(false); 
+                setPersonDetailModalOpen(true); 
+            }} person={selectedPerson} />
+            <AddChildModal isOpen={addChildModalOpen} onClose={() => setAddChildModalOpen(false)} onSuccess={() => { 
+                refetchAll(); 
+                setGenerationalTreeData(null); 
+                setAddChildModalOpen(false); 
+                setPersonDetailModalOpen(true); 
+            }} spouseId={selectedSpouseIdForChild} />
+            <AddPersonModal isOpen={addPersonModalOpen} onClose={() => setAddPersonModalOpen(false)} onSuccess={() => { refetchAll(); setGenerationalTreeData(null); setAddPersonModalOpen(false); }} />
             <GuestCodeModal isOpen={guestCodeModalOpen} onClose={() => setGuestCodeModalOpen(false)} />
         </div>
     );
