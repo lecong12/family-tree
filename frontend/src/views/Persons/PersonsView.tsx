@@ -13,7 +13,7 @@ import Header from './components/Header';
 import Toolbar from './components/Toolbar';
 import PersonList from './components/PersonList';
 import Pagination from './components/Pagination';
-import GenerationalTree from './components/GenerationalTree';
+import GenerationalTree from '../../components/GenerationalTree';
 
 // Modals (Cũng nằm ở thư mục components chung)
 import LoadingOverlay from 'src/components/LoadingOverlay/LoadingOverlay';
