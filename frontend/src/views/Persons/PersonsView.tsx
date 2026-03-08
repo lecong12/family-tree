@@ -2,7 +2,6 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
 
 // Context & Hooks
 import { useAuth } from 'src/context/AuthContext';
@@ -25,6 +24,94 @@ import GuestCodeModal from 'src/components/GuestCodeModal/GuestCodeModal';
 
 // Utils & Types
 import { FilterMode, PageSize, SortDirection, SortField } from './types';
+
+// Helper: Xây dựng cây gia phả từ dữ liệu thô tại Client
+const buildGenerationalTreeData = (rootId: string, persons: any[], spouses: any[], parentChilds: any[], maxGenerations: number = 10) => {
+    const getId = (item: any) => typeof item === 'object' ? item._id : item;
+    
+    const personMap = new Map(persons.map(p => [p._id, p]));
+    const spouseMap = new Map<string, any[]>();
+    const childMap = new Map<string, string[]>();
+
+    // Index spouses
+    spouses.forEach(s => {
+        const hId = getId(s.husband);
+        const wId = getId(s.wife);
+        if (hId && wId) {
+             if (!spouseMap.has(hId)) spouseMap.set(hId, []);
+             spouseMap.get(hId)?.push({ ...s, partnerId: wId, type: 'husband' });
+
+             if (!spouseMap.has(wId)) spouseMap.set(wId, []);
+             spouseMap.get(wId)?.push({ ...s, partnerId: hId, type: 'wife' });
+        }
+    });
+
+    // Index children
+    parentChilds.forEach(pc => {
+        const pId = getId(pc.parent);
+        const cId = getId(pc.child);
+        if (pId && cId) {
+            if (!childMap.has(pId)) childMap.set(pId, []);
+            childMap.get(pId)?.push(cId);
+        }
+    });
+
+    const generations: any[][] = [];
+    const visited = new Set<string>();
+    let currentGenIds = [rootId];
+    visited.add(rootId);
+
+    for (let i = 0; i < maxGenerations; i++) {
+        if (currentGenIds.length === 0) break;
+        
+        const currentGenFamilies: any[] = [];
+        const nextGenIds: string[] = [];
+
+        for (const userId of currentGenIds) {
+            const userSpouses = spouseMap.get(userId) || [];
+            userSpouses.sort((a, b) => (a.spouseOrder || 0) - (b.spouseOrder || 0));
+
+            const spousesNode = userSpouses.map(s => {
+                const partnerId = s.partnerId;
+                const myChildren = childMap.get(userId) || [];
+                const partnerChildren = childMap.get(partnerId) || [];
+                
+                // Tìm con chung của cặp vợ chồng này
+                const commonChildren = myChildren.filter(c => partnerChildren.includes(c));
+                
+                commonChildren.forEach(c => {
+                    if (!visited.has(c)) {
+                        visited.add(c);
+                        nextGenIds.push(c);
+                    }
+                });
+
+                return {
+                    user: { id: partnerId, spouseOrder: s.spouseOrder || 1 },
+                    spouseOrder: s.spouseOrder || 1,
+                    children: commonChildren
+                };
+            });
+
+            currentGenFamilies.push({
+                user: userId,
+                spouses: spousesNode
+            });
+        }
+
+        if (currentGenFamilies.length > 0) {
+            generations.push(currentGenFamilies);
+        }
+        currentGenIds = nextGenIds;
+    }
+
+    const personData: Record<string, any> = {};
+    persons.forEach(p => {
+        personData[p._id] = p;
+    });
+
+    return { personData, treeData: generations };
+};
 
 export default function PersonsView() {
     const router = useRouter();
@@ -83,18 +170,19 @@ export default function PersonsView() {
                 }
 
                 try {
-                    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-                    const response = await axios.get(`${apiUrl}/persons/${rootPerson._id}/tree?generations=10`);
-                    setGenerationalTreeData(response.data);
+                    // Xử lý dữ liệu tại Client thay vì gọi API bị lỗi
+                    const data = buildGenerationalTreeData(rootPerson._id, persons, spouses, parentChilds);
+                    setGenerationalTreeData(data);
                 } catch (error: any) {
-                    setTreeError(error.response?.data?.message || "Lỗi khi tải dữ liệu cây gia phả.");
+                    console.error(error);
+                    setTreeError("Lỗi khi xử lý dữ liệu cây gia phả.");
                 } finally {
                     setTreeLoading(false);
                 }
             }
         };
         fetchTreeData();
-    }, [viewMode, persons, generationalTreeData, isLoading]);
+    }, [viewMode, persons, spouses, parentChilds, generationalTreeData, isLoading]);
 
     // FIX LOGIC: Tính toán danh sách ID đã liên kết trực tiếp tại đây để đảm bảo chính xác
     const connectedIds = useMemo(() => {
