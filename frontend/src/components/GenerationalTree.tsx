@@ -21,6 +21,7 @@ interface SpouseNode {
 interface FamilyUnit {
     user: string;
     spouses: SpouseNode[];
+    children?: string[];
 }
 
 interface TreeData {
@@ -70,7 +71,13 @@ function FamilyNode({ family, personData, onPersonClick }: { family: FamilyUnit;
 
     return (
         <div className="flex items-start gap-4 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-            <PersonCard person={mainPerson} isRoot={true} onClick={() => onPersonClick(mainPerson)} />
+            <div className="flex flex-col items-center">
+                <PersonCard person={mainPerson} isRoot={true} onClick={() => onPersonClick(mainPerson)} />
+                {/* Hiển thị đường nối xuống nếu có con riêng/con không xác định mẹ */}
+                {family.children && family.children.length > 0 && (
+                    <div className="w-[1px] h-4 bg-gray-300 mt-1"></div>
+                )}
+            </div>
 
             {family.spouses.map((spouseRel, index) => {
                 const spouse = personData[spouseRel.user.id];

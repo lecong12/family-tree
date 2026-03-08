@@ -71,15 +71,18 @@ const buildGenerationalTreeData = (rootId: string, persons: any[], spouses: any[
             const userSpouses = spouseMap.get(userId) || [];
             userSpouses.sort((a, b) => (a.spouseOrder || 0) - (b.spouseOrder || 0));
 
+            const allMyChildren = childMap.get(userId) || [];
+            const assignedChildren = new Set<string>();
+
             const spousesNode = userSpouses.map(s => {
                 const partnerId = s.partnerId;
-                const myChildren = childMap.get(userId) || [];
                 const partnerChildren = childMap.get(partnerId) || [];
                 
                 // Tìm con chung của cặp vợ chồng này
-                const commonChildren = myChildren.filter(c => partnerChildren.includes(c));
+                const commonChildren = allMyChildren.filter(c => partnerChildren.includes(c));
                 
                 commonChildren.forEach(c => {
+                    assignedChildren.add(c);
                     if (!visited.has(c)) {
                         visited.add(c);
                         nextGenIds.push(c);
@@ -93,9 +96,19 @@ const buildGenerationalTreeData = (rootId: string, persons: any[], spouses: any[
                 };
             });
 
+            // Xử lý con cái không thuộc về vợ/chồng nào (Single Parent hoặc dữ liệu thiếu)
+            const unassignedChildren = allMyChildren.filter(c => !assignedChildren.has(c));
+            unassignedChildren.forEach(c => {
+                if (!visited.has(c)) {
+                    visited.add(c);
+                    nextGenIds.push(c);
+                }
+            });
+
             currentGenFamilies.push({
                 user: userId,
-                spouses: spousesNode
+                spouses: spousesNode,
+                children: unassignedChildren
             });
         }
 
@@ -162,7 +175,22 @@ export default function PersonsView() {
                 }
 
                 // Tìm người gốc, ưu tiên người có isRoot, nếu không thì lấy người đầu tiên
-                const rootPerson = persons.find((p: any) => p.isRoot) || persons[0];
+                let rootPerson = persons.find((p: any) => p.isRoot);
+                
+                // Nếu không có isRoot, tìm người không có cha mẹ (gốc của cây)
+                if (!rootPerson) {
+                    const allChildIds = new Set(parentChilds.map((pc: any) => pc.child));
+                    const potentialRoots = persons.filter((p: any) => !allChildIds.has(p._id));
+                    
+                    // Nếu có nhiều người không có cha mẹ, lấy người sinh sớm nhất
+                    if (potentialRoots.length > 0) {
+                        rootPerson = potentialRoots.sort((a: any, b: any) => (a.birth || '9999').localeCompare(b.birth || '9999'))[0];
+                    } else {
+                        // Trường hợp vòng lặp hoặc dữ liệu lạ, lấy người sinh sớm nhất trong toàn bộ danh sách
+                        rootPerson = [...persons].sort((a: any, b: any) => (a.birth || '9999').localeCompare(b.birth || '9999'))[0];
+                    }
+                }
+
                 if (!rootPerson) {
                     setTreeError("Không tìm thấy người gốc để bắt đầu.");
                     setTreeLoading(false);
