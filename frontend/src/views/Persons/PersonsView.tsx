@@ -161,6 +161,7 @@ export default function PersonsView() {
                 )}
             </div>
 
+            {/* Chỉ hiện phân trang khi ở chế độ danh sách */}
             {viewMode === 'list' && (
                 <Pagination currentPage={currentPage} totalPages={totalPages} pageSize={pageSize} totalItems={filtered.length} onPageChange={setCurrentPage} />
             )}
