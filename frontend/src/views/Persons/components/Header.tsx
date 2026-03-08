@@ -27,6 +27,11 @@ export default function Header({
     const { isAdmin, logout, user } = useAuth();
     const router = useRouter();
 
+    // Xác định trạng thái active cho từng tab để hiển thị UI chính xác
+    const isTreeActive = viewMode === 'tree';
+    const isListActive = viewMode === 'list' && filterMode === 'all';
+    const isIsolatedActive = viewMode === 'list' && filterMode === 'isolated';
+
     return (
         <header className="flex-shrink-0 flex items-center justify-between px-4 h-14 bg-white border-b border-gray-200 shadow-sm w-full font-sans">
             
@@ -44,18 +49,24 @@ export default function Header({
                 <div className="h-6 w-[1px] bg-gray-200 mx-1"></div>
 
                 <button 
-                    onClick={() => onViewModeChange('tree')}
+                    onClick={() => {
+                        onViewModeChange('tree');
+                        onFilterModeChange('all'); // Reset bộ lọc khi qua cây
+                    }}
                     className={`whitespace-nowrap text-sm font-medium px-4 py-1.5 rounded-full transition-all ${
-                        viewMode === 'tree' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+                        isTreeActive ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
                     }`}
                 >
                     Cây gia phả
                 </button>
 
                 <button 
-                    onClick={() => onViewModeChange('list')}
+                    onClick={() => {
+                        onViewModeChange('list');
+                        onFilterModeChange('all'); // Reset về danh sách đầy đủ
+                    }}
                     className={`whitespace-nowrap text-sm font-medium px-4 py-1.5 rounded-full transition-all ${
-                        viewMode === 'list' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
+                        isListActive ? 'bg-blue-600 text-white shadow-md' : 'text-gray-600 hover:bg-gray-100'
                     }`}
                 >
                     Danh sách
@@ -63,9 +74,12 @@ export default function Header({
 
                 {isolatedCount > 0 && (
                     <button
-                        onClick={() => onFilterModeChange(filterMode === 'isolated' ? 'all' : 'isolated')}
+                        onClick={() => {
+                            onViewModeChange('list'); // Buộc chuyển về list
+                            onFilterModeChange('isolated'); // Buộc chuyển sang chế độ lọc isolated
+                        }}
                         className={`whitespace-nowrap flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all ${
-                            filterMode === 'isolated' ? 'bg-amber-500 text-white' : 'bg-amber-100 text-amber-700'
+                            isIsolatedActive ? 'bg-amber-500 text-white' : 'bg-amber-100 text-amber-700'
                         }`}
                     >
                         <span className="w-2 h-2 rounded-full bg-current animate-pulse"></span>

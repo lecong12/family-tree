@@ -141,9 +141,16 @@ export default function PersonsView() {
             <Header 
                 user={user} isAdmin={isAdmin} onLogout={logout}
                 isolatedCount={isolatedCount} 
-                filterMode={filterMode} onFilterModeChange={(m: any) => { setFilterMode(m); setCurrentPage(1); }}
+                filterMode={filterMode} 
+                onFilterModeChange={(m: any) => { 
+                    setFilterMode(m); 
+                    setCurrentPage(1); 
+                }}
                 onOpenGuestCodeModal={() => setGuestCodeModalOpen(true)}
-                viewMode={viewMode} onViewModeChange={setViewMode}
+                viewMode={viewMode} 
+                onViewModeChange={(v) => {
+                    setViewMode(v);
+                }}
             />
 
             {viewMode === 'list' && (
