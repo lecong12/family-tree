@@ -51,7 +51,8 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
                 setResults(data);
                 setShowDropdown(true);
             } else {
-                console.error("Search failed with status:", res.status);
+                const errorText = await res.text();
+                console.error("Search failed with status:", res.status, errorText);
                 setResults([]);
             }
         } catch (error) {
@@ -64,11 +65,6 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
 
     useEffect(() => {
         const searchTerm = query.trim();
-
-        if (searchTerm.length === 0) {
-            setResults([]);
-            return;
-        }
 
         const debounceSearch = setTimeout(() => {
             search(searchTerm);
