@@ -63,43 +63,64 @@ function PersonCard({ person, isRoot = false, onClick }: { person: Person; isRoo
     );
 }
 
-function FamilyNode({ family, personData, onPersonClick }: { family: FamilyUnit; personData: Record<string, Person>; onPersonClick: (person: Person) => void }) {
+function FamilyNode({ family, personData, onPersonClick }: { family: FamilyUnit; personData: Record<string, Person>; onPersonClick: (person: Person) => void; }) {
     const mainPerson = personData[family.user];
     if (!mainPerson) return null;
 
     const isMainMale = isMale(mainPerson);
 
+    // Hợp nhất tất cả con cái từ các mối quan hệ vợ chồng và con riêng
+    const allChildrenIds = [
+        ...(family.children || []),
+        ...family.spouses.flatMap(s => s.children || [])
+    ];
+    const uniqueChildren = [...new Set(allChildrenIds)]
+        .map(id => personData[id])
+        .filter((p): p is Person => Boolean(p));
+
     return (
-        <div className="flex items-start gap-4 bg-white p-4 rounded-lg shadow-sm border border-gray-100">
-            <div className="flex flex-col items-center">
-                <PersonCard person={mainPerson} isRoot={true} onClick={() => onPersonClick(mainPerson)} />
-                {/* Hiển thị đường nối xuống nếu có con riêng/con không xác định mẹ */}
-                {family.children && family.children.length > 0 && (
-                    <div className="w-[1px] h-4 bg-gray-300 mt-1"></div>
-                )}
+        <div className="inline-flex flex-col items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
+            {/* Hàng cha mẹ */}
+            <div className="flex items-start gap-4">
+                <div className="flex flex-col items-center">
+                    <PersonCard person={mainPerson} isRoot={true} onClick={() => onPersonClick(mainPerson)} />
+                </div>
+
+                {family.spouses.map((spouseRel, index) => {
+                    const spouse = personData[spouseRel.user.id];
+                    if (!spouse) return null;
+
+                    return (
+                        <div key={index} className="flex items-center gap-3">
+                            <div className="flex flex-col items-center justify-center relative px-1">
+                                <div className="w-8 h-8 relative flex items-center justify-center">
+                                    <div 
+                                        className="w-6 h-6 transform rotate-45 border border-gray-400 shadow-sm overflow-hidden"
+                                        style={{ background: 'linear-gradient(135deg, #3b82f6 50%, #ef4444 50%)' }}
+                                    ></div>
+                                    <span className="absolute text-[10px] font-bold text-white drop-shadow-md z-10">
+                                        {isMainMale ? `v${spouseRel.spouseOrder}` : `c${spouseRel.spouseOrder}`}
+                                    </span>
+                                </div>
+                            </div>
+                            <PersonCard person={spouse} onClick={() => onPersonClick(spouse)} />
+                        </div>
+                    );
+                })}
             </div>
 
-            {family.spouses.map((spouseRel, index) => {
-                const spouse = personData[spouseRel.user.id];
-                if (!spouse) return null;
-
-                return (
-                    <div key={index} className="flex items-center gap-3">
-                        <div className="flex flex-col items-center justify-center relative px-1">
-                            <div className="w-8 h-8 relative flex items-center justify-center">
-                                <div 
-                                    className="w-6 h-6 transform rotate-45 border border-gray-400 shadow-sm overflow-hidden"
-                                    style={{ background: 'linear-gradient(135deg, #3b82f6 50%, #ef4444 50%)' }}
-                                ></div>
-                                <span className="absolute text-[10px] font-bold text-white drop-shadow-md z-10">
-                                    {isMainMale ? `v${spouseRel.spouseOrder}` : `c${spouseRel.spouseOrder}`}
-                                </span>
-                            </div>
-                        </div>
-                        <PersonCard person={spouse} onClick={() => onPersonClick(spouse)} />
+            {/* Hàng con cái */}
+            {uniqueChildren.length > 0 && (
+                <div className="flex flex-col items-center w-full pt-4">
+                    {/* Đường nối từ cha mẹ xuống con cái */}
+                    <div className="w-px h-6 bg-gray-300 mb-4" />
+                    <div className="flex flex-wrap justify-center gap-x-6 gap-y-4">
+                        {uniqueChildren.map(child => (
+                            <PersonCard key={child._id} person={child} onClick={() => onPersonClick(child)} />
+                        ))}
                     </div>
-                );
-            })}
+                </div>
+            )}
         </div>
     );
 }
@@ -114,15 +135,15 @@ export default function GenerationalTree({ data, onPersonClick }: GenerationalTr
 
     return (
         <div className="p-8 overflow-auto min-h-full bg-gray-100" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"%23e0e0e0\" fill-opacity=\"0.4\" fill-rule=\"evenodd\"%3E%3Ccircle cx=\"3\" cy=\"3\" r=\"3\"/%3E%3Ccircle cx=\"13\" cy=\"13\" r=\"3\"/%3E%3C/g%3E%3C/svg%3E')" }}>
-            <div className="flex flex-col gap-12 min-w-max">
+            <div className="flex flex-col items-center gap-12 min-w-max">
                 {treeData.map((generation, genIndex) => (
-                    <div key={genIndex} className="relative flex items-start pl-28">
-                        <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10">
+                    <div key={genIndex} className="flex flex-col items-center gap-4 w-full">
+                        <div className="sticky top-4 z-10">
                             <div className="bg-yellow-200 border-2 border-yellow-300 text-red-600 font-bold px-3 py-1 rounded-md shadow-md uppercase tracking-wider text-sm">
                                 Thế hệ {genIndex + 1}
                             </div>
                         </div>
-                        <div className="flex-1 flex flex-wrap justify-center items-start gap-8 py-4 border-l-2 border-dashed border-gray-300 ml-4">
+                        <div className="flex flex-wrap justify-center items-start gap-8">
                             {generation.map((family, famIndex) => (
                                 <FamilyNode
                                     key={`${genIndex}-${famIndex}`}
