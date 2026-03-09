@@ -144,9 +144,6 @@ function TreeNode({
                     const spouse = personData[spouseRel.user.id];
                     if (!spouse) return null;
 
-                    // Đánh dấu spouse đã được hiển thị để tránh lặp lại ở các nhánh con
-                    renderedIds.add(spouse._id);
-
                     return (
                         <div key={index} className="flex items-center gap-3">
                             {/* Icon kết hôn */}
