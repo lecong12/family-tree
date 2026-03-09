@@ -36,7 +36,11 @@ interface GenerationalTreeProps {
 
 // Helper Functions
 const isMale = (person: Person) => person.gender === 0 || person.gender === 'MALE' || String(person.gender) === '0';
-const getYear = (dateStr?: string) => dateStr ? new Date(dateStr).getFullYear() : '';
+const getYear = (dateStr?: string) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    return isNaN(date.getFullYear()) ? '' : date.getFullYear();
+};
 
 // Sub-components
 function PersonCard({ person, isRoot = false, onClick }: { person: Person; isRoot?: boolean; onClick: () => void }) {
@@ -52,7 +56,19 @@ function PersonCard({ person, isRoot = false, onClick }: { person: Person; isRoo
                     src={person.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}`} 
                     alt={person.name}
                     className="w-full h-full object-cover rounded-full"
-                    onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}`; }}
+                    onError={(e) => { 
+                        const target = e.target as HTMLImageElement;
+                        const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=random`;
+                        // Tránh vòng lặp vô hạn nếu fallback cũng lỗi
+                        if (target.src !== fallback) {
+                            target.src = fallback;
+                        } else {
+                            target.style.display = 'none'; // Ẩn ảnh nếu lỗi hẳn
+                            if (target.parentElement) {
+                                target.parentElement.style.backgroundColor = '#e5e7eb'; // Màu nền xám thay thế
+                            }
+                        }
+                    }}
                 />
             </div>
             <div className={`text-center px-2 py-1 rounded shadow-sm border border-gray-100 w-full z-10 ${bgColor}`}>
@@ -130,12 +146,19 @@ export default function GenerationalTree({ data, onPersonClick }: GenerationalTr
     const { personData, treeData } = data;
 
     if (!treeData || treeData.length === 0) {
-        return <div className="p-4 text-center text-gray-500">Chưa có dữ liệu gia phả để hiển thị.</div>;
+        return (
+            <div className="flex items-center justify-center h-[calc(100vh-3.5rem)] bg-gray-50">
+                <div className="text-center text-gray-500">
+                    <p className="text-lg font-medium">Chưa có dữ liệu gia phả</p>
+                    <p className="text-sm mt-2">Hãy thêm thành viên và mối quan hệ để hiển thị cây.</p>
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div className="p-8 overflow-auto min-h-full bg-gray-100" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"%23e0e0e0\" fill-opacity=\"0.4\" fill-rule=\"evenodd\"%3E%3Ccircle cx=\"3\" cy=\"3\" r=\"3\"/%3E%3Ccircle cx=\"13\" cy=\"13\" r=\"3\"/%3E%3C/g%3E%3C/svg%3E')" }}>
-            <div className="flex flex-col items-center gap-12 min-w-max">
+        <div className="p-8 overflow-auto w-full h-[calc(100vh-3.5rem)] bg-gray-100" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"%23e0e0e0\" fill-opacity=\"0.4\" fill-rule=\"evenodd\"%3E%3Ccircle cx=\"3\" cy=\"3\" r=\"3\"/%3E%3Ccircle cx=\"13\" cy=\"13\" r=\"3\"/%3E%3C/g%3E%3C/svg%3E')" }}>
+            <div className="flex flex-col items-center gap-12 min-w-max pb-20">
                 {treeData.map((generation, genIndex) => (
                     <div key={genIndex} className="flex flex-col items-center gap-4 w-full">
                         <div className="sticky top-4 z-10">
