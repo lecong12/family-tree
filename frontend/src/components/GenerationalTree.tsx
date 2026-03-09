@@ -95,9 +95,9 @@ function FamilyNode({ family, personData, onPersonClick }: { family: FamilyUnit;
         .filter((p): p is Person => Boolean(p));
 
     return (
-        <div className="inline-flex flex-col items-center gap-4 p-4 bg-white rounded-lg shadow-sm border border-gray-100">
+        <div className="inline-flex flex-col items-center p-4 bg-white rounded-lg shadow-sm border border-gray-100">
             {/* Hàng cha mẹ */}
-            <div className="flex items-start gap-4">
+            <div className="flex items-start gap-4 z-10">
                 <div className="flex flex-col items-center">
                     <PersonCard person={mainPerson} isRoot={true} onClick={() => onPersonClick(mainPerson)} />
                 </div>
@@ -127,13 +127,33 @@ function FamilyNode({ family, personData, onPersonClick }: { family: FamilyUnit;
 
             {/* Hàng con cái */}
             {uniqueChildren.length > 0 && (
-                <div className="flex flex-col items-center w-full pt-4">
-                    {/* Đường nối từ cha mẹ xuống con cái */}
-                    <div className="w-px h-6 bg-gray-300 mb-4" />
-                    <div className="flex flex-wrap justify-center gap-x-6 gap-y-4">
-                        {uniqueChildren.map(child => (
-                            <PersonCard key={child._id} person={child} onClick={() => onPersonClick(child)} />
-                        ))}
+                <div className="flex flex-col items-center w-full">
+                    {/* Đường nối từ cha mẹ xuống */}
+                    <div className="w-px h-6 bg-gray-300"></div>
+                    
+                    <div className="flex justify-center gap-6">
+                        {uniqueChildren.map((child, index) => {
+                            const isFirst = index === 0;
+                            const isLast = index === uniqueChildren.length - 1;
+                            const isOnly = uniqueChildren.length === 1;
+
+                            return (
+                                <div key={child._id} className="flex flex-col items-center relative pt-6">
+                                    {/* Vẽ đường nối ngang và dọc */}
+                                    {!isOnly && (
+                                        <div className="absolute top-0 left-0 right-0 h-6 flex">
+                                            <div className={`w-1/2 h-full ${isFirst ? '' : 'border-t border-gray-300'}`}></div>
+                                            <div className={`w-1/2 h-full border-l border-gray-300 ${isLast ? '' : 'border-t border-gray-300'}`}></div>
+                                        </div>
+                                    )}
+                                    {isOnly && (
+                                        <div className="absolute top-0 w-px h-6 bg-gray-300"></div>
+                                    )}
+                                    
+                                    <PersonCard person={child} onClick={() => onPersonClick(child)} />
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             )}
