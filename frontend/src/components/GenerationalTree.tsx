@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 
 // Interfaces
 interface Person {
@@ -50,6 +50,7 @@ function PersonCard({ person, isRoot = false, onClick }: { person: Person; isRoo
     const bgColor = isRoot ? (isMaleGender ? 'bg-blue-50' : 'bg-red-50') : 'bg-white';
 
     return (
+        <div className="flex flex-col items-center gap-2 w-28 relative group cursor-pointer z-20" onClick={onClick}>
         <div className="flex flex-col items-center gap-2 w-28 relative group cursor-pointer" onClick={onClick}>
             <div className={`w-16 h-16 rounded-full border-2 p-0.5 ${borderColor} overflow-hidden shadow-md transition-transform hover:scale-110 bg-white`}>
                 <img 
@@ -72,6 +73,7 @@ function PersonCard({ person, isRoot = false, onClick }: { person: Person; isRoo
                 />
             </div>
             <div className={`text-center px-2 py-1 rounded shadow-sm border border-gray-100 w-full z-10 ${bgColor}`}>
+            <div className={`text-center px-2 py-1 rounded shadow-sm border border-gray-100 w-full ${bgColor}`}>
                 <p className={`font-bold text-xs truncate ${textColor}`}>{person.name}</p>
                 <p className="text-[10px] text-gray-500">{getYear(person.birth)} {person.death ? `- ${getYear(person.death)}` : ''}</p>
             </div>
@@ -79,44 +81,58 @@ function PersonCard({ person, isRoot = false, onClick }: { person: Person; isRoo
     );
 }
 
-function FamilyNode({ family, personData, onPersonClick }: { family: FamilyUnit; personData: Record<string, Person>; onPersonClick: (person: Person) => void; }) {
+function TreeNode({ 
+    family, 
+    personData, 
+    onPersonClick, 
+    familyMap,
+    renderedIds 
+}: { 
+    family: FamilyUnit; 
+    personData: Record<string, Person>; 
+    onPersonClick: (person: Person) => void;
+    familyMap: Map<string, FamilyUnit>;
+    renderedIds: Set<string>;
+}) {
     const mainPerson = personData[family.user];
     if (!mainPerson) return null;
 
+    // Kiểm tra nếu gia đình này đã được vẽ ở nhánh khác để tránh lặp vô hạn
+    if (renderedIds.has(family.user)) {
+        return (
+            <div className="flex flex-col items-center opacity-50">
+                <PersonCard person={mainPerson} onClick={() => onPersonClick(mainPerson)} />
+                <div className="mt-1 text-[10px] text-gray-400 font-medium">(Đã hiển thị)</div>
+            </div>
+        );
+    }
+    renderedIds.add(family.user);
+
     const isMainMale = isMale(mainPerson);
 
-    // Hợp nhất tất cả con cái từ các mối quan hệ vợ chồng và con riêng
+    // Hợp nhất tất cả con cái
     const allChildrenIds = [
         ...(family.children || []),
         ...family.spouses.flatMap(s => s.children || [])
     ];
-    const uniqueChildren = [...new Set(allChildrenIds)]
-        .map(id => personData[id])
-        .filter((p): p is Person => Boolean(p));
+    const uniqueChildrenIds = [...new Set(allChildrenIds)];
 
     return (
-        <div className="inline-flex flex-col items-center p-4 bg-white rounded-lg shadow-sm border border-gray-100">
-            {/* Hàng cha mẹ */}
-            <div className="flex items-start gap-4 z-10">
-                <div className="flex flex-col items-center">
-                    <PersonCard person={mainPerson} isRoot={true} onClick={() => onPersonClick(mainPerson)} />
-                </div>
-
+        <div className="flex flex-col items-center">
+            {/* Hàng Cha Mẹ */}
+            <div className="flex items-start gap-4 p-3 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-200 relative z-10">
+            <div className="flex items-start gap-4 relative">
+                <PersonCard person={mainPerson} isRoot={true} onClick={() => onPersonClick(mainPerson)} />
+                
                 {family.spouses.map((spouseRel, index) => {
                     const spouse = personData[spouseRel.user.id];
                     if (!spouse) return null;
-
                     return (
                         <div key={index} className="flex items-center gap-3">
+                            {/* Icon kết hôn */}
                             <div className="flex flex-col items-center justify-center relative px-1">
-                                <div className="w-8 h-8 relative flex items-center justify-center">
-                                    <div 
-                                        className="w-6 h-6 transform rotate-45 border border-gray-400 shadow-sm overflow-hidden"
-                                        style={{ background: 'linear-gradient(135deg, #3b82f6 50%, #ef4444 50%)' }}
-                                    ></div>
-                                    <span className="absolute text-[10px] font-bold text-white drop-shadow-md z-10">
-                                        {isMainMale ? `v${spouseRel.spouseOrder}` : `c${spouseRel.spouseOrder}`}
-                                    </span>
+                                <div className="w-6 h-6 relative flex items-center justify-center">
+                                    <div className="w-4 h-4 transform rotate-45 border border-gray-300 bg-pink-50 shadow-sm"></div>
                                 </div>
                             </div>
                             <PersonCard person={spouse} onClick={() => onPersonClick(spouse)} />
@@ -125,32 +141,50 @@ function FamilyNode({ family, personData, onPersonClick }: { family: FamilyUnit;
                 })}
             </div>
 
-            {/* Hàng con cái */}
-            {uniqueChildren.length > 0 && (
-                <div className="flex flex-col items-center w-full">
-                    {/* Đường nối từ cha mẹ xuống */}
-                    <div className="w-px h-6 bg-gray-300"></div>
+            {/* Hàng Con Cái */}
+            {uniqueChildrenIds.length > 0 && (
+                <div className="flex flex-col items-center">
+                    {/* Đường nối dọc từ cha mẹ xuống */}
+                    <div className="w-px h-8 bg-gray-300"></div>
                     
-                    <div className="flex justify-center gap-6">
-                        {uniqueChildren.map((child, index) => {
+                    <div className="flex justify-center items-start">
+                        {uniqueChildrenIds.map((childId, index) => {
+                            const childPerson = personData[childId];
+                            if (!childPerson) return null;
+
+                            const childFamily = familyMap.get(childId);
                             const isFirst = index === 0;
-                            const isLast = index === uniqueChildren.length - 1;
-                            const isOnly = uniqueChildren.length === 1;
+                            const isLast = index === uniqueChildrenIds.length - 1;
+                            const isOnly = uniqueChildrenIds.length === 1;
 
                             return (
-                                <div key={child._id} className="flex flex-col items-center relative pt-6">
-                                    {/* Vẽ đường nối ngang và dọc */}
+                                <div key={childId} className="flex flex-col items-center relative px-4">
+                                    {/* Vẽ các đường nối ngang/dọc tạo hình cây */}
                                     {!isOnly && (
-                                        <div className="absolute top-0 left-0 right-0 h-6 flex">
-                                            <div className={`w-1/2 h-full ${isFirst ? '' : 'border-t border-gray-300'}`}></div>
-                                            <div className={`w-1/2 h-full border-l border-gray-300 ${isLast ? '' : 'border-t border-gray-300'}`}></div>
-                                        </div>
+                                        <>
+                                            <div className={`absolute top-0 left-0 w-1/2 h-8 border-t-2 border-gray-300 ${isFirst ? 'invisible' : ''}`}></div>
+                                            <div className={`absolute top-0 right-0 w-1/2 h-8 border-t-2 border-gray-300 ${isLast ? 'invisible' : ''}`}></div>
+                                        </>
                                     )}
-                                    {isOnly && (
-                                        <div className="absolute top-0 w-px h-6 bg-gray-300"></div>
-                                    )}
+                                    <div className="absolute top-0 w-px h-8 bg-gray-300"></div>
                                     
-                                    <PersonCard person={child} onClick={() => onPersonClick(child)} />
+                                    {/* Khoảng cách đệm */}
+                                    <div className="h-8"></div>
+
+                                    {/* Render Node con (Đệ quy hoặc Leaf) */}
+                                    <div>
+                                        {childFamily ? (
+                                            <TreeNode 
+                                                family={childFamily} 
+                                                personData={personData} 
+                                                onPersonClick={onPersonClick} 
+                                                familyMap={familyMap}
+                                                renderedIds={renderedIds}
+                                            />
+                                        ) : (
+                                            <PersonCard person={childPerson} onClick={() => onPersonClick(childPerson)} />
+                                        )}
+                                    </div>
                                 </div>
                             );
                         })}
@@ -165,39 +199,52 @@ function FamilyNode({ family, personData, onPersonClick }: { family: FamilyUnit;
 export default function GenerationalTree({ data, onPersonClick }: GenerationalTreeProps) {
     const { personData, treeData } = data;
 
+    // Chuẩn bị dữ liệu: Map và Root Families
+    const { familyMap, rootFamilies } = useMemo(() => {
+        if (!treeData || treeData.length === 0) return { familyMap: new Map(), rootFamilies: [] };
+        
+        const map = new Map<string, FamilyUnit>();
+        treeData.forEach(gen => {
+            gen.forEach(family => {
+                map.set(family.user, family);
+            });
+        });
+
+        // Thế hệ đầu tiên trong mảng treeData được coi là gốc
+        const roots = treeData[0] || [];
+        return { familyMap: map, rootFamilies: roots };
+    }, [treeData]);
+
     if (!treeData || treeData.length === 0) {
         return (
             <div className="flex items-center justify-center h-[calc(100vh-3.5rem)] bg-gray-50">
                 <div className="text-center text-gray-500">
                     <p className="text-lg font-medium">Chưa có dữ liệu gia phả</p>
-                    <p className="text-sm mt-2">Hãy thêm thành viên và mối quan hệ để hiển thị cây.</p>
+                    <p className="text-sm mt-2">Hãy thêm thành viên và mối quan hệ để hiển thị.</p>
                 </div>
             </div>
         );
     }
 
+    // Set theo dõi các node đã render trong lần vẽ này
+    const renderedIds = new Set<string>();
+
     return (
-        <div className="p-8 overflow-auto w-full h-[calc(100vh-3.5rem)] bg-gray-100" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg width=\"20\" height=\"20\" viewBox=\"0 0 20 20\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"%23e0e0e0\" fill-opacity=\"0.4\" fill-rule=\"evenodd\"%3E%3Ccircle cx=\"3\" cy=\"3\" r=\"3\"/%3E%3Ccircle cx=\"13\" cy=\"13\" r=\"3\"/%3E%3C/g%3E%3C/svg%3E')" }}>
-            <div className="flex flex-col items-center gap-12 min-w-max pb-20">
-                {treeData.map((generation, genIndex) => (
-                    <div key={genIndex} className="flex flex-col items-center gap-4 w-full">
-                        <div className="sticky top-4 z-10">
-                            <div className="bg-yellow-200 border-2 border-yellow-300 text-red-600 font-bold px-3 py-1 rounded-md shadow-md uppercase tracking-wider text-sm">
-                                Thế hệ {genIndex + 1}
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap justify-center items-start gap-8">
-                            {generation.map((family, famIndex) => (
-                                <FamilyNode
-                                    key={`${genIndex}-${famIndex}`}
-                                    family={family}
-                                    personData={personData}
-                                    onPersonClick={onPersonClick}
-                                />
-                            ))}
-                        </div>
-                    </div>
-                ))}
+        <div className="w-full h-[calc(100vh-3.5rem)] bg-gray-100 overflow-auto cursor-grab active:cursor-grabbing" 
+             style={{ backgroundImage: "radial-gradient(#cbd5e1 1px, transparent 1px)", backgroundSize: "20px 20px" }}>
+            <div className="min-w-max min-h-full p-20 flex justify-center items-start">
+                <div className="flex gap-16">
+                    {rootFamilies.map(family => (
+                        <TreeNode
+                            key={family.user}
+                            family={family}
+                            personData={personData}
+                            onPersonClick={onPersonClick}
+                            familyMap={familyMap}
+                            renderedIds={renderedIds}
+                        />
+                    ))}
+                </div>
             </div>
         </div>
     );
