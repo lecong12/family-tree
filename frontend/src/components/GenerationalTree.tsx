@@ -32,6 +32,7 @@ interface TreeData {
 interface GenerationalTreeProps {
     data: TreeData;
     onPersonClick: (person: Person) => void;
+    focusedPersonId?: string | null;
 }
 
 // Helper Functions
@@ -50,7 +51,7 @@ function PersonCard({ person, isRoot = false, onClick }: { person: Person; isRoo
     const bgColor = isRoot ? (isMaleGender ? 'bg-blue-50' : 'bg-red-50') : 'bg-white';
 
     return (
-        <div className="flex flex-col items-center gap-2 w-28 relative group cursor-pointer" onClick={onClick}>
+        <div data-person-id={person._id} className="flex flex-col items-center gap-2 w-28 relative group cursor-pointer" onClick={onClick}>
             <div className={`w-16 h-16 rounded-full border-2 p-0.5 ${borderColor} overflow-hidden shadow-md transition-transform hover:scale-110 bg-white`}>
                 <img 
                     src={person.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}`} 
@@ -108,6 +109,11 @@ function TreeNode({
 
     const isMainMale = isMale(mainPerson);
 
+    // Lọc danh sách vợ/chồng để tránh trùng lặp (nếu dữ liệu backend trả về bị dư)
+    const uniqueSpouses = family.spouses.filter((spouse, index, self) => 
+        index === self.findIndex((t) => t.user.id === spouse.user.id)
+    );
+
     // Hợp nhất tất cả con cái
     const allChildrenIds = [
         ...(family.children || []),
@@ -119,11 +125,27 @@ function TreeNode({
         <div className="flex flex-col items-center">
             {/* Hàng Cha Mẹ */}
             <div className="flex items-start gap-4 relative">
+                {/* Spacer (ẩn) để cân bằng layout: Giúp MainPerson luôn nằm chính giữa, 
+                    từ đó đường nối xuống con cái sẽ xuất phát từ MainPerson (theo huyết thống) 
+                    thay vì từ giữa cặp vợ chồng. */}
+                {uniqueSpouses.map((_, index) => (
+                    <div key={`spacer-${index}`} className="flex items-center gap-3 invisible" aria-hidden="true">
+                        <div className="flex flex-col items-center justify-center relative px-1">
+                            <div className="w-6 h-6"></div>
+                        </div>
+                        <div className="w-28"></div>
+                    </div>
+                ))}
+
                 <PersonCard person={mainPerson} isRoot={true} onClick={() => onPersonClick(mainPerson)} />
                 
-                {family.spouses.map((spouseRel, index) => {
+                {uniqueSpouses.map((spouseRel, index) => {
                     const spouse = personData[spouseRel.user.id];
                     if (!spouse) return null;
+
+                    // Đánh dấu spouse đã được hiển thị để tránh lặp lại ở các nhánh con
+                    renderedIds.add(spouse._id);
+
                     return (
                         <div key={index} className="flex items-center gap-3">
                             {/* Icon kết hôn */}
@@ -193,8 +215,29 @@ function TreeNode({
 }
 
 // Main Component
-export default function GenerationalTree({ data, onPersonClick }: GenerationalTreeProps) {
+export default function GenerationalTree({ data, onPersonClick, focusedPersonId }: GenerationalTreeProps) {
     const { personData, treeData } = data;
+
+    useEffect(() => {
+        if (focusedPersonId) {
+            const element = document.querySelector(`[data-person-id="${focusedPersonId}"]`);
+            if (element) {
+                element.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                    inline: 'center',
+                });
+
+                // Add a temporary highlight effect
+                element.classList.add('ring-4', 'ring-offset-4', 'ring-yellow-400', 'rounded-lg', 'transition-all', 'duration-300');
+                const timer = setTimeout(() => {
+                    element.classList.remove('ring-4', 'ring-offset-4', 'ring-yellow-400', 'rounded-lg');
+                }, 2500); // Highlight for 2.5 seconds
+
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [focusedPersonId]);
 
     // Chuẩn bị dữ liệu: Map và Root Families
     const { familyMap, rootFamilies } = useMemo(() => {
