@@ -9,7 +9,7 @@ import { join } from 'path';
 async function seed() {
     const app = await NestFactory.createApplicationContext(AppModule);
 
-    // Lấy trực tiếp Model để ghi đè mọi quy tắc của Service
+    // Lấy Models
     const personModel = app.get<Model<any>>(getModelToken('Person'));
     const spouseModel = app.get<Model<any>>(getModelToken('Spouse'));
     const parentChildModel = app.get<Model<any>>(getModelToken('ParentChild'));
@@ -24,38 +24,49 @@ async function seed() {
 
     try {
         const fileContent = fs.readFileSync(filePath, 'utf-8');
-        const records: any[] = parse(fileContent, { columns: true, skip_empty_lines: true, trim: true, bom: true });
+        const records: any[] = parse(fileContent, { 
+            columns: true, 
+            skip_empty_lines: true, 
+            trim: true, 
+            bom: true 
+        });
 
         const personMap = new Map(); 
         const spouseMap = new Map(); 
 
-        console.log('🚀 BƯỚC 2: NẠP NHÂN VẬT & AVATAR...');
+        console.log('🚀 BƯỚC 2: NẠP NHÂN VẬT & TẠO AVATAR TỰ ĐỘNG...');
         for (const row of records) {
             const id = String(row.id).trim();
             if (!id) continue;
 
             const gen = parseInt(row.generation) || 1;
+            
+            // Xử lý giới tính thông minh hơn (nhận diện cả tiếng Việt và mã số)
             const genderRaw = String(row.gender).trim().toLowerCase();
-            const isMale = (genderRaw === 'nam' || genderRaw === '0' || genderRaw === 'male');
+            const isMale = (
+                genderRaw === 'nam' || 
+                genderRaw === '0' || 
+                genderRaw === 'male' || 
+                genderRaw === 'm'
+            );
 
-            // Fix Avatar: Nam theo nam, Nữ theo nữ chuẩn 100%
+            // Logic Avatar: Nam Xanh (#0D8ABC) - Nữ Hồng (#E91E63)
             let avatarUrl = row.avatar ? String(row.avatar).trim() : '';
 
             if (!avatarUrl) {
-                avatarUrl = isMale 
-                    ? `https://ui-avatars.com/api/?name=${encodeURIComponent(row.full_name)}&background=0D8ABC&color=fff&size=128`
-                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(row.full_name)}&background=E91E63&color=fff&size=128`;
+                const bgColor = isMale ? '0D8ABC' : 'E91E63';
+                // Sử dụng UI-Avatars để tạo hình mặt người dựa trên Tên
+                avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(row.full_name)}&background=${bgColor}&color=fff&size=128&bold=true&rounded=true`;
             }
 
-            // Tạo trực tiếp bằng Model để lách lỗi 409
             const pId = new Types.ObjectId();
             await personModel.create({
                 _id: pId,
                 cccd: id.padStart(10, '0'),
                 name: row.full_name,
-                gender: isMale ? 0 : 1, // 0: Nam, 1: Nữ
+                gender: isMale ? 0 : 1, // Lưu 0 cho Nam, 1 cho Nữ
                 birth: new Date(1800 + (gen * 25), 0, 1),
-                avatar: avatarUrl,
+                avatar: avatarUrl, // Đảm bảo trường này khớp với Frontend
                 isDead: row.is_live === '0',
                 address: row.address || "",
                 desc: isMale ? `Thế hệ thứ ${gen}` : `Thành viên nữ`,
@@ -63,7 +74,7 @@ async function seed() {
             personMap.set(id, { _id: pId, name: row.full_name });
         }
 
-        console.log('💍 BƯỚC 3: THIẾT LẬP VỢ CHỒNG (GHI ĐÈ TRỰC TIẾP DB)...');
+        console.log('💍 BƯỚC 3: THIẾT LẬP VỢ CHỒNG...');
         const husbandTrack = new Map<string, number>();
 
         for (const row of records) {
@@ -79,7 +90,6 @@ async function seed() {
                 if (husband && wife) {
                     let orderToUse = (husbandTrack.get(husbandId) || 0) + 1;
                     
-                    // Ghi trực tiếp vào Model - Không thông qua Service để tránh lỗi Conflict 409
                     const spouse = await spouseModel.create({
                         husband: husband._id,
                         wife: wife._id,
@@ -87,7 +97,7 @@ async function seed() {
                         wifeOrder: orderToUse,
                     });
 
-                    // [2026-03-05] Cập nhật mô tả quan hệ dựa trên thứ tự vừa gán
+                    // Cập nhật mô tả quan hệ vợ chồng
                     await personModel.updateOne(
                         { _id: wife._id },
                         { desc: orderToUse === 1 ? "Chính thất" : `Thứ thất (Vợ ${orderToUse})` }
@@ -126,7 +136,7 @@ async function seed() {
         }
 
         console.log('--------------------------------------------------');
-        console.log(`✅ THÀNH CÔNG RỰC RỠ! ĐÃ NỐI ${connectCount} CON CÁI.`);
+        console.log(`✅ HOÀN TẤT: ĐÃ KẾT NỐI ${connectCount} MỐI QUAN HỆ.`);
         console.log('--------------------------------------------------');
 
     } catch (error) {
