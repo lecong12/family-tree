@@ -117,6 +117,10 @@ function TreeNode({
     // Sắp xếp theo thứ tự kết hôn (spouseOrder)
     uniqueSpouses.sort((a, b) => a.spouseOrder - b.spouseOrder);
 
+    // Collect all children IDs that are already handled by spouses to find orphans
+    const spouseChildrenIds = new Set(uniqueSpouses.flatMap(s => s.children || []));
+    const orphanChildrenIds = (family.children || []).filter(id => !spouseChildrenIds.has(id));
+
     // 2. Phân chia Vợ/Chồng sang Trái/Phải
     // Logic: Nếu chỉ có 1 vợ -> Để bên Phải (chuẩn H-W).
     // Nếu đa thê: Vợ 1 (index 0) -> Trái, Vợ 2 (index 1) -> Phải, xen kẽ...
@@ -138,9 +142,6 @@ function TreeNode({
     const renderSpouseBranch = (spouseRel: SpouseNode, side: 'left' | 'right') => {
         const spouse = personData[spouseRel.user.id];
         if (!spouse) return null;
-
-        // Đánh dấu đã vẽ
-        renderedIds.add(spouse._id);
 
         const childrenIds = spouseRel.children || [];
 
@@ -231,6 +232,39 @@ function TreeNode({
                 <div className="mx-4 z-10">
                     <PersonCard person={mainPerson} isRoot={true} onClick={() => onPersonClick(mainPerson)} />
                 </div>
+                
+                {/* Render Orphan Children (Children not linked to any spouse) */}
+                {orphanChildrenIds.length > 0 && (
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 flex flex-col items-center">
+                        <div className="w-px h-8 bg-gray-300"></div>
+                        <div className="flex justify-center gap-6">
+                            {orphanChildrenIds.map((childId, index) => {
+                                const childPerson = personData[childId];
+                                if (!childPerson) return null;
+                                const childFamily = familyMap.get(childId);
+                                
+                                return (
+                                    <div key={childId} className="flex flex-col items-center relative pt-4">
+                                        <div className="absolute top-0 w-px h-4 bg-gray-300"></div>
+                                        {/* Connectors for multiple orphans could be added here similar to spouse children */}
+                                        
+                                        {childFamily ? (
+                                            <TreeNode 
+                                                family={childFamily} 
+                                                personData={personData} 
+                                                onPersonClick={onPersonClick} 
+                                                familyMap={familyMap}
+                                                renderedIds={renderedIds}
+                                            />
+                                        ) : (
+                                            <PersonCard person={childPerson} onClick={() => onPersonClick(childPerson)} />
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
 
                 {/* Nhóm Vợ bên Phải */}
                 <div className="flex">
