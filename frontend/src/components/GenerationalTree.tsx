@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useEffect } from 'react';
+import { SearchBar } from './SearchBar';
 
 // Interfaces
 interface Person {
@@ -217,10 +218,12 @@ function TreeNode({
 // Main Component
 export default function GenerationalTree({ data, onPersonClick, focusedPersonId }: GenerationalTreeProps) {
     const { personData, treeData } = data;
+    const [internalFocusedId, setInternalFocusedId] = React.useState<string | null>(null);
 
     useEffect(() => {
-        if (focusedPersonId) {
-            const element = document.querySelector(`[data-person-id="${focusedPersonId}"]`);
+        const targetId = internalFocusedId || focusedPersonId;
+        if (targetId) {
+            const element = document.querySelector(`[data-person-id="${targetId}"]`);
             if (element) {
                 element.scrollIntoView({
                     behavior: 'smooth',
@@ -237,7 +240,7 @@ export default function GenerationalTree({ data, onPersonClick, focusedPersonId 
                 return () => clearTimeout(timer);
             }
         }
-    }, [focusedPersonId]);
+    }, [focusedPersonId, internalFocusedId]);
 
     // Chuẩn bị dữ liệu: Map và Root Families
     const { familyMap, rootFamilies } = useMemo(() => {
@@ -270,20 +273,25 @@ export default function GenerationalTree({ data, onPersonClick, focusedPersonId 
     const renderedIds = new Set<string>();
 
     return (
-        <div className="w-full h-[calc(100vh-3.5rem)] bg-gray-100 overflow-auto cursor-grab active:cursor-grabbing" 
-             style={{ backgroundImage: "radial-gradient(#cbd5e1 1px, transparent 1px)", backgroundSize: "20px 20px" }}>
-            <div className="min-w-max min-h-full p-20 flex justify-center items-start">
-                <div className="flex gap-16">
-                    {rootFamilies.map(family => (
-                        <TreeNode
-                            key={family.user}
-                            family={family}
-                            personData={personData}
-                            onPersonClick={onPersonClick}
-                            familyMap={familyMap}
-                            renderedIds={renderedIds}
-                        />
-                    ))}
+        <div className="relative w-full h-[calc(100vh-3.5rem)]">
+            {/* Search Bar đặt trực tiếp trên màn hình cây */}
+            <SearchBar onNodeSelect={setInternalFocusedId} />
+
+            <div className="w-full h-full bg-gray-100 overflow-auto cursor-grab active:cursor-grabbing" 
+                 style={{ backgroundImage: "radial-gradient(#cbd5e1 1px, transparent 1px)", backgroundSize: "20px 20px" }}>
+                <div className="min-w-max min-h-full p-20 flex justify-center items-start">
+                    <div className="flex gap-16">
+                        {rootFamilies.map(family => (
+                            <TreeNode
+                                key={family.user}
+                                family={family}
+                                personData={personData}
+                                onPersonClick={onPersonClick}
+                                familyMap={familyMap}
+                                renderedIds={renderedIds}
+                            />
+                        ))}
+                    </div>
                 </div>
             </div>
         </div>
