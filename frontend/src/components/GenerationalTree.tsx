@@ -111,9 +111,12 @@ function TreeNode({
     const isMainMale = isMale(mainPerson);
 
     // Lọc danh sách vợ/chồng để tránh trùng lặp (nếu dữ liệu backend trả về bị dư)
+    // 1. Lọc và Sắp xếp Vợ/Chồng
     const uniqueSpouses = family.spouses.filter((spouse, index, self) => 
         index === self.findIndex((t) => t.user.id === spouse.user.id)
     );
+    // Sắp xếp theo thứ tự kết hôn (spouseOrder)
+    uniqueSpouses.sort((a, b) => a.spouseOrder - b.spouseOrder);
 
     // Hợp nhất tất cả con cái
     const allChildrenIds = [
@@ -121,6 +124,11 @@ function TreeNode({
         ...family.spouses.flatMap(s => s.children || [])
     ];
     const uniqueChildrenIds = [...new Set(allChildrenIds)];
+    // 2. Phân chia Vợ/Chồng sang Trái/Phải
+    // Logic: Nếu chỉ có 1 vợ -> Để bên Phải (chuẩn H-W).
+    // Nếu đa thê: Vợ 1 (index 0) -> Trái, Vợ 2 (index 1) -> Phải, xen kẽ...
+    const leftSpouses: SpouseNode[] = [];
+    const rightSpouses: SpouseNode[] = [];
 
     return (
         <div className="flex flex-col items-center">
@@ -137,12 +145,26 @@ function TreeNode({
                         <div className="w-28"></div>
                     </div>
                 ))}
+    if (uniqueSpouses.length === 1) {
+        rightSpouses.push(uniqueSpouses[0]);
+    } else {
+        uniqueSpouses.forEach((s, i) => {
+            if (i % 2 === 0) leftSpouses.push(s); // Chẵn (0, 2...) -> Trái
+            else rightSpouses.push(s);            // Lẻ (1, 3...) -> Phải
+        });
+        // Đảo ngược bên trái để người có order nhỏ nhất (Vợ 1) nằm gần Chồng nhất
+        leftSpouses.reverse();
+    }
 
                 <PersonCard person={mainPerson} isRoot={true} onClick={() => onPersonClick(mainPerson)} />
                 
                 {uniqueSpouses.map((spouseRel, index) => {
                     const spouse = personData[spouseRel.user.id];
                     if (!spouse) return null;
+    // 3. Hàm render một nhánh Vợ/Chồng và Con cái của họ
+    const renderSpouseBranch = (spouseRel: SpouseNode, side: 'left' | 'right') => {
+        const spouse = personData[spouseRel.user.id];
+        if (!spouse) return null;
 
                     return (
                         <div key={index} className="flex items-center gap-3">
@@ -157,22 +179,47 @@ function TreeNode({
                     );
                 })}
             </div>
+        // Đánh dấu đã vẽ
+        renderedIds.add(spouse._id);
 
             {/* Hàng Con Cái */}
             {uniqueChildrenIds.length > 0 && (
                 <div className="flex flex-col items-center">
                     {/* Đường nối dọc từ cha mẹ xuống */}
                     <div className="w-px h-8 bg-gray-300"></div>
+        const childrenIds = spouseRel.children || [];
+
+        return (
+            <div key={spouse._id} className={`flex flex-col items-center ${side === 'left' ? 'mr-8' : 'ml-8'}`}>
+                {/* Hàng Vợ Chồng: Card + Dây nối */}
+                <div className={`flex items-center ${side === 'left' ? 'flex-row' : 'flex-row-reverse'}`}>
+                    {/* Thẻ Vợ/Chồng */}
+                    <PersonCard person={spouse} onClick={() => onPersonClick(spouse)} />
                     
                     <div className="flex justify-center items-start">
                         {uniqueChildrenIds.map((childId, index) => {
                             const childPerson = personData[childId];
                             if (!childPerson) return null;
+                    {/* Dây nối tới Chồng (MainPerson) */}
+                    <div className="relative flex items-center">
+                        {/* Thanh ngang nối Vợ - Chồng */}
+                        <div className="w-12 h-px bg-gray-400"></div>
+                        
+                        {/* Dây dọc xuống Con cái (xuất phát từ giữa thanh ngang) */}
+                        {childrenIds.length > 0 && (
+                            <div className="absolute left-1/2 top-0 w-px h-10 bg-gray-400 transform -translate-x-1/2"></div>
+                        )}
 
                             const childFamily = familyMap.get(childId);
                             const isFirst = index === 0;
                             const isLast = index === uniqueChildrenIds.length - 1;
                             const isOnly = uniqueChildrenIds.length === 1;
+                        {/* Icon hôn nhân (trái tim/chấm tròn) */}
+                        <div className="absolute left-1/2 top-0 transform -translate-x-1/2 -translate-y-1/2 z-10">
+                             <div className="w-1.5 h-1.5 rounded-full bg-gray-500"></div>
+                        </div>
+                    </div>
+                </div>
 
                             return (
                                 <div key={childId} className="flex flex-col items-center relative px-4">
@@ -187,6 +234,13 @@ function TreeNode({
                                     
                                     {/* Khoảng cách đệm */}
                                     <div className="h-8"></div>
+                {/* Hàng Con cái */}
+                {childrenIds.length > 0 && (
+                    <div className="flex flex-col items-center mt-10">
+                        <div className="flex justify-center items-start gap-6">
+                            {childrenIds.map((childId, index) => {
+                                const childPerson = personData[childId];
+                                if (!childPerson) return null;
 
                                     {/* Render Node con (Đệ quy hoặc Leaf) */}
                                     <div>
@@ -200,14 +254,71 @@ function TreeNode({
                                             />
                                         ) : (
                                             <PersonCard person={childPerson} onClick={() => onPersonClick(childPerson)} />
+                                const childFamily = familyMap.get(childId);
+                                const isFirst = index === 0;
+                                const isLast = index === childrenIds.length - 1;
+                                const isOnly = childrenIds.length === 1;
+
+                                return (
+                                    <div key={childId} className="flex flex-col items-center relative">
+                                        {/* Vẽ khung dây nối phía trên đầu con */}
+                                        {!isOnly && (
+                                            <>
+                                                <div className={`absolute top-0 left-0 w-1/2 h-6 border-t border-gray-400 ${isFirst ? 'invisible' : ''}`}></div>
+                                                <div className={`absolute top-0 right-0 w-1/2 h-6 border-t border-gray-400 ${isLast ? 'invisible' : ''}`}></div>
+                                            </>
                                         )}
+                                        <div className="absolute top-0 w-px h-6 bg-gray-400"></div>
+                                        
+                                        {/* Khoảng cách đệm để dây chạm vào đầu thẻ */}
+                                        <div className="h-6"></div>
+
+                                        {/* Đệ quy vẽ tiếp hoặc vẽ thẻ con */}
+                                        <div>
+                                            {childFamily ? (
+                                                <TreeNode 
+                                                    family={childFamily} 
+                                                    personData={personData} 
+                                                    onPersonClick={onPersonClick} 
+                                                    familyMap={familyMap}
+                                                    renderedIds={renderedIds}
+                                                />
+                                            ) : (
+                                                <PersonCard person={childPerson} onClick={() => onPersonClick(childPerson)} />
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             );
                         })}
+                                );
+                            })}
+                        </div>
                     </div>
+                )}
+            </div>
+        );
+    };
+
+    return (
+        <div className="flex flex-col items-center">
+            <div className="flex items-start">
+                {/* Nhóm Vợ bên Trái */}
+                <div className="flex">
+                    {leftSpouses.map(s => renderSpouseBranch(s, 'left'))}
                 </div>
             )}
+
+                {/* Người Chồng (Trung tâm) */}
+                <div className="mx-4 z-10">
+                    <PersonCard person={mainPerson} isRoot={true} onClick={() => onPersonClick(mainPerson)} />
+                </div>
+
+                {/* Nhóm Vợ bên Phải */}
+                <div className="flex">
+                    {rightSpouses.map(s => renderSpouseBranch(s, 'right'))}
+                </div>
+            </div>
         </div>
     );
 }
