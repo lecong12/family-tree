@@ -29,22 +29,9 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
             let baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:9999/api/v1';
             baseUrl = baseUrl.replace(/\/$/, '');
 
-            // Lấy token từ cookie hoặc localStorage
-            const token = Cookies.get('token') || localStorage.getItem('token');
-
-            // Nếu không có token, không thực hiện tìm kiếm để tránh lỗi 401 Unauthorized.
-            if (!token) {
-                console.error("Search aborted: No authentication token found.");
-                setResults([]);
-                return; // Dừng hàm nếu không có token
-            }
-
-            // Gọi API search. Endpoint đúng là /persons/search?name=...
-            const res = await fetch(`${baseUrl}/persons/search?name=${encodeURIComponent(searchTerm)}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
+            // Gọi API search công khai, không cần token.
+            // Endpoint đúng là /person/search (số ít)
+            const res = await fetch(`${baseUrl}/person/search?name=${encodeURIComponent(searchTerm)}`);
 
             if (res.ok) {
                 const data = await res.json();
