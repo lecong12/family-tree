@@ -50,7 +50,6 @@ function PersonCard({ person, isRoot = false, onClick }: { person: Person; isRoo
     const bgColor = isRoot ? (isMaleGender ? 'bg-blue-50' : 'bg-red-50') : 'bg-white';
 
     return (
-        <div className="flex flex-col items-center gap-2 w-28 relative group cursor-pointer z-20" onClick={onClick}>
         <div className="flex flex-col items-center gap-2 w-28 relative group cursor-pointer" onClick={onClick}>
             <div className={`w-16 h-16 rounded-full border-2 p-0.5 ${borderColor} overflow-hidden shadow-md transition-transform hover:scale-110 bg-white`}>
                 <img 
@@ -72,7 +71,6 @@ function PersonCard({ person, isRoot = false, onClick }: { person: Person; isRoo
                     }}
                 />
             </div>
-            <div className={`text-center px-2 py-1 rounded shadow-sm border border-gray-100 w-full z-10 ${bgColor}`}>
             <div className={`text-center px-2 py-1 rounded shadow-sm border border-gray-100 w-full ${bgColor}`}>
                 <p className={`font-bold text-xs truncate ${textColor}`}>{person.name}</p>
                 <p className="text-[10px] text-gray-500">{getYear(person.birth)} {person.death ? `- ${getYear(person.death)}` : ''}</p>
@@ -120,7 +118,6 @@ function TreeNode({
     return (
         <div className="flex flex-col items-center">
             {/* Hàng Cha Mẹ */}
-            <div className="flex items-start gap-4 p-3 bg-white/80 backdrop-blur-sm rounded-xl shadow-sm border border-gray-200 relative z-10">
             <div className="flex items-start gap-4 relative">
                 <PersonCard person={mainPerson} isRoot={true} onClick={() => onPersonClick(mainPerson)} />
                 
