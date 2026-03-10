@@ -117,15 +117,7 @@ function TreeNode({
     // Sắp xếp theo thứ tự kết hôn (spouseOrder)
     uniqueSpouses.sort((a, b) => a.spouseOrder - b.spouseOrder);
 
-    // Collect all children IDs that are already handled by spouses to find orphans
-    const spouseChildrenIds = new Set(uniqueSpouses.flatMap(s => s.children || []));
-    const orphanChildrenIds = (family.children || []).filter(id => !spouseChildrenIds.has(id));
-
-    // 2. Phân chia Vợ/Chồng sang Trái/Phải
-    // Logic: Nếu chỉ có 1 vợ -> Để bên Phải (chuẩn H-W).
-    // Nếu đa thê: Vợ 1 (index 0) -> Trái, Vợ 2 (index 1) -> Phải, xen kẽ...
-    const leftSpouses: SpouseNode[] = [];
-    const rightSpouses: SpouseNode[] = [];
+    // st rightSpouses: SpouseNode[] = [];
 
     if (uniqueSpouses.length === 1) {
         rightSpouses.push(uniqueSpouses[0]);
@@ -232,76 +224,10 @@ function TreeNode({
                 <div className="mx-4 z-10">
                     <PersonCard person={mainPerson} isRoot={true} onClick={() => onPersonClick(mainPerson)} />
                 </div>
-                
-                {/* Render Orphan Children (Children not linked to any spouse) */}
-                {orphanChildrenIds.length > 0 && (
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 flex flex-col items-center">
-                        <div className="w-px h-8 bg-gray-300"></div>
-                        <div className="flex justify-center gap-6">
-                            {orphanChildrenIds.map((childId, index) => {
-                                const childPerson = personData[childId];
-                                if (!childPerson) return null;
-                                const childFamily = familyMap.get(childId);
-                                
-                                return (
-                                    <div key={childId} className="flex flex-col items-center relative pt-4">
-                                        <div className="absolute top-0 w-px h-4 bg-gray-300"></div>
-                                        {/* Connectors for multiple orphans could be added here similar to spouse children */}
-                                        
-                                        {childFamily ? (
-                                            <TreeNode 
-                                                family={childFamily} 
-                                                personData={personData} 
-                                                onPersonClick={onPersonClick} 
-                                                familyMap={familyMap}
-                                                renderedIds={renderedIds}
-                                            />
-                                        ) : (
-                                            <PersonCard person={childPerson} onClick={() => onPersonClick(childPerson)} />
-                                        )}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
 
                 {/* Nhóm Vợ bên Phải */}
                 <div className="flex">
-                    {rightSpouses.map(s => renderSpouseBranch(s, 'right'))}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-// Main Component
-export default function GenerationalTree({ data, onPersonClick, focusedPersonId }: GenerationalTreeProps) {
-    const { personData, treeData } = data;
-    const [internalFocusedId, setInternalFocusedId] = React.useState<string | null>(null);
-
-    useEffect(() => {
-        const targetId = internalFocusedId || focusedPersonId;
-        if (targetId) {
-            const element = document.querySelector(`[data-person-id="${targetId}"]`);
-            if (element) {
-                element.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'center',
-                    inline: 'center',
-                });
-
-                // Add a temporary highlight effect
-                element.classList.add('ring-4', 'ring-offset-4', 'ring-yellow-400', 'rounded-lg', 'transition-all', 'duration-300');
-                const timer = setTimeout(() => {
-                    element.classList.remove('ring-4', 'ring-offset-4', 'ring-yellow-400', 'rounded-lg');
-                }, 2500); // Highlight for 2.5 seconds
-
-                return () => clearTimeout(timer);
-            }
-        }
-    }, [focusedPersonId, internalFocusedId]);
-
+    }, [focusedPnId, i
     // Chuẩn bị dữ liệu: Map và Root Families
     const { familyMap, rootFamilies } = useMemo(() => {
         if (!treeData || treeData.length === 0) return { familyMap: new Map(), rootFamilies: [] };

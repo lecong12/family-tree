@@ -14,9 +14,9 @@ interface CsvRow {
     avatar: string;
     is_live: string;
     address: string;
-    cha?: string;
-    me?: string;
-    vo_chong?: string;
+    pid?: string; // Partner ID (Husband)
+    fid?: string; // Father ID
+    mid?: string; // Mother ID
     [key: string]: any; // Cho phép các cột khác có thể tồn tại trong CSV
 }
 
@@ -37,8 +37,7 @@ async function seed() {
         const fileContent = fs.readFileSync(filePath, 'utf-8');
         const records: CsvRow[] = parse(fileContent, { columns: true, skip_empty_lines: true, trim: true, bom: true });
 
-        const personMap = new Map<string, { _id: Types.ObjectId, gender: number }>();
-        const parentSpouseMap = new Map<string, Types.ObjectId>();
+        const personMap = new Map<string, { _id: Types.ObjectId, name: string }>();
 
         console.log('🚀 Đang nạp nhân vật và gán Avatar...');
         for (const row of records) {
@@ -70,65 +69,74 @@ async function seed() {
                 address: row.address || "",
                 desc: isMale ? `Thế hệ thứ ${gen}` : `Thành viên nữ`,
             });
-            personMap.set(id, { _id: pId, gender: isMale ? 0 : 1 });
+            personMap.set(id, { _id: pId, name: row.full_name });
         }
 
         console.log('🔗 Đang kết nối quan hệ Vợ-Chồng...');
-        const createdSpouseLinks = new Set<string>();
+        const spouseMap = new Map<string, { _id: Types.ObjectId }>();
+        let spouseConnectCount = 0;
 
         for (const row of records) {
-            const personCsvId = String(row.id).trim();
-            const spouseCsvId = row.vo_chong ? String(row.vo_chong).trim() : null;
+            const husbandCsvId = row.pid ? String(row.pid).trim() : null;
+            const wifeCsvId = String(row.id).trim();
+            const genderRaw = String(row.gender).trim().toLowerCase();
+            const isFemale = (genderRaw === 'nữ' || genderRaw === '1' || genderRaw === 'female');
 
-            if (!personCsvId || !spouseCsvId) continue;
+            // Logic này dựa trên việc file CSV định nghĩa chồng trong dòng của vợ qua cột 'pid'
+            if (husbandCsvId && husbandCsvId !== '0' && isFemale) {
+                const husband = personMap.get(husbandCsvId);
+                const wife = personMap.get(wifeCsvId);
 
-            const person = personMap.get(personCsvId);
-            const spouse = personMap.get(spouseCsvId);
-
-            if (!person || !spouse) continue;
-
-            const linkKey = [person._id.toString(), spouse._id.toString()].sort().join('-');
-            if (createdSpouseLinks.has(linkKey)) continue;
-
-            const husbandId = person.gender === 0 ? person._id : spouse._id;
-            const wifeId = person.gender === 0 ? spouse._id : person._id;
-
-            const spouseDoc = await spouseModel.create({
-                husband: husbandId,
-                wife: wifeId,
-                husbandOrder: 1,
-                wifeOrder: 1,
-            });
-            
-            createdSpouseLinks.add(linkKey);
-            parentSpouseMap.set(linkKey, spouseDoc._id);
-        }
-
-        console.log('🔗 Đang kết nối quan hệ Cha-Mẹ-Con...');
-        for (const row of records) {
-            const childCsvId = String(row.id).trim();
-            const fatherCsvId = row.cha ? String(row.cha).trim() : null;
-            const motherCsvId = row.me ? String(row.me).trim() : null;
-
-            if (!childCsvId || !fatherCsvId || !motherCsvId) continue;
-
-            const child = personMap.get(childCsvId);
-            const father = personMap.get(fatherCsvId);
-            const mother = personMap.get(motherCsvId);
-
-            if (!child || !father || !mother) continue;
-
-            const parentLinkKey = [father._id.toString(), mother._id.toString()].sort().join('-');
-            const parentSpouseDocId = parentSpouseMap.get(parentLinkKey);
-
-            if (parentSpouseDocId) {
-                await parentChildModel.create({
-                    parent: parentSpouseDocId,
-                    child: child._id,
-                    isAdopted: false,
-                });
+                if (husband && wife) {
+                    const spouseDoc = await spouseModel.create({
+                        husband: husband._id,
+                        wife: wife._id,
+                        // Giả định thứ tự, có thể cần logic phức tạp hơn nếu có đa thê
+                        husbandOrder: 1,
+                        wifeOrder: 1, 
+                    });
+                    spouseMap.set(`${husbandCsvId}_${wifeCsvId}`, { _id: spouseDoc._id });
+                    spouseConnectCount++;
+                } else {
+                    const husbandName = husband ? husband.name : 'Không tìm thấy';
+                    const wifeName = wife ? wife.name : 'Không tìm thấy';
+                    console.warn(`⚠️  [VỢ-CHỒNG] Bỏ qua: Vợ '${wifeName}' (ID: ${wifeCsvId}) và Chồng '${husbandName}' (ID: ${husbandCsvId}) do không tìm thấy đủ thông tin trong map.`);
+                }
             }
         }
+        console.log(`    -> Đã tạo ${spouseConnectCount} liên kết vợ-chồng.`);
+
+        console.log('🔗 Đang kết nối quan hệ Cha-Mẹ-Con...');
+        let childConnectCount = 0;
+        for (const row of records) {
+            const childCsvId = String(row.id).trim();
+            const fatherCsvId = row.fid ? String(row.fid).trim() : null;
+            const motherCsvId = row.mid ? String(row.mid).trim() : null;
+
+            // Chỉ kết nối nếu có thông tin cha hoặc mẹ
+            if (childCsvId && (fatherCsvId || motherCsvId)) {
+                const child = personMap.get(childCsvId);
+                if (!child) continue;
+
+                // Tìm bản ghi hôn nhân của cha và mẹ
+                const parentSpouse = spouseMap.get(`${fatherCsvId}_${motherCsvId}`);
+
+                if (parentSpouse) {
+                    await parentChildModel.create({
+                        parent: parentSpouse._id,
+                        child: child._id,
+                        isAdopted: false,
+                    });
+                    childConnectCount++;
+                } else {
+                    const childName = child ? child.name : 'Không tìm thấy';
+                    const fatherName = personMap.get(fatherCsvId)?.name || 'Không rõ';
+                    const motherName = personMap.get(motherCsvId)?.name || 'Không rõ';
+                    console.warn(`⚠️  [CHA-CON] Bỏ qua: Không tìm thấy quan hệ hôn nhân của Cha '${fatherName}' (ID: ${fatherCsvId}) và Mẹ '${motherName}' (ID: ${motherCsvId}) để kết nối cho Con '${childName}' (ID: ${childCsvId}).`);
+                }
+            }
+        }
+        console.log(`    -> Đã kết nối ${childConnectCount} người con.`);
 
         console.log('✅ Hoàn tất nạp dữ liệu!');
 

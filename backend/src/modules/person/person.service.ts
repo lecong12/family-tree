@@ -172,13 +172,11 @@ export class PersonService {
         const tree: any = {
             user: personId,
             spouses: [],
-            children: [],
         };
 
         // 3. Dựng cấu trúc cây với dữ liệu đầy đủ
         for (const relationship of spouseRelationships) {
             const children = await this.parentChildService.findAllChildIdsByParent(relationship._id.toString());
-            children.forEach(childId => tree.children.push(childId));
             if (personId === relationship.husband.toString()) {
                 const wifeId = relationship.wife.toString();
                 tree.spouses.push({
@@ -199,8 +197,6 @@ export class PersonService {
                 });
             }
         }
-
-        tree.children = [...new Set(tree.children.map((c: any) => c.toString()))];
 
         return {
             personData: personInFamily,
@@ -237,9 +233,11 @@ export class PersonService {
                  generationResult.push(subFamily.tree);
  
                  // Thu thập ID của thế hệ tiếp theo (con cái)
-                 if (subFamily.tree.children && subFamily.tree.children.length > 0) {
-                     subFamily.tree.children.forEach((childId: any) => nextGenerationIds.add(childId));
-                 }
+                if (subFamily.tree.spouses && subFamily.tree.spouses.length > 0) {
+                    subFamily.tree.spouses.forEach(spouseRel => {
+                        spouseRel.children?.forEach((childId: any) => nextGenerationIds.add(childId.toString()));
+                    });
+                }
             }
 
             if (generationResult.length > 0) {
