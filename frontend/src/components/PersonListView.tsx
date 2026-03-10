@@ -32,7 +32,7 @@ const PersonListView: React.FC<PersonListViewProps> = ({ persons, filterMode }) 
                 >
                     <div className="flex-shrink-0">
                         <img 
-                            src={person.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=random`} 
+                            src={person.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=random&color=fff`} 
                             alt={person.name} 
                             className="w-12 h-12 rounded-full object-cover border border-gray-100"
                         />
@@ -40,7 +40,7 @@ const PersonListView: React.FC<PersonListViewProps> = ({ persons, filterMode }) 
                     <div className="flex-1 min-w-0">
                         <h3 className="text-sm font-medium text-gray-900 truncate">{person.name}</h3>
                         <p className="text-xs text-gray-500 truncate">
-                            {person.birthDate ? new Date(person.birthDate).toLocaleDateString('vi-VN') : 'N/A'}
+                            {person.birth ? new Date(person.birth).toLocaleDateString('vi-VN') : 'Chưa rõ năm sinh'}
                         </p>
                     </div>
                 </div>
