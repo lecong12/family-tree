@@ -86,27 +86,14 @@ function TreeNode({
     personData, 
     onPersonClick, 
     familyMap,
-    renderedIds 
 }: { 
     family: FamilyUnit; 
     personData: Record<string, Person>; 
     onPersonClick: (person: Person) => void;
     familyMap: Map<string, FamilyUnit>;
-    renderedIds: Set<string>;
 }) {
     const mainPerson = personData[family.user];
     if (!mainPerson) return null;
-
-    // Kiểm tra nếu gia đình này đã được vẽ ở nhánh khác để tránh lặp vô hạn
-    if (renderedIds.has(family.user)) {
-        return (
-            <div className="flex flex-col items-center opacity-50">
-                <PersonCard person={mainPerson} onClick={() => onPersonClick(mainPerson)} />
-                <div className="mt-1 text-[10px] text-gray-400 font-medium">(Đã hiển thị)</div>
-            </div>
-        );
-    }
-    renderedIds.add(family.user);
 
     const isMainMale = isMale(mainPerson);
 
@@ -202,7 +189,6 @@ function TreeNode({
                                                     personData={personData} 
                                                     onPersonClick={onPersonClick} 
                                                     familyMap={familyMap}
-                                                    renderedIds={renderedIds}
                                                 />
                                             ) : (
                                                 <PersonCard person={childPerson} onClick={() => onPersonClick(childPerson)} />
@@ -250,7 +236,6 @@ function TreeNode({
                                                     personData={personData} 
                                                     onPersonClick={onPersonClick} 
                                                     familyMap={familyMap}
-                                                    renderedIds={renderedIds}
                                                 />
                                             ) : (
                                                 <PersonCard person={childPerson} onClick={() => onPersonClick(childPerson)} />
@@ -326,9 +311,6 @@ export default function GenerationalTree({ data, onPersonClick, focusedPersonId 
         );
     }
 
-    // Set theo dõi các node đã render trong lần vẽ này
-    const renderedIds = new Set<string>();
-
     return (
         <div className="relative w-full h-[calc(100vh-3.5rem)]">
             {/* Search Bar đặt trực tiếp trên màn hình cây */}
@@ -345,7 +327,6 @@ export default function GenerationalTree({ data, onPersonClick, focusedPersonId 
                                 personData={personData}
                                 onPersonClick={onPersonClick}
                                 familyMap={familyMap}
-                                renderedIds={renderedIds}
                             />
                         ))}
                     </div>
