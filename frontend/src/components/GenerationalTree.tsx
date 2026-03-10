@@ -117,7 +117,13 @@ function TreeNode({
     // Sắp xếp theo thứ tự kết hôn (spouseOrder)
     uniqueSpouses.sort((a, b) => a.spouseOrder - b.spouseOrder);
 
-    // st rightSpouses: SpouseNode[] = [];
+    // Tìm con "mồ côi" (không thuộc về cuộc hôn nhân nào được liệt kê)
+    const spouseChildrenIds = new Set(uniqueSpouses.flatMap(s => s.children || []));
+    const orphanChildrenIds = (family.children || []).filter(id => !spouseChildrenIds.has(id));
+
+    // 2. Phân chia Vợ/Chồng sang Trái/Phải
+    const leftSpouses: SpouseNode[] = [];
+    const rightSpouses: SpouseNode[] = [];
 
     if (uniqueSpouses.length === 1) {
         rightSpouses.push(uniqueSpouses[0]);
@@ -221,13 +227,78 @@ function TreeNode({
                 </div>
 
                 {/* Người Chồng (Trung tâm) */}
-                <div className="mx-4 z-10">
+                <div className="mx-4 z-10 relative">
                     <PersonCard person={mainPerson} isRoot={true} onClick={() => onPersonClick(mainPerson)} />
+                    {/* Render con "mồ côi" ngay dưới người cha/mẹ chính */}
+                    {orphanChildrenIds.length > 0 && (
+                        <div className="absolute top-full left-1/2 transform -translate-x-1/2 flex flex-col items-center">
+                            <div className="w-px h-8 bg-gray-300"></div>
+                            <div className="flex justify-center items-start gap-6">
+                                {orphanChildrenIds.map((childId) => {
+                                    const childPerson = personData[childId];
+                                    if (!childPerson) return null;
+                                    const childFamily = familyMap.get(childId);
+                                    
+                                    return (
+                                        <div key={childId} className="flex flex-col items-center relative pt-6">
+                                            <div className="absolute top-0 w-px h-6 bg-gray-300"></div>
+                                            {/* Có thể thêm logic vẽ đường nối ngang cho nhiều con mồ côi ở đây */}
+                                            
+                                            {childFamily ? (
+                                                <TreeNode 
+                                                    family={childFamily} 
+                                                    personData={personData} 
+                                                    onPersonClick={onPersonClick} 
+                                                    familyMap={familyMap}
+                                                    renderedIds={renderedIds}
+                                                />
+                                            ) : (
+                                                <PersonCard person={childPerson} onClick={() => onPersonClick(childPerson)} />
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Nhóm Vợ bên Phải */}
                 <div className="flex">
-    }, [focusedPnId, i
+                    {rightSpouses.map(s => renderSpouseBranch(s, 'right'))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// Main Component
+export default function GenerationalTree({ data, onPersonClick, focusedPersonId }: GenerationalTreeProps) {
+    const { personData, treeData } = data;
+    const [internalFocusedId, setInternalFocusedId] = React.useState<string | null>(null);
+
+    useEffect(() => {
+        const targetId = internalFocusedId || focusedPersonId;
+        if (targetId) {
+            const element = document.querySelector(`[data-person-id="${targetId}"]`);
+            if (element) {
+                element.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                    inline: 'center',
+                });
+
+                // Add a temporary highlight effect
+                element.classList.add('ring-4', 'ring-offset-4', 'ring-yellow-400', 'rounded-lg', 'transition-all', 'duration-300');
+                const timer = setTimeout(() => {
+                    element.classList.remove('ring-4', 'ring-offset-4', 'ring-yellow-400', 'rounded-lg');
+                }, 2500); // Highlight for 2.5 seconds
+
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [focusedPersonId, internalFocusedId]);
+
     // Chuẩn bị dữ liệu: Map và Root Families
     const { familyMap, rootFamilies } = useMemo(() => {
         if (!treeData || treeData.length === 0) return { familyMap: new Map(), rootFamilies: [] };
