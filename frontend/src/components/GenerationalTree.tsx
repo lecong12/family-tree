@@ -149,7 +149,15 @@ function TreeNode({
 
                         {/* Icon hôn nhân (trái tim/chấm tròn) */}
                         <div className="absolute left-1/2 top-0 transform -translate-x-1/2 -translate-y-1/2 z-10">
-                             <div className="w-1.5 h-1.5 rounded-full bg-gray-500"></div>
+                            <div className="w-8 h-8 relative flex items-center justify-center">
+                                <div 
+                                    className="w-6 h-6 transform rotate-45 border border-gray-400 shadow-sm overflow-hidden"
+                                    style={{ background: 'linear-gradient(135deg, #3b82f6 50%, #ef4444 50%)' }}
+                                ></div>
+                                <span className="absolute text-[10px] font-bold text-white drop-shadow-md">
+                                    {isMainMale ? `v${spouseRel.spouseOrder}` : `c${spouseRel.spouseOrder}`}
+                                </span>
+                            </div>
                         </div>
                     </div>
                 </div>
