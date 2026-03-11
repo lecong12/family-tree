@@ -290,8 +290,8 @@ export class PersonService {
         if (!person.avatar || person.avatar.trim() === '') {
             const isMale = Number(person.gender) === 0 || (person.gender as any) === 'MALE' || person.gender === Gender.MALE;
             person.avatar = isMale
-                ? `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=0D8ABC&color=fff&size=128`
-                : `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name)}&background=E91E63&color=fff&size=128`;
+                ? 'https://www.cartoonize.net/wp-content/uploads/2024/05/avatar-maker-photo-to-cartoon.png'
+                : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ3rzFZs0tioVeqNH0BKGWxnzfGNevCLpvoXN-vWtjvsjUl5gjNW6lXGyuD7AwJltJgoKk&usqp=CAU';
         }
     }
 }
