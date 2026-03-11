@@ -96,11 +96,17 @@ export class PersonService {
         }
 
         try {
-            const updatedPerson = await this.personModel.findByIdAndUpdate(id, updatePersonDto, { new: true }).exec();
+            const updatedPersonDoc = await this.personModel.findByIdAndUpdate(id, updatePersonDto, { new: true }).exec();
 
-            if (!updatedPerson) {
+            if (!updatedPersonDoc) {
                 throw new NotFoundException(`Person with ID ${id} not found`);
             }
+
+            // Convert to plain object to safely modify it before returning
+            const updatedPerson = updatedPersonDoc.toObject();
+
+            // Ensure the returned object has a default avatar if the field is empty.
+            this._ensureAvatar(updatedPerson);
 
             return updatedPerson;
         } catch (error) {
