@@ -28,7 +28,10 @@ export class PersonService {
         }
 
         try {
-            const newPerson = await this.personModel.create(createPersonDto);
+            const newPersonDoc = await this.personModel.create(createPersonDto);
+            // Chuyển đổi sang object thuần và đảm bảo có avatar trước khi trả về
+            const newPerson = newPersonDoc.toObject();
+            this._ensureAvatar(newPerson);
             return newPerson;
         } catch (error) {
             if (error.code === 11000) {
