@@ -236,6 +236,24 @@ export class PersonService {
 
             const results = (await Promise.all(generationPromises)).filter(Boolean);
 
+            // Sắp xếp results để ưu tiên người có nhiều mối quan hệ hơn và Nam giới làm gốc
+            results.sort((a, b) => {
+                const countA = a.tree.spouses.length;
+                const countB = b.tree.spouses.length;
+                if (countA !== countB) return countB - countA;
+
+                const genderA = a.personData[a.tree.user]?.gender;
+                const genderB = b.personData[b.tree.user]?.gender;
+                
+                // Kiểm tra giới tính (ưu tiên Nam = 0/MALE lên trước)
+                const isMaleA = genderA === 'MALE' || Number(genderA) === 0 || genderA === Gender.MALE;
+                const isMaleB = genderB === 'MALE' || Number(genderB) === 0 || genderB === Gender.MALE;
+
+                if (isMaleA && !isMaleB) return -1;
+                if (!isMaleA && isMaleB) return 1;
+                return 0;
+            });
+
             const processedCouplesInGen = new Set<string>(); // Dùng để tránh lặp lại cặp vợ chồng trong cùng 1 thế hệ
 
             for (const subFamily of results) {
@@ -243,21 +261,24 @@ export class PersonService {
                 Object.assign(personData, subFamily.personData);
 
                 const userId = subFamily.tree.user;
-                let isDuplicateCouple = false;
+                let allSpousesProcessed = true;
 
-                // Kiểm tra xem cặp đôi này đã được xử lý từ phía người vợ/chồng kia chưa
-                for (const spouse of subFamily.tree.spouses) {
-                    const spouseId = spouse.user.id;
-                    // Tạo một key duy nhất cho cặp đôi, không phân biệt thứ tự
-                    const coupleKey = [userId, spouseId].sort().join('-');
-                    if (processedCouplesInGen.has(coupleKey)) {
-                        isDuplicateCouple = true;
-                        break;
+                if (subFamily.tree.spouses.length === 0) {
+                    allSpousesProcessed = false; // Không có vợ chồng thì giữ lại
+                } else {
+                    // Kiểm tra xem TOÀN BỘ các mối quan hệ vợ chồng của người này đã được xử lý chưa
+                    for (const spouse of subFamily.tree.spouses) {
+                        const spouseId = spouse.user.id;
+                        const coupleKey = [userId, spouseId].sort().join('-');
+                        if (!processedCouplesInGen.has(coupleKey)) {
+                            allSpousesProcessed = false;
+                            break; // Có ít nhất 1 mối quan hệ mới -> Giữ lại nhánh này
+                        }
                     }
                 }
 
-                // Nếu không phải là cặp đôi bị trùng, thêm vào kết quả và ghi nhận đã xử lý
-                if (!isDuplicateCouple) {
+                // Chỉ thêm vào kết quả nếu nhánh này mang lại thông tin quan hệ mới
+                if (!allSpousesProcessed) {
                     generationResult.push(subFamily.tree);
                     for (const spouse of subFamily.tree.spouses) {
                         const spouseId = spouse.user.id;
