@@ -296,7 +296,8 @@ export class PersonService {
      * @param person - A person-like object with at least `name` and `gender` properties.
      */
     private _ensureAvatar(person: { name: string; gender: Gender | number; avatar?: string }): void {
-        if (!person.avatar || person.avatar.trim() === '' (person.gender as any) === 'MALE' || person.gender === Gender.MALE;
+        if (!person.avatar || person.avatar.trim() === '' || person.avatar.includes('ui-avatars.com')) {
+            const isMale = Number(person.gender) === 0 || (person.gender as any) === 'MALE' || person.gender === Gender.MALE;
             person.avatar = isMale
                 ? 'https://www.cartoonize.net/wp-content/uploads/2024/05/avatar-maker-photo-to-cartoon.png'
                 : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ3rzFZs0tioVeqNH0BKGWxnzfGNevCLpvoXN-vWtjvsjUl5gjNW6lXGyuD7AwJltJgoKk&usqp=CAU';
