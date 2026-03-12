@@ -254,40 +254,34 @@ export class PersonService {
                 return 0;
             });
 
-            const processedCouplesInGen = new Set<string>(); // Dùng để tránh lặp lại cặp vợ chồng trong cùng 1 thế hệ
+            const processedPeople = new Set<string>(); // People already included in a family unit for this generation.
 
             for (const subFamily of results) {
                 // Hợp nhất personData trước để đảm bảo có đủ thông tin cho tất cả mọi người
                 Object.assign(personData, subFamily.personData);
 
                 const userId = subFamily.tree.user;
-                let allSpousesProcessed = true;
 
-                if (subFamily.tree.spouses.length === 0) {
-                    allSpousesProcessed = false; // Không có vợ chồng thì giữ lại
-                } else {
-                    // Kiểm tra xem TOÀN BỘ các mối quan hệ vợ chồng của người này đã được xử lý chưa
-                    for (const spouse of subFamily.tree.spouses) {
-                        const spouseId = spouse.user.id;
-                        const coupleKey = [userId, spouseId].sort().join('-');
-                        if (!processedCouplesInGen.has(coupleKey)) {
-                            allSpousesProcessed = false;
-                            break; // Có ít nhất 1 mối quan hệ mới -> Giữ lại nhánh này
-                        }
-                    }
+                // If the main person of this branch has already been included
+                // (either as a main person or as a spouse), skip creating a new branch for them.
+                if (processedPeople.has(userId)) {
+                    continue;
                 }
 
-                // Chỉ thêm vào kết quả nếu nhánh này mang lại thông tin quan hệ mới
-                if (!allSpousesProcessed) {
-                    generationResult.push(subFamily.tree);
-                    for (const spouse of subFamily.tree.spouses) {
-                        const spouseId = spouse.user.id;
-                        const coupleKey = [userId, spouseId].sort().join('-');
-                        processedCouplesInGen.add(coupleKey);
-                    }
-                }
+                // This is a new family unit to be displayed.
+                generationResult.push(subFamily.tree);
 
-                // Luôn thu thập ID của con cái cho thế hệ tiếp theo, bất kể có trùng lặp hay không
+                // Mark the main person and all their spouses as "processed" for this generation
+                // to prevent them from creating their own separate branches.
+                processedPeople.add(userId);
+                for (const spouse of subFamily.tree.spouses) {
+                    processedPeople.add(spouse.user.id);
+                }
+            }
+
+            // After deciding which branches to display, loop through ALL original results
+            // to ensure all children are collected for the next generation.
+            for (const subFamily of results) {
                 subFamily.tree.spouses.forEach(spouse => {
                     spouse.children?.forEach(childId => nextGenerationIds.add(childId));
                 });
