@@ -163,8 +163,21 @@ export class PersonService {
 
         const spouseRelationships = await this.spouseService.findByPerson(personId);
 
+        // [Defensive Programming] Deduplicate relationships to handle potential data inconsistencies
+        // or upstream service issues that might return the same couple multiple times.
+        // This creates a canonical key for each couple (e.g., "id1-id2") to ensure uniqueness.
+        const uniqueRelationships = [];
+        const seenCouples = new Set<string>();
+        for (const rel of spouseRelationships) {
+            const coupleKey = [rel.husband.toString(), rel.wife.toString()].sort().join('-');
+            if (!seenCouples.has(coupleKey)) {
+                seenCouples.add(coupleKey);
+                uniqueRelationships.push(rel);
+            }
+        }
+
         // 1. Lấy ID của tất cả vợ/chồng
-        const spouseIds = spouseRelationships.map((rel) =>
+        const spouseIds = uniqueRelationships.map((rel) =>
             rel.husband.toString() === personId ? rel.wife.toString() : rel.husband.toString(),
         );
 
@@ -183,15 +196,11 @@ export class PersonService {
             spouses: [],
         };
 
-        const addedSpouseIds = new Set<string>();
-
         // 3. Dựng cấu trúc cây với dữ liệu đầy đủ
-        for (const relationship of spouseRelationships) {
+        for (const relationship of uniqueRelationships) {
             const children = await this.parentChildService.findAllChildIdsByParent(relationship._id.toString());
             if (personId === relationship.husband.toString()) {
                 const wifeId = relationship.wife.toString();
-                if (addedSpouseIds.has(wifeId)) continue;
-                addedSpouseIds.add(wifeId);
                 tree.spouses.push({
                     user: { id: wifeId, spouseOrder: relationship.husbandOrder },
                     spouseOrder: relationship.wifeOrder,
@@ -201,8 +210,6 @@ export class PersonService {
                 });
             } else {
                 const husbandId = relationship.husband.toString();
-                if (addedSpouseIds.has(husbandId)) continue;
-                addedSpouseIds.add(husbandId);
                 tree.spouses.push({
                     user: { id: husbandId, spouseOrder: relationship.wifeOrder },
                     spouseOrder: relationship.husbandOrder,
