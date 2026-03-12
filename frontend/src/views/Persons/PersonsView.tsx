@@ -222,7 +222,9 @@ export default function PersonsView() {
                 onChangeView={setViewMode}
             />
 
-            <Toolbar search={search} onSearchChange={handleSearch} pageSize={pageSize} onPageSizeChange={handlePageSizeChange} onAddPerson={() => setAddPersonModalOpen(true)} />
+            {viewMode === 'list' && (
+                <Toolbar search={search} onSearchChange={handleSearch} pageSize={pageSize} onPageSizeChange={handlePageSizeChange} onAddPerson={() => setAddPersonModalOpen(true)} />
+            )}
 
             <LoadingOverlay isLoading={isLoading} />
 
