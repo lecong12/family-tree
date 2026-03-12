@@ -149,23 +149,25 @@ export class PersonService {
             throw new NotFoundException(`Invalid person ID: ${personId}`);
         }
 
-        const person = await this.personModel.findById(personId).lean().exec();
+        const idStr = personId.toString();
+
+        const person = await this.personModel.findById(idStr).lean().exec();
         if (!person) {
-            throw new NotFoundException(`Person with ID ${personId} not found`);
+            throw new NotFoundException(`Person with ID ${idStr} not found`);
         }
 
         // Đảm bảo người gốc của thế hệ này có avatar
         this._ensureAvatar(person);
 
         const personInFamily: Record<string, any> = {
-            [personId]: person,
+            [idStr]: person,
         };
 
-        const spouseRelationships = await this.spouseService.findByPerson(personId);
+        const spouseRelationships = await this.spouseService.findByPerson(idStr);
 
         // 1. Lấy ID của tất cả vợ/chồng
         const spouseIds = spouseRelationships.map((rel) =>
-            rel.husband.toString() === personId ? rel.wife.toString() : rel.husband.toString(),
+            rel.husband.toString() === idStr ? rel.wife.toString() : rel.husband.toString(),
         );
 
         // 2. Lấy toàn bộ thông tin của các vợ/chồng đó trong 1 query
@@ -179,14 +181,14 @@ export class PersonService {
         }
 
         const tree = {
-            user: personId,
+            user: idStr,
             spouses: [],
         };
 
         // 3. Dựng cấu trúc cây với dữ liệu đầy đủ
         for (const relationship of spouseRelationships) {
             const children = await this.parentChildService.findAllChildIdsByParent(relationship._id.toString());
-            if (personId === relationship.husband.toString()) {
+            if (idStr === relationship.husband.toString()) {
                 const wifeId = relationship.wife.toString();
                 tree.spouses.push({
                     user: { id: wifeId, spouseOrder: relationship.husbandOrder },
@@ -229,9 +231,10 @@ export class PersonService {
 
             // Lấy dữ liệu cho tất cả các person trong thế hệ hiện tại
             const generationPromises = Array.from(idsToProcess).map(id => {
-                if (processedIds.has(id)) return null;
-                processedIds.add(id);
-                return this.getGenerationByPerson(id);
+                const idStr = id.toString();
+                if (processedIds.has(idStr)) return null;
+                processedIds.add(idStr);
+                return this.getGenerationByPerson(idStr);
             });
 
             const results = (await Promise.all(generationPromises)).filter(Boolean);
@@ -265,7 +268,7 @@ export class PersonService {
             // to ensure all children are collected for the next generation.
             for (const subFamily of results) {
                 subFamily.tree.spouses.forEach(spouse => {
-                    spouse.children?.forEach(childId => nextGenerationIds.add(childId));
+                    spouse.children?.forEach(childId => nextGenerationIds.add(childId.toString()));
                 });
             }
 
