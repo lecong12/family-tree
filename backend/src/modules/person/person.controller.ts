@@ -127,29 +127,4 @@ export class PersonController {
         }
         return this.personService.getNGenerations(id, genNum);
     }
-
-    @Get(':id/generations/:generations')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @ApiOperation({ summary: 'Get N generations of a person including spouse relationships and children' })
-    @ApiParam({ name: 'id', description: 'Person ID' })
-    @ApiParam({ name: 'generations', required: true, type: Number, description: 'Number of generations to get' })
-    @ApiResponse({
-        status: HttpStatus.OK,
-        description: 'Return N generations of the person',
-        schema: {
-            type: 'object',
-            properties: {
-                person: { type: 'object', $ref: '#/components/schemas/Person' },
-                spouseRelationships: { type: 'array', items: { $ref: '#/components/schemas/Spouse' } },
-                children: { type: 'array', items: { $ref: '#/components/schemas/ParentChild' } },
-            },
-        },
-    })
-    @ApiResponse({
-        status: HttpStatus.NOT_FOUND,
-        description: 'Person not found',
-    })
-    getNGenerations(@Param('id') id: string, @Param('generations') generations: number) {
-        return this.personService.getNGenerations(id, generations);
-    }
 }
