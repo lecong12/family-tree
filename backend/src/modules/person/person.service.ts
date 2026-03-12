@@ -236,24 +236,6 @@ export class PersonService {
 
             const results = (await Promise.all(generationPromises)).filter(Boolean);
 
-            // Sắp xếp results để ưu tiên người có nhiều mối quan hệ hơn và Nam giới làm gốc
-            results.sort((a, b) => {
-                const countA = a.tree.spouses.length;
-                const countB = b.tree.spouses.length;
-                if (countA !== countB) return countB - countA;
-
-                const genderA = a.personData[a.tree.user]?.gender;
-                const genderB = b.personData[b.tree.user]?.gender;
-                
-                // Kiểm tra giới tính (ưu tiên Nam = 0/MALE lên trước)
-                const isMaleA = genderA === 'MALE' || Number(genderA) === 0 || genderA === Gender.MALE;
-                const isMaleB = genderB === 'MALE' || Number(genderB) === 0 || genderB === Gender.MALE;
-
-                if (isMaleA && !isMaleB) return -1;
-                if (!isMaleA && isMaleB) return 1;
-                return 0;
-            });
-
             const processedPeople = new Set<string>(); // People already included in a family unit for this generation.
 
             for (const subFamily of results) {
@@ -286,6 +268,23 @@ export class PersonService {
                     spouse.children?.forEach(childId => nextGenerationIds.add(childId));
                 });
             }
+
+            // Sắp xếp các nhánh trong cùng một thế hệ (anh chị em) theo ngày sinh.
+            // Logic thông thường của gia phả là người lớn tuổi hơn (anh, chị) sẽ ở bên trái.
+            generationResult.sort((a, b) => {
+                const personA = personData[a.user];
+                const personB = personData[b.user];
+
+                // Bỏ qua sắp xếp nếu thiếu thông tin ngày sinh
+                if (!personA?.birth || !personB?.birth) {
+                    return 0;
+                }
+
+                const birthA = new Date(personA.birth).getTime();
+                const birthB = new Date(personB.birth).getTime();
+
+                return birthA - birthB; // Sắp xếp tăng dần theo ngày sinh (người lớn tuổi hơn có ngày sinh nhỏ hơn sẽ đứng trước).
+            });
 
             if (generationResult.length > 0) {
                 treeData.push(generationResult);
