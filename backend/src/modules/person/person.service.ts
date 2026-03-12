@@ -236,17 +236,40 @@ export class PersonService {
 
             const results = (await Promise.all(generationPromises)).filter(Boolean);
 
+            const processedCouplesInGen = new Set<string>(); // Dùng để tránh lặp lại cặp vợ chồng trong cùng 1 thế hệ
+
             for (const subFamily of results) {
-                 // Hợp nhất personData
-                 Object.assign(personData, subFamily.personData);
-                 generationResult.push(subFamily.tree);
- 
-                 // Thu thập ID của thế hệ tiếp theo (con cái)
-                 subFamily.tree.spouses.forEach(spouse => {
-                     if (spouse.children && spouse.children.length > 0) {
-                         spouse.children.forEach(childId => nextGenerationIds.add(childId));
-                     }
-                 });
+                // Hợp nhất personData trước để đảm bảo có đủ thông tin cho tất cả mọi người
+                Object.assign(personData, subFamily.personData);
+
+                const userId = subFamily.tree.user;
+                let isDuplicateCouple = false;
+
+                // Kiểm tra xem cặp đôi này đã được xử lý từ phía người vợ/chồng kia chưa
+                for (const spouse of subFamily.tree.spouses) {
+                    const spouseId = spouse.user.id;
+                    // Tạo một key duy nhất cho cặp đôi, không phân biệt thứ tự
+                    const coupleKey = [userId, spouseId].sort().join('-');
+                    if (processedCouplesInGen.has(coupleKey)) {
+                        isDuplicateCouple = true;
+                        break;
+                    }
+                }
+
+                // Nếu không phải là cặp đôi bị trùng, thêm vào kết quả và ghi nhận đã xử lý
+                if (!isDuplicateCouple) {
+                    generationResult.push(subFamily.tree);
+                    for (const spouse of subFamily.tree.spouses) {
+                        const spouseId = spouse.user.id;
+                        const coupleKey = [userId, spouseId].sort().join('-');
+                        processedCouplesInGen.add(coupleKey);
+                    }
+                }
+
+                // Luôn thu thập ID của con cái cho thế hệ tiếp theo, bất kể có trùng lặp hay không
+                subFamily.tree.spouses.forEach(spouse => {
+                    spouse.children?.forEach(childId => nextGenerationIds.add(childId));
+                });
             }
 
             if (generationResult.length > 0) {
