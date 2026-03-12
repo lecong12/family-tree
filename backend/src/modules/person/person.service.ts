@@ -270,8 +270,12 @@ export class PersonService {
             const processedPeople = new Set<string>(); // People already included in a family unit for this generation.
 
             for (const subFamily of results) {
-                // Hợp nhất personData trước để đảm bảo có đủ thông tin cho tất cả mọi người
+                // Luôn hợp nhất dữ liệu person và thu thập con cái cho thế hệ tiếp theo
+                // từ tất cả các nhánh đã được fetch, bất kể nhánh đó có được hiển thị hay không.
                 Object.assign(personData, subFamily.personData);
+                subFamily.tree.spouses.forEach(spouse => {
+                    spouse.children?.forEach(childId => nextGenerationIds.add(childId));
+                });
 
                 const userId = subFamily.tree.user;
 
@@ -290,14 +294,6 @@ export class PersonService {
                 for (const spouse of subFamily.tree.spouses) {
                     processedPeople.add(spouse.user.id);
                 }
-            }
-
-            // After deciding which branches to display, loop through ALL original results
-            // to ensure all children are collected for the next generation.
-            for (const subFamily of results) {
-                subFamily.tree.spouses.forEach(spouse => {
-                    spouse.children?.forEach(childId => nextGenerationIds.add(childId));
-                });
             }
 
             if (generationResult.length > 0) {
