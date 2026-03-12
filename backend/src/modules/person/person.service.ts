@@ -183,11 +183,15 @@ export class PersonService {
             spouses: [],
         };
 
+        const addedSpouseIds = new Set<string>();
+
         // 3. Dựng cấu trúc cây với dữ liệu đầy đủ
         for (const relationship of spouseRelationships) {
             const children = await this.parentChildService.findAllChildIdsByParent(relationship._id.toString());
             if (personId === relationship.husband.toString()) {
                 const wifeId = relationship.wife.toString();
+                if (addedSpouseIds.has(wifeId)) continue;
+                addedSpouseIds.add(wifeId);
                 tree.spouses.push({
                     user: { id: wifeId, spouseOrder: relationship.husbandOrder },
                     spouseOrder: relationship.wifeOrder,
@@ -197,6 +201,8 @@ export class PersonService {
                 });
             } else {
                 const husbandId = relationship.husband.toString();
+                if (addedSpouseIds.has(husbandId)) continue;
+                addedSpouseIds.add(husbandId);
                 tree.spouses.push({
                     user: { id: husbandId, spouseOrder: relationship.wifeOrder },
                     spouseOrder: relationship.husbandOrder,
