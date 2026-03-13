@@ -3,15 +3,32 @@
 @tailwind utilities;
 
 :root {
-    --background: #ffffff;
-    --foreground: #171717;
+  /* Theme Sáng (Mặc định) */
+  --color-bg-primary: #f9fafb; /* bg-gray-50 */
+  --color-bg-secondary: #ffffff; /* bg-white */
+  --color-text-primary: #111827; /* text-gray-900 */
+  --color-text-secondary: #6b7280; /* text-gray-500 */
+  --color-border: #e5e7eb; /* border-gray-200 */
+  --color-accent: #3b82f6; /* bg-blue-600 */
+  --color-accent-hover: #2563eb; /* bg-blue-700 */
+  --color-accent-text: #ffffff; /* text-white */
 }
 
-@media (prefers-color-scheme: dark) {
+.dark {
+  /* Theme Tối */
+  --color-bg-primary: #111827; /* bg-gray-900 */
+  --color-bg-secondary: #1f2937; /* bg-gray-800 */
+  --color-text-primary: #f9fafb; /* text-gray-50 */
+  --color-text-secondary: #9ca3af; /* text-gray-400 */
+  --color-border: #374151; /* border-gray-700 */
+  --color-accent: #60a5fa; /* bg-blue-400 */
+  --color-accent-hover: #3b82f6; /* bg-blue-500 */
+  --color-accent-text: #111827; /* text-gray-900 */
 }
 
 body {
-    color: var(--foreground);
-    background: var(--background);
-    font-family: Arial, Helvetica, sans-serif;
+    /* Sử dụng biến CSS cho màu nền và màu chữ mặc định */
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    font-family: Arial, Helvetica, sans-serif; /* Giữ nguyên font của bạn */
 }
