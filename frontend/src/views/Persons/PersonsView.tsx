@@ -275,23 +275,23 @@ export default function PersonsView() {
 
             <LoadingOverlay isLoading={isLoading || authLoading} />
 
-            <div className="flex-1 overflow-auto bg-bg-primary relative">
-                <div className={`absolute inset-0 p-4 ${viewMode === 'list' ? 'block' : 'hidden'}`}>
+            <div className={`flex-1 overflow-auto bg-bg-primary relative ${viewMode === 'list' ? 'p-4' : ''}`}>
+                {viewMode === 'list' && (
                     <div className="max-w-[900px] mx-auto bg-bg-secondary shadow-sm ring-1 ring-border-color rounded-xl overflow-hidden">
-                         <PersonList
-                             paginated={paginated}
-                             connectedIds={connectedIds}
-                             currentPage={currentPage}
-                             pageSize={pageSize}
-                             sortField={sortField}
-                             sortDirection={sortDirection}
-                             onSort={handleSort}
-                             onPersonClick={handlePersonClick}
-                         />
-                     </div>
-                </div>
+                        <PersonList
+                            paginated={paginated}
+                            connectedIds={connectedIds}
+                            currentPage={currentPage}
+                            pageSize={pageSize}
+                            sortField={sortField}
+                            sortDirection={sortDirection}
+                            onSort={handleSort}
+                            onPersonClick={handlePersonClick}
+                        />
+                    </div>
+                )}
 
-                <div className={`absolute inset-0 ${viewMode === 'tree' ? 'block' : 'hidden'}`}>
+                {viewMode === 'tree' && (
                     <FamilyTreeFlow
                         persons={persons}
                         spouses={spouses}
@@ -301,15 +301,11 @@ export default function PersonsView() {
                         onPersonNodeClick={handlePersonClick}
                         onRelationshipNodeClick={handleRelationshipClick}
                     />
-                </div>
+                )}
 
-                <div className={`absolute inset-0 overflow-auto ${viewMode === 'stats' ? 'block' : 'hidden'}`}>
-                    <StatsView persons={persons} spouses={spouses} />
-                </div>
+                {viewMode === 'stats' && <StatsView persons={persons} spouses={spouses} />}
 
-                <div className={`absolute inset-0 overflow-auto ${viewMode === 'events' ? 'block' : 'hidden'}`}>
-                    <EventsView persons={persons} spouses={spouses} />
-                </div>
+                {viewMode === 'events' && <EventsView persons={persons} spouses={spouses} />}
 
                 {viewMode === 'settings' && (
                     <div className="p-4 md:p-8 bg-bg-primary min-h-full">
