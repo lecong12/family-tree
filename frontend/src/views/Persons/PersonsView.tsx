@@ -65,6 +65,12 @@ export default function PersonsView() {
         }
         return 'lastName';
     });
+    const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+        if (typeof window !== 'undefined') {
+            return (localStorage.getItem('family-tree-theme') as any) || 'light';
+        }
+        return 'light';
+    });
 
     // Relationship index
     const connectedIds = useMemo(() => buildConnectedIds(spouses, parentChilds), [spouses, parentChilds]);
@@ -150,6 +156,15 @@ export default function PersonsView() {
     useEffect(() => {
         localStorage.setItem('family-tree-sortByName', sortByNamePreference);
     }, [sortByNamePreference]);
+
+    useEffect(() => {
+        localStorage.setItem('family-tree-theme', theme);
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, [theme]);
 
 
 
@@ -244,7 +259,7 @@ export default function PersonsView() {
     if (!user) return <LoadingOverlay isLoading={true} />;
 
     return (
-        <div className="w-screen h-screen flex flex-col bg-gray-50 font-sans">
+        <div className="w-screen h-screen flex flex-col bg-bg-primary text-text-primary font-sans">
             <Header
                 isolatedCount={isolatedCount}
                 filterMode={filterMode}
@@ -258,9 +273,9 @@ export default function PersonsView() {
                 <Toolbar search={search} onSearchChange={handleSearch} pageSize={pageSize} onPageSizeChange={handlePageSizeChange} onAddPerson={() => setAddPersonModalOpen(true)} />
             )}
 
-            <LoadingOverlay isLoading={isLoading} />
+            <LoadingOverlay isLoading={isLoading || authLoading} />
 
-            <div className="flex-1 overflow-auto bg-gray-50 relative">
+            <div className="flex-1 overflow-auto bg-bg-primary relative">
                 <div className={`absolute inset-0 p-4 ${viewMode === 'list' ? 'block' : 'hidden'}`}>
                     <div className="max-w-[900px] mx-auto bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
                          <PersonList
@@ -298,7 +313,7 @@ export default function PersonsView() {
 
                 {viewMode === 'settings' && (
                     <div className="p-4 md:p-8 bg-gray-50 min-h-full">
-                        <div className="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div className="max-w-2xl mx-auto bg-bg-secondary p-6 rounded-xl shadow-sm border border-border-color">
                             <h2 className="text-xl font-bold text-gray-800 mb-6">Cài đặt hiển thị</h2>
                             <div className="space-y-6">
                                 {/* Sort by Name Preference */}
@@ -334,7 +349,38 @@ export default function PersonsView() {
                                     </div>
                                 </div>
 
-                                {/* Add more settings here in the future */}
+                                {/* Theme Setting */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Giao diện
+                                    </label>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex items-center">
+                                            <input
+                                                id="theme-light"
+                                                type="radio"
+                                                name="themePreference"
+                                                value="light"
+                                                checked={theme === 'light'}
+                                                onChange={(e) => setTheme(e.target.value as any)}
+                                                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                            />
+                                            <label htmlFor="theme-light" className="ml-2 block text-sm text-gray-900">Sáng</label>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <input
+                                                id="theme-dark"
+                                                type="radio"
+                                                name="themePreference"
+                                                value="dark"
+                                                checked={theme === 'dark'}
+                                                onChange={(e) => setTheme(e.target.value as any)}
+                                                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                            />
+                                            <label htmlFor="theme-dark" className="ml-2 block text-sm text-gray-900">Tối</label>
+                                        </div>
+                                    </div>
+                                </div>
 
                             </div>
                         </div>
