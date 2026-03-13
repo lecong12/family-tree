@@ -89,32 +89,21 @@ export class PersonService {
             }
         }
 
-        // If a new avatar URL is NOT provided (it's undefined, null, or empty string),
-        // we need to decide whether to set a default avatar.
-        if (!payload.avatar) { // This covers undefined, null, and ""
-            const currentPerson = await this.personModel.findById(id).select('gender avatar').lean().exec();
+        // Chỉ xử lý logic avatar khi người dùng muốn reset (gửi chuỗi rỗng)
+        if (payload.avatar === '') {
+            const currentPerson = await this.personModel.findById(id).select('gender').lean().exec();
             if (currentPerson) {
                 const MALE_DEFAULT = 'https://www.cartoonize.net/wp-content/uploads/2024/05/avatar-maker-photo-to-cartoon.png';
                 const FEMALE_DEFAULT = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ3rzFZs0tioVeqNH0BKGWxnzfGNevCLpvoXN-vWtjvsjUl5gjNW6lXGyuD7AwJltJgoKk&usqp=CAU';
 
                 const nextGender = payload.gender !== undefined ? payload.gender : currentPerson.gender;
                 const isMale = Number(nextGender) === 0 || (nextGender as any) === 'MALE' || nextGender === Gender.MALE;
-                const correctDefaultAvatar = isMale ? MALE_DEFAULT : FEMALE_DEFAULT;
-
-                // Case 1: User explicitly wants to reset the avatar.
-                if (payload.avatar === '') {
-                    payload.avatar = correctDefaultAvatar;
-                }
-                // Case 2: User is updating other fields, so we check if the current avatar needs fixing.
-                else { // payload.avatar is undefined or null
-                    const currentAvatar = currentPerson.avatar;
-                    const isInvalid = !currentAvatar || currentAvatar.trim() === '' || currentAvatar.includes('ui-avatars.com');
-                    const isWrongGenderDefault = (isMale && currentAvatar === FEMALE_DEFAULT) || (!isMale && currentAvatar === MALE_DEFAULT);
-                    if (isInvalid || isWrongGenderDefault) {
-                        payload.avatar = correctDefaultAvatar;
-                    }
-                }
+                
+                payload.avatar = isMale ? MALE_DEFAULT : FEMALE_DEFAULT;
             }
+        } else if (payload.avatar === undefined || payload.avatar === null) {
+            // Nếu không gửi avatar (hoặc null), xóa khỏi payload để Mongoose KHÔNG chạm vào trường này trong DB
+            delete payload.avatar;
         }
 
         try {
