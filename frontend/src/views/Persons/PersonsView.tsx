@@ -52,6 +52,20 @@ export default function PersonsView() {
     const [sortField, setSortField] = useState<SortField>('name');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
     const [viewMode, setViewMode] = useState<'list' | 'tree' | 'stats' | 'events' | 'settings'>('list'); // Default view is 'list'
+    
+    // Settings State with localStorage persistence
+    const [viewMode, setViewMode] = useState<'list' | 'tree' | 'stats' | 'events' | 'settings'>(() => {
+        if (typeof window !== 'undefined') {
+            return (localStorage.getItem('family-tree-viewMode') as any) || 'list';
+        }
+        return 'list';
+    });
+    const [sortByNamePreference, setSortByNamePreference] = useState<'firstName' | 'lastName'>(() => {
+        if (typeof window !== 'undefined') {
+            return (localStorage.getItem('family-tree-sortByName') as any) || 'lastName';
+        }
+        return 'lastName';
+    });
 
     // Relationship index
     const connectedIds = useMemo(() => buildConnectedIds(spouses, parentChilds), [spouses, parentChilds]);
@@ -90,12 +104,21 @@ export default function PersonsView() {
             switch (sortField) {
                 case 'name': {
                     const getName = (name: string) => {
+                    const getFirstName = (name: string) => {
+                        const parts = name.trim().split(/\s+/);
+                        return parts.length > 1 ? parts.slice(0, -1).join(' ') : '';
+                    };
+                    const getLastName = (name: string) => {
                         const parts = name.trim().split(/\s+/);
                         // Lấy tên cuối cùng, nếu không có thì lấy chuỗi trống
                         return parts.length > 0 ? parts[parts.length - 1] : '';
                     };
                     const nameA = getName(a.name);
                     const nameB = getName(b.name);
+
+                    const nameA = sortByNamePreference === 'lastName' ? getLastName(a.name) : getFirstName(a.name);
+                    const nameB = sortByNamePreference === 'lastName' ? getLastName(b.name) : getFirstName(b.name);
+
                     // Dùng localeCompare để sort tiếng Việt chuẩn
                     res = nameA.localeCompare(nameB, 'vi');
                     // Nếu tên giống nhau thì so sánh full name
@@ -122,6 +145,18 @@ export default function PersonsView() {
             return sortDirection === 'asc' ? res : -res;
         });
     }, [persons, search, filterMode, connectedIds, sortField, sortDirection]);
+    }, [persons, search, filterMode, connectedIds, sortField, sortDirection, sortByNamePreference]);
+
+    // Effect to save settings to localStorage
+    useEffect(() => {
+        localStorage.setItem('family-tree-viewMode', viewMode);
+    }, [viewMode]);
+
+    useEffect(() => {
+        localStorage.setItem('family-tree-sortByName', sortByNamePreference);
+    }, [sortByNamePreference]);
+
+
 
     const isolatedCount = useMemo(() => persons.filter((p) => p._id && !connectedIds.has(p._id)).length, [persons, connectedIds]);
 
@@ -271,6 +306,46 @@ export default function PersonsView() {
                         <div className="text-center p-10">
                             <h3 className="text-2xl font-semibold">Cài đặt</h3>
                             <p className="mt-2">Các cấu hình cho hệ thống và giao diện sẽ ở đây.</p>
+                    <div className="p-4 md:p-8 bg-gray-50 min-h-full">
+                        <div className="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <h2 className="text-xl font-bold text-gray-800 mb-6">Cài đặt hiển thị</h2>
+                            <div className="space-y-6">
+                                {/* Sort by Name Preference */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Sắp xếp danh sách thành viên theo
+                                    </label>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex items-center">
+                                            <input
+                                                id="sort-lastname"
+                                                type="radio"
+                                                name="sortPreference"
+                                                value="lastName"
+                                                checked={sortByNamePreference === 'lastName'}
+                                                onChange={(e) => setSortByNamePreference(e.target.value as any)}
+                                                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                            />
+                                            <label htmlFor="sort-lastname" className="ml-2 block text-sm text-gray-900">Tên (ví dụ: An, Bình, Cúc)</label>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <input
+                                                id="sort-firstname"
+                                                type="radio"
+                                                name="sortPreference"
+                                                value="firstName"
+                                                checked={sortByNamePreference === 'firstName'}
+                                                onChange={(e) => setSortByNamePreference(e.target.value as any)}
+                                                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                            />
+                                            <label htmlFor="sort-firstname" className="ml-2 block text-sm text-gray-900">Họ và tên đệm (ví dụ: Lê Công, Nguyễn Thị)</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Add more settings here in the future */}
+
+                            </div>
                         </div>
                     </div>
                 )}
