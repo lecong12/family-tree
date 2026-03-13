@@ -2,19 +2,21 @@ import UserMenu from 'src/components/UserMenu/UserMenu';
 import { FilterMode } from '../types';
 import { useAuth } from 'src/context/AuthContext';
 
+type ViewMode = 'list' | 'tree' | 'stats' | 'events' | 'settings';
+
 interface HeaderProps {
     isolatedCount: number;
     filterMode: FilterMode;
     onFilterModeChange: (mode: FilterMode) => void;
     onOpenGuestCodeModal: () => void;
-    currentView: string;
-    onChangeView: (view: string) => void;
+    currentView: ViewMode;
+    onChangeView: (view: ViewMode) => void;
 }
 
 export default function Header({ isolatedCount, filterMode, onFilterModeChange, onOpenGuestCodeModal, currentView, onChangeView }: HeaderProps) {
     const { isAdmin, logout, user } = useAuth();
 
-    const tabs = [
+    const tabs: { id: ViewMode; label: string }[] = [
         { id: 'tree', label: 'Cây gia phả' },
         { id: 'list', label: 'Danh sách thành viên' },
         { id: 'stats', label: 'Thống kê' },
