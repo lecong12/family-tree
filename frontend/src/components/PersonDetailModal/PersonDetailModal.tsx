@@ -167,6 +167,10 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
                 isDead: person.isDead,
                 address: person.address,
                 desc: person.desc,
+                job: person.job,
+                generation: person.generation,
+                branch: person.branch,
+                order: person.order,
             });
         }
     }, [isOpen, person]);
@@ -244,6 +248,10 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
             isDead: person?.isDead,
             address: person?.address,
             desc: person?.desc,
+            job: person?.job,
+            generation: person?.generation,
+            branch: person?.branch,
+            order: person?.order,
         });
     };
 
@@ -452,6 +460,42 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
                                             Đã mất
                                         </label>
                                     </div>
+                                    <div>
+                                        <label className="block text-gray-700 mb-1 text-sm">Thế hệ</label>
+                                        <input
+                                            type="number"
+                                            value={editForm.generation || ''}
+                                            onChange={(e) => setEditForm({ ...editForm, generation: parseInt(e.target.value) || undefined })}
+                                            className="w-full px-3 py-2 border rounded text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-gray-700 mb-1 text-sm">Thứ tự</label>
+                                        <input
+                                            type="number"
+                                            value={editForm.order || ''}
+                                            onChange={(e) => setEditForm({ ...editForm, order: parseInt(e.target.value) || undefined })}
+                                            className="w-full px-3 py-2 border rounded text-sm"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-gray-700 mb-1 text-sm">Phái/Chi</label>
+                                        <input
+                                            type="text"
+                                            value={editForm.branch || ''}
+                                            onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
+                                            className="w-full px-3 py-2 border rounded text-sm"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-gray-700 mb-1 text-sm">Nghề nghiệp</label>
+                                        <input
+                                            type="text"
+                                            value={editForm.job || ''}
+                                            onChange={(e) => setEditForm({ ...editForm, job: e.target.value })}
+                                            className="w-full px-3 py-2 border rounded text-sm"
+                                        />
+                                    </div>
                                     <div className="col-span-2">
                                         <label className="block text-gray-700 mb-1">Địa chỉ</label>
                                         <input
@@ -532,6 +576,23 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
                                                     <span className="text-gray-400">-</span>
                                                 )}
                                             </div>
+                                        </div>
+
+                                        <div>
+                                            <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">Thế hệ</p>
+                                            <p className="text-gray-900 font-medium">{person.generation ? `Đời thứ ${person.generation}` : 'Chưa rõ'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">Phái/Chi</p>
+                                            <p className="text-gray-900 font-medium">{person.branch || 'Chưa rõ'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">Thứ tự</p>
+                                            <p className="text-gray-900 font-medium">{person.order ?? 'Chưa rõ'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">Nghề nghiệp</p>
+                                            <p className="text-gray-900 font-medium">{person.job || 'Chưa cập nhật'}</p>
                                         </div>
 
                                         <div className="sm:col-span-2">

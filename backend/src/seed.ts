@@ -93,6 +93,9 @@ async function seed() {
                         desc: row.note || (isMale ? `Thế hệ thứ ${gen}` : `Thành viên nữ`),
                         phone: row.phone || "",
                         job: row.job || "",
+                        generation: gen,
+                        branch: row.branch || "0",
+                        order: parseInt(row.order) || 1,
                     });
                     personMap.set(id, { _id: pId, name: row.full_name });
                 }

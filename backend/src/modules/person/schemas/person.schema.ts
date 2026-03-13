@@ -38,6 +38,15 @@ export class Person {
 
     @Prop()
     job: string;
+
+    @Prop()
+    generation: number;
+
+    @Prop()
+    branch: string;
+
+    @Prop()
+    order: number;
 }
 
 export const PersonSchema = SchemaFactory.createForClass(Person);

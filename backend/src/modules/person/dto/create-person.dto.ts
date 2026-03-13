@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsEnum, IsDateString, IsBoolean } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsEnum, IsDateString, IsBoolean, IsNumber } from 'class-validator';
 import { Gender } from '../../../constants';
 
 export class CreatePersonDto {
@@ -45,4 +45,16 @@ export class CreatePersonDto {
     @IsOptional()
     @IsString()
     job?: string;
+
+    @IsOptional()
+    @IsNumber()
+    generation?: number;
+
+    @IsOptional()
+    @IsString()
+    branch?: string;
+
+    @IsOptional()
+    @IsNumber()
+    order?: number;
 }
