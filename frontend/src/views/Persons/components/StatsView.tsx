@@ -182,6 +182,29 @@ const StatsView: React.FC<StatsViewProps> = ({ persons, spouses }) => {
         };
     }, [persons, spouses]);
 
+    const birthMonthData = useMemo(() => {
+        const counts = Array(12).fill(0);
+        persons.forEach(p => {
+            if (p.birth) {
+                const date = new Date(p.birth);
+                if (!isNaN(date.getTime())) {
+                    counts[date.getMonth()]++; // getMonth() trả về 0-11
+                }
+            }
+        });
+
+        return {
+            labels: Array.from({ length: 12 }, (_, i) => `Tháng ${i + 1}`),
+            datasets: [{
+                label: 'Số lượng',
+                data: counts,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)', // Màu xanh dương
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1,
+            }]
+        };
+    }, [persons]);
+
     if (persons.length === 0) {
         return <div className="p-10 text-center text-gray-500">Không có dữ liệu để thống kê.</div>;
     }
@@ -207,6 +230,13 @@ const StatsView: React.FC<StatsViewProps> = ({ persons, spouses }) => {
                     <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Số lượng Vợ (Nam giới)</h3>
                     <div className="w-full h-64 mx-auto">
                         <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={spouseCountData} />
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ sinh nhật (Tháng)</h3>
+                    <div className="w-full h-64 mx-auto">
+                        <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={birthMonthData} />
                     </div>
                 </div>
 

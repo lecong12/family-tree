@@ -49,6 +49,35 @@ async function seed() {
                 const personMap = new Map(); 
                 const spouseMap = new Map(); 
 
+                // Pre-scan to build relationship maps for description generation
+                const personInfoMap = new Map<string, { name: string, fid: string, mid: string }>();
+                const childrenOfParentMap = new Map<string, Array<{ name: string, order: number }>>();
+
+                for (const row of records) {
+                    const id = String(row.id).trim();
+                    if (!id) continue;
+
+                    const name = row.full_name || row.name || "Không tên";
+                    const fid = String(row.fid).trim();
+                    const mid = String(row.mid).trim();
+                    const order = parseInt(row.order) || 999;
+
+                    personInfoMap.set(id, { name, fid, mid });
+
+                    const childEntry = { name, order };
+
+                    // We map children to their father's ID (fid)
+                    if (fid && fid !== '0') {
+                        if (!childrenOfParentMap.has(fid)) childrenOfParentMap.set(fid, []);
+                        childrenOfParentMap.get(fid)!.push(childEntry);
+                    }
+                    // We also map children to their mother's ID (mid)
+                    if (mid && mid !== '0') {
+                        if (!childrenOfParentMap.has(mid)) childrenOfParentMap.set(mid, []);
+                        childrenOfParentMap.get(mid)!.push(childEntry);
+                    }
+                }
+
                 console.log(`🚀 BƯỚC 2: NẠP ${records.length} NHÂN VẬT TỪ CSV...`);
                 for (const row of records) {
                     const id = String(row.id).trim();
@@ -78,6 +107,35 @@ async function seed() {
                     // isDead logic: based on CSV 'is_live' or if death date is in the past.
                     const isDead = row.is_live === '0' || (deathDate !== null && deathDate <= new Date());
 
+                    // Description logic: Prioritize CSV 'desc', then generate, then fallback to 'note' or simple text.
+                    let finalDesc = row.desc?.trim();
+                    if (!finalDesc) {
+                        const descParts: string[] = [];
+
+                        // Parent Info
+                        const fid = String(row.fid).trim();
+                        const mid = String(row.mid).trim();
+                        const fatherInfo = personInfoMap.get(fid);
+                        const motherInfo = personInfoMap.get(mid);
+
+                        if (fatherInfo && motherInfo) {
+                            descParts.push(`Là con của ông ${fatherInfo.name} và bà ${motherInfo.name}.`);
+                        } else if (fatherInfo) {
+                            descParts.push(`Là con của ông ${fatherInfo.name}.`);
+                        }
+
+                        // Children Info
+                        const childrenList = childrenOfParentMap.get(id);
+                        if (childrenList && childrenList.length > 0) {
+                            // Sort by order
+                            childrenList.sort((a, b) => a.order - b.order);
+                            
+                            const childrenString = childrenList.map((c, i) => `${i + 1}. ${c.name}`).join('; ');
+                            descParts.push(`Sinh hạ ${childrenList.length} người con là: ${childrenString}.`);
+                        }
+                        finalDesc = descParts.join(' ');
+                    }
+
                     // Tạo trực tiếp bằng Model để lách lỗi 409
                     const pId = new Types.ObjectId();
                     await personModel.create({
@@ -90,7 +148,7 @@ async function seed() {
                         avatar: avatarUrl,
                         isDead: isDead,
                         address: row.address || "",
-                        desc: row.note || (isMale ? `Thế hệ thứ ${gen}` : `Thành viên nữ`),
+                        desc: finalDesc || row.note || (isMale ? `Thế hệ thứ ${gen}` : `Thành viên nữ`),
                         phone: row.phone || "",
                         job: row.job || "",
                         generation: gen,
@@ -123,12 +181,6 @@ async function seed() {
                                 husbandOrder: 1,
                                 wifeOrder: orderToUse,
                             });
-
-                            // [2026-03-05] Cập nhật mô tả quan hệ dựa trên thứ tự vừa gán
-                            await personModel.updateOne(
-                                { _id: wife._id },
-                                { desc: orderToUse === 1 ? "Chính thất" : `Thứ thất (Vợ ${orderToUse})` }
-                            );
 
                             spouseMap.set(`${husbandId}_${wifeId}`, spouse);
                             husbandTrack.set(husbandId, orderToUse);
