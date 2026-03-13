@@ -51,7 +51,6 @@ export default function PersonsView() {
     const [filterMode, setFilterMode] = useState<FilterMode>('all');
     const [sortField, setSortField] = useState<SortField>('name');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-    const [viewMode, setViewMode] = useState<'list' | 'tree' | 'stats' | 'events' | 'settings'>('list'); // Default view is 'list'
     
     // Settings State with localStorage persistence
     const [viewMode, setViewMode] = useState<'list' | 'tree' | 'stats' | 'events' | 'settings'>(() => {
@@ -103,7 +102,6 @@ export default function PersonsView() {
             let res = 0;
             switch (sortField) {
                 case 'name': {
-                    const getName = (name: string) => {
                     const getFirstName = (name: string) => {
                         const parts = name.trim().split(/\s+/);
                         return parts.length > 1 ? parts.slice(0, -1).join(' ') : '';
@@ -113,8 +111,6 @@ export default function PersonsView() {
                         // Lấy tên cuối cùng, nếu không có thì lấy chuỗi trống
                         return parts.length > 0 ? parts[parts.length - 1] : '';
                     };
-                    const nameA = getName(a.name);
-                    const nameB = getName(b.name);
 
                     const nameA = sortByNamePreference === 'lastName' ? getLastName(a.name) : getFirstName(a.name);
                     const nameB = sortByNamePreference === 'lastName' ? getLastName(b.name) : getFirstName(b.name);
@@ -144,7 +140,6 @@ export default function PersonsView() {
             }
             return sortDirection === 'asc' ? res : -res;
         });
-    }, [persons, search, filterMode, connectedIds, sortField, sortDirection]);
     }, [persons, search, filterMode, connectedIds, sortField, sortDirection, sortByNamePreference]);
 
     // Effect to save settings to localStorage
@@ -302,10 +297,6 @@ export default function PersonsView() {
                 </div>
 
                 {viewMode === 'settings' && (
-                     <div className="flex items-center justify-center h-full text-gray-500">
-                        <div className="text-center p-10">
-                            <h3 className="text-2xl font-semibold">Cài đặt</h3>
-                            <p className="mt-2">Các cấu hình cho hệ thống và giao diện sẽ ở đây.</p>
                     <div className="p-4 md:p-8 bg-gray-50 min-h-full">
                         <div className="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                             <h2 className="text-xl font-bold text-gray-800 mb-6">Cài đặt hiển thị</h2>
