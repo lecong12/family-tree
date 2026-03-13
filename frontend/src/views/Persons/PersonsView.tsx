@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Person } from 'src/services/personService';
 import { useAuth } from 'src/context/AuthContext';
@@ -12,13 +12,66 @@ import AddChildModal from 'src/components/AddChildModal/AddChildModal';
 import AddPersonModal from 'src/components/AddPersonModal/AddPersonModal';
 import GuestCodeModal from 'src/components/GuestCodeModal/GuestCodeModal';
 
-import Header from './components/Header';
 import Toolbar from './components/Toolbar';
 import PersonList from './components/PersonList';
 import Pagination from './components/Pagination';
 import { FilterMode, PageSize, SortDirection, SortField } from './types';
 import { buildConnectedIds } from './utils';
 import FamilyTreeFlow from 'src/components/FamilyTree/FamilyTreeFlow';
+import StatsView from './components/StatsView'; // Import component thống kê mới
+
+// --- START: Inlined Components for Header ---
+// Do không có file Header.tsx, chúng ta sẽ định nghĩa lại Header và các component con của nó ở đây
+// để thực hiện nâng cấp.
+
+function UserMenu({ user, isAdmin, onLogout, onOpenGuestCodeModal }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const menuRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const roleText = user.role === 'admin' ? 'Admin' : user.role === 'editor' ? 'Người chỉnh sửa' : 'Gia đình';
+
+    return (
+        <div className="relative" ref={menuRef}>
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center border border-gray-200 hover:bg-gray-50 focus:outline-none transition-all duration-200 hover:scale-105"
+                title="Menu người dùng"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+            </button>
+            {isOpen && (
+                <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-2xl border border-gray-100 py-2 overflow-hidden transform origin-top-right transition-all duration-200 ease-out z-50">
+                    <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+                        <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Xin chào</p>
+                        <p className="text-base font-bold text-gray-900 truncate">{roleText}</p>
+                    </div>
+                    <div className="py-1">
+                        {isAdmin && (
+                            <button onClick={() => { onOpenGuestCodeModal(); setIsOpen(false); }} className="w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors flex items-center gap-3 group">
+                                <span className="font-medium">Quản lý Mã Khách</span>
+                            </button>
+                        )}
+                        <button onClick={onLogout} className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-3 group">
+                            <span className="font-medium">Đăng xuất</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// --- END: Inlined Components for Header ---
 
 export default function PersonsView() {
     const router = useRouter();
@@ -49,7 +102,7 @@ export default function PersonsView() {
     const [filterMode, setFilterMode] = useState<FilterMode>('all');
     const [sortField, setSortField] = useState<SortField>('name');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-    const [viewMode, setViewMode] = useState<'list' | 'tree'>('list');
+    const [viewMode, setViewMode] = useState<'list' | 'tree' | 'stats' | 'events' | 'settings'>('tree');
 
     // Relationship index
     const connectedIds = useMemo(() => buildConnectedIds(spouses, parentChilds), [spouses, parentChilds]);
@@ -212,15 +265,61 @@ export default function PersonsView() {
     if (!user) return <LoadingOverlay isLoading={true} />;
 
     return (
-        <div className="w-screen h-screen flex flex-col bg-gray-50">
-            <Header
-                isolatedCount={isolatedCount}
-                filterMode={filterMode}
-                onFilterModeChange={handleFilterMode}
-                onOpenGuestCodeModal={handleOpenGuestCodeModal}
-                currentView={viewMode}
-                onChangeView={setViewMode}
-            />
+        <div className="w-screen h-screen flex flex-col bg-gray-50 font-sans">
+            {/* --- START: New Header Implementation --- */}
+            <header className="flex-shrink-0 flex items-center h-14 bg-white border-b border-gray-200 shadow-sm w-full relative z-30">
+                <div className="flex-1 flex items-center overflow-x-auto px-4 gap-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+                    {[
+                        { id: 'tree', label: 'Cây gia phả' },
+                        { id: 'list', label: 'Danh sách thành viên' },
+                        { id: 'stats', label: 'Thống kê' },
+                        { id: 'events', label: 'Sự kiện' },
+                        { id: 'settings', label: 'Cài đặt' },
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            type="button"
+                            onClick={() => setViewMode(tab.id as any)}
+                            className={`whitespace-nowrap px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150 flex-shrink-0 ${
+                                viewMode === tab.id
+                                    ? 'bg-blue-100 text-blue-700 shadow-sm ring-1 ring-blue-200'
+                                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
+                            }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+
+                    {(viewMode === 'tree' || viewMode === 'list') && isolatedCount > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                handleFilterMode("isolated");
+                                if (viewMode !== 'list') setViewMode("list");
+                            }}
+                            className={`flex-shrink-0 ml-1 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-colors whitespace-nowrap ${
+                                filterMode === "isolated"
+                                    ? "bg-amber-600 text-white shadow-md"
+                                    : "bg-amber-100 text-amber-700 hover:bg-amber-200"
+                            }`}
+                        >
+                            {isolatedCount} chưa có liên hệ
+                        </button>
+                    )}
+                </div>
+
+                <div className="flex-shrink-0 px-2 md:px-4 border-l border-gray-100 bg-white h-full flex items-center">
+                    {user && (
+                        <UserMenu
+                            user={user}
+                            isAdmin={isAdmin}
+                            onLogout={logout}
+                            onOpenGuestCodeModal={handleOpenGuestCodeModal}
+                        />
+                    )}
+                </div>
+            </header>
+            {/* --- END: New Header Implementation --- */}
 
             {viewMode === 'list' && (
                 <Toolbar search={search} onSearchChange={handleSearch} pageSize={pageSize} onPageSizeChange={handlePageSizeChange} onAddPerson={() => setAddPersonModalOpen(true)} />
@@ -229,7 +328,7 @@ export default function PersonsView() {
             <LoadingOverlay isLoading={isLoading} />
 
             <div className={`flex-1 overflow-auto bg-gray-50 ${viewMode === 'list' ? 'p-4' : ''}`}>
-                {viewMode === 'list' ? (
+                {viewMode === 'list' && (
                     <div className="max-w-[900px] mx-auto bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
                         <PersonList
                             paginated={paginated}
@@ -242,7 +341,8 @@ export default function PersonsView() {
                             onPersonClick={handlePersonClick}
                         />
                     </div>
-                ) : (
+                )}
+                {viewMode === 'tree' && (
                     <FamilyTreeFlow
                         persons={persons}
                         spouses={spouses}
@@ -252,6 +352,23 @@ export default function PersonsView() {
                         onPersonNodeClick={handlePersonClick}
                         onRelationshipNodeClick={handleRelationshipClick}
                     />
+                )}
+                {viewMode === 'stats' && <StatsView persons={persons} />}
+                {viewMode === 'events' && (
+                    <div className="flex items-center justify-center h-full text-gray-500">
+                        <div className="text-center p-10">
+                            <h3 className="text-2xl font-semibold">Dòng thời gian Sự kiện</h3>
+                            <p className="mt-2">Tính năng đang được phát triển.</p>
+                        </div>
+                    </div>
+                )}
+                {viewMode === 'settings' && (
+                     <div className="flex items-center justify-center h-full text-gray-500">
+                        <div className="text-center p-10">
+                            <h3 className="text-2xl font-semibold">Cài đặt</h3>
+                            <p className="mt-2">Các cấu hình cho hệ thống và giao diện sẽ ở đây.</p>
+                        </div>
+                    </div>
                 )}
             </div>
 
