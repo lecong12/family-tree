@@ -23,12 +23,19 @@ interface PersonDetailModalProps {
     onUpdate?: () => void; // Callback after edit/delete
 }
 
+type PersonWithDetails = Person & {
+    job?: string;
+    generation?: number;
+    branch?: string;
+    order?: number;
+};
+
 export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse, onAddChild, onUpdate }: PersonDetailModalProps) {
     const { isAdmin, isEditor } = useAuth();
     const queryClient = useQueryClient();
 
     const [isEditing, setIsEditing] = useState(false);
-    const [editForm, setEditForm] = useState<Partial<Person>>({});
+    const [editForm, setEditForm] = useState<Partial<PersonWithDetails>>({});
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
@@ -91,7 +98,7 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
 
     // Mutations
     const updatePersonMutation = useMutation({
-        mutationFn: (data: Partial<Person>) => personService.updatePerson(person!._id!, data),
+        mutationFn: (data: Partial<PersonWithDetails>) => personService.updatePerson(person!._id!, data as any),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['persons'] });
             queryClient.invalidateQueries({ queryKey: ['person', person?._id] });
@@ -157,20 +164,21 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
 
     useEffect(() => {
         if (isOpen && person?._id) {
+            const p = person as PersonWithDetails;
             setIsEditing(false);
             setEditForm({
-                name: person.name,
-                gender: person.gender,
-                cccd: person.cccd,
-                birth: person.birth,
-                death: person.death,
-                isDead: person.isDead,
-                address: person.address,
-                desc: person.desc,
-                job: person.job,
-                generation: person.generation,
-                branch: person.branch,
-                order: person.order,
+                name: p.name,
+                gender: p.gender,
+                cccd: p.cccd,
+                birth: p.birth,
+                death: p.death,
+                isDead: p.isDead,
+                address: p.address,
+                desc: p.desc,
+                job: p.job,
+                generation: p.generation,
+                branch: p.branch,
+                order: p.order,
             });
         }
     }, [isOpen, person]);
@@ -238,20 +246,21 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
     };
 
     const handleCancelEdit = () => {
+        const p = person as PersonWithDetails;
         setIsEditing(false);
         setEditForm({
-            name: person?.name,
-            gender: person?.gender,
-            cccd: person?.cccd,
-            birth: person?.birth,
-            death: person?.death,
-            isDead: person?.isDead,
-            address: person?.address,
-            desc: person?.desc,
-            job: person?.job,
-            generation: person?.generation,
-            branch: person?.branch,
-            order: person?.order,
+            name: p?.name,
+            gender: p?.gender,
+            cccd: p?.cccd,
+            birth: p?.birth,
+            death: p?.death,
+            isDead: p?.isDead,
+            address: p?.address,
+            desc: p?.desc,
+            job: p?.job,
+            generation: p?.generation,
+            branch: p?.branch,
+            order: p?.order,
         });
     };
 
@@ -580,19 +589,19 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
 
                                         <div>
                                             <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">Thế hệ</p>
-                                            <p className="text-gray-900 font-medium">{person.generation ? `Đời thứ ${person.generation}` : 'Chưa rõ'}</p>
+                                            <p className="text-gray-900 font-medium">{(person as PersonWithDetails).generation ? `Đời thứ ${(person as PersonWithDetails).generation}` : 'Chưa rõ'}</p>
                                         </div>
                                         <div>
                                             <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">Phái/Chi</p>
-                                            <p className="text-gray-900 font-medium">{person.branch || 'Chưa rõ'}</p>
+                                            <p className="text-gray-900 font-medium">{(person as PersonWithDetails).branch || 'Chưa rõ'}</p>
                                         </div>
                                         <div>
                                             <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">Thứ tự</p>
-                                            <p className="text-gray-900 font-medium">{person.order ?? 'Chưa rõ'}</p>
+                                            <p className="text-gray-900 font-medium">{(person as PersonWithDetails).order ?? 'Chưa rõ'}</p>
                                         </div>
                                         <div>
                                             <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">Nghề nghiệp</p>
-                                            <p className="text-gray-900 font-medium">{person.job || 'Chưa cập nhật'}</p>
+                                            <p className="text-gray-900 font-medium">{(person as PersonWithDetails).job || 'Chưa cập nhật'}</p>
                                         </div>
 
                                         <div className="sm:col-span-2">
