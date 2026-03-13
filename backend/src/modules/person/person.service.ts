@@ -72,50 +72,53 @@ export class PersonService {
             throw new NotFoundException(`Invalid person ID: ${id}`);
         }
 
+        // Create a mutable payload from the DTO to avoid side effects
+        const payload: Partial<UpdatePersonDto> = { ...updatePersonDto };
+
         // Check if CCCD is being updated and if it already exists
-        if (updatePersonDto.cccd) {
+        if (payload.cccd) {
             const existingPerson = await this.personModel
                 .findOne({
-                    cccd: updatePersonDto.cccd,
+                    cccd: payload.cccd,
                     _id: { $ne: id },
                 })
                 .exec();
 
             if (existingPerson) {
-                throw new ConflictException(`CCCD ${updatePersonDto.cccd} đã tồn tại trong hệ thống`);
+                throw new ConflictException(`CCCD ${payload.cccd} đã tồn tại trong hệ thống`);
             }
         }
 
-        // Lấy thông tin hiện tại để kiểm tra avatar có cần cập nhật lại không (ví dụ: đổi giới tính)
-        const currentPerson = await this.personModel.findById(id).select('name gender avatar').lean().exec();
+        // If a new avatar URL is NOT provided (it's undefined, null, or empty string),
+        // we need to decide whether to set a default avatar.
+        if (!payload.avatar) { // This covers undefined, null, and ""
+            const currentPerson = await this.personModel.findById(id).select('gender avatar').lean().exec();
+            if (currentPerson) {
+                const MALE_DEFAULT = 'https://www.cartoonize.net/wp-content/uploads/2024/05/avatar-maker-photo-to-cartoon.png';
+                const FEMALE_DEFAULT = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ3rzFZs0tioVeqNH0BKGWxnzfGNevCLpvoXN-vWtjvsjUl5gjNW6lXGyuD7AwJltJgoKk&usqp=CAU';
 
-        if (currentPerson) {
-            const MALE_DEFAULT = 'https://www.cartoonize.net/wp-content/uploads/2024/05/avatar-maker-photo-to-cartoon.png';
-            const FEMALE_DEFAULT = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ3rzFZs0tioVeqNH0BKGWxnzfGNevCLpvoXN-vWtjvsjUl5gjNW6lXGyuD7AwJltJgoKk&usqp=CAU';
+                const nextGender = payload.gender !== undefined ? payload.gender : currentPerson.gender;
+                const isMale = Number(nextGender) === 0 || (nextGender as any) === 'MALE' || nextGender === Gender.MALE;
+                const correctDefaultAvatar = isMale ? MALE_DEFAULT : FEMALE_DEFAULT;
 
-            // Xác định giới tính sau khi sửa (nếu không sửa thì lấy giới tính cũ)
-            const nextGender = updatePersonDto.gender !== undefined ? updatePersonDto.gender : currentPerson.gender;
-            const isMale = Number(nextGender) === 0 || (nextGender as any) === 'MALE' || nextGender === Gender.MALE;
-            const correctDefaultAvatar = isMale ? MALE_DEFAULT : FEMALE_DEFAULT;
-
-            if (updatePersonDto.avatar === "") {
-                // Trường hợp 1: Người dùng chủ động xóa avatar -> Gán avatar mặc định chuẩn
-                updatePersonDto.avatar = correctDefaultAvatar;
-            } else if (updatePersonDto.avatar === undefined || updatePersonDto.avatar === null) {
-                // Trường hợp 2: Người dùng chỉ sửa thông tin khác, không gửi avatar
-                const currentAvatar = currentPerson.avatar;
-                const isInvalid = !currentAvatar || currentAvatar.trim() === '' || currentAvatar.includes('ui-avatars.com');
-                const isWrongGenderDefault = (isMale && currentAvatar === FEMALE_DEFAULT) || (!isMale && currentAvatar === MALE_DEFAULT);
-
-                // Nếu avatar hiện tại bị thiếu, là avatar tạm, hoặc là avatar mặc định SAI giới tính -> Cập nhật lại
-                if (isInvalid || isWrongGenderDefault) {
-                    updatePersonDto.avatar = correctDefaultAvatar;
+                // Case 1: User explicitly wants to reset the avatar.
+                if (payload.avatar === '') {
+                    payload.avatar = correctDefaultAvatar;
+                }
+                // Case 2: User is updating other fields, so we check if the current avatar needs fixing.
+                else { // payload.avatar is undefined or null
+                    const currentAvatar = currentPerson.avatar;
+                    const isInvalid = !currentAvatar || currentAvatar.trim() === '' || currentAvatar.includes('ui-avatars.com');
+                    const isWrongGenderDefault = (isMale && currentAvatar === FEMALE_DEFAULT) || (!isMale && currentAvatar === MALE_DEFAULT);
+                    if (isInvalid || isWrongGenderDefault) {
+                        payload.avatar = correctDefaultAvatar;
+                    }
                 }
             }
         }
 
         try {
-            const updatedPersonDoc = await this.personModel.findByIdAndUpdate(id, updatePersonDto, { new: true }).exec();
+            const updatedPersonDoc = await this.personModel.findByIdAndUpdate(id, payload, { new: true }).exec();
 
             if (!updatedPersonDoc) {
                 throw new NotFoundException(`Person with ID ${id} not found`);
@@ -130,7 +133,7 @@ export class PersonService {
             return updatedPerson;
         } catch (error) {
             if (error.code === 11000) {
-                throw new ConflictException(`CCCD ${updatePersonDto.cccd} đã tồn tại trong hệ thống`);
+                throw new ConflictException(`CCCD ${payload.cccd} đã tồn tại trong hệ thống`);
             }
             throw error;
         }
