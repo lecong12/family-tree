@@ -256,6 +256,7 @@ export default function PersonsView() {
                     />
                 )}
                 {viewMode === 'stats' && <StatsView persons={persons} />}
+                {viewMode === 'stats' && <StatsView persons={persons} spouses={spouses} />}
                 {viewMode === 'events' && (
                     <div className="flex items-center justify-center h-full text-gray-500">
                         <div className="text-center p-10">
