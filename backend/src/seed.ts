@@ -58,10 +58,25 @@ async function seed() {
                     const genderRaw = String(row.gender).trim().toLowerCase();
                     const isMale = (genderRaw === 'nam' || genderRaw === '0' || genderRaw === 'male');
 
-                    // Fix Avatar: Nam theo nam, Nữ theo nữ chuẩn 100%
-                    const avatarUrl = isMale 
-                        ? 'https://www.cartoonize.net/wp-content/uploads/2024/05/avatar-maker-photo-to-cartoon.png'
-                        : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ3rzFZs0tioVeqNH0BKGWxnzfGNevCLpvoXN-vWtjvsjUl5gjNW6lXGyuD7AwJltJgoKk&usqp=CAU';
+                    // Avatar logic: Prioritize 'image' from CSV, then fallback to default.
+                    const avatarUrl = (row.image && row.image.trim() !== '')
+                        ? row.image.trim()
+                        : (isMale 
+                            ? 'https://www.cartoonize.net/wp-content/uploads/2024/05/avatar-maker-photo-to-cartoon.png'
+                            : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ3rzFZs0tioVeqNH0BKGWxnzfGNevCLpvoXN-vWtjvsjUl5gjNW6lXGyuD7AwJltJgoKk&usqp=CAU');
+
+                    // Birth date logic: Prioritize 'birth_date' from CSV, then fallback to generated date.
+                    const birthDate = row.birth_date && new Date(row.birth_date).toString() !== 'Invalid Date'
+                        ? new Date(row.birth_date)
+                        : new Date(1800 + (gen * 25), 0, 1);
+                    
+                    // Death date logic from CSV
+                    const deathDate = row.death_date && new Date(row.death_date).toString() !== 'Invalid Date'
+                        ? new Date(row.death_date)
+                        : null;
+
+                    // isDead logic: based on CSV 'is_live' or if death date is in the past.
+                    const isDead = row.is_live === '0' || (deathDate !== null && deathDate <= new Date());
 
                     // Tạo trực tiếp bằng Model để lách lỗi 409
                     const pId = new Types.ObjectId();
@@ -69,12 +84,15 @@ async function seed() {
                         _id: pId,
                         cccd: id.padStart(10, '0'),
                         name: row.full_name || row.name || "Không tên",
-                        gender: isMale ? 0 : 1, // 0: Nam, 1: Nữ
-                        birth: new Date(1800 + (gen * 25), 0, 1),
+                        gender: isMale ? 0 : 1,
+                        birth: birthDate,
+                        death: deathDate,
                         avatar: avatarUrl,
-                        isDead: row.is_live === '0',
+                        isDead: isDead,
                         address: row.address || "",
-                        desc: isMale ? `Thế hệ thứ ${gen}` : `Thành viên nữ`,
+                        desc: row.note || (isMale ? `Thế hệ thứ ${gen}` : `Thành viên nữ`),
+                        phone: row.phone || "",
+                        job: row.job || "",
                     });
                     personMap.set(id, { _id: pId, name: row.full_name });
                 }
