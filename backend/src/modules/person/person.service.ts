@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -7,6 +7,7 @@ import { HydratedDocument, Model, Types } from 'mongoose';
 import { SpouseService } from '../spouse/spouse.service';
 import { ParentChildService } from '../parent-child/parent-child.service';
 import { Gender } from '../../constants';
+import { parse } from 'csv-parse/sync';
 
 @Injectable()
 export class PersonService {
@@ -15,6 +16,182 @@ export class PersonService {
         private readonly spouseService: SpouseService,
         private readonly parentChildService: ParentChildService,
     ) {}
+
+    async importFromCsv(fileBuffer: Buffer) {
+        const spouseModel = this.personModel.db.model('Spouse');
+        const parentChildModel = this.personModel.db.model('ParentChild');
+
+        console.log('--------------------------------------------------');
+        console.log('🧹 BƯỚC 1: XÓA SẠCH DỮ LIỆU CŨ...');
+        await this.personModel.deleteMany({});
+        await spouseModel.deleteMany({});
+        await parentChildModel.deleteMany({});
+
+        const records: any[] = parse(fileBuffer, { columns: true, skip_empty_lines: true, trim: true, bom: true });
+
+        if (records.length === 0) {
+            throw new BadRequestException('File CSV rỗng hoặc không hợp lệ.');
+        }
+
+        const personMap = new Map();
+        const spouseMap = new Map();
+
+        // Pre-scan to build relationship maps for description generation
+        const personInfoMap = new Map<string, { name: string, fid: string, mid: string }>();
+        const childrenOfParentMap = new Map<string, Array<{ name: string, order: number }>>();
+
+        for (const row of records) {
+            const id = String(row.id).trim();
+            if (!id) continue;
+
+            const name = row.full_name || row.name || "Không tên";
+            const fid = String(row.fid).trim();
+            const mid = String(row.mid).trim();
+            const order = parseInt(row.order) || 999;
+
+            personInfoMap.set(id, { name, fid, mid });
+
+            const childEntry = { name, order };
+
+            if (fid && fid !== '0') {
+                if (!childrenOfParentMap.has(fid)) childrenOfParentMap.set(fid, []);
+                childrenOfParentMap.get(fid)!.push(childEntry);
+            }
+            if (mid && mid !== '0') {
+                if (!childrenOfParentMap.has(mid)) childrenOfParentMap.set(mid, []);
+                childrenOfParentMap.get(mid)!.push(childEntry);
+            }
+        }
+
+        console.log(`🚀 BƯỚC 2: NẠP ${records.length} NHÂN VẬT TỪ CSV...`);
+        for (const row of records) {
+            const id = String(row.id).trim();
+            if (!id) continue;
+
+            const gen = parseInt(row.generation) || 1;
+            const genderRaw = String(row.gender).trim().toLowerCase();
+            const isMale = (genderRaw === 'nam' || genderRaw === '0' || genderRaw === 'male');
+
+            const avatarUrl = (row.image && row.image.trim() !== '')
+                ? row.image.trim()
+                : (isMale 
+                    ? 'https://www.cartoonize.net/wp-content/uploads/2024/05/avatar-maker-photo-to-cartoon.png'
+                    : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ3rzFZs0tioVeqNH0BKGWxnzfGNevCLpvoXN-vWtjvsjUl5gjNW6lXGyuD7AwJltJgoKk&usqp=CAU');
+
+            const birthDate = row.birth_date && new Date(row.birth_date).toString() !== 'Invalid Date'
+                ? new Date(row.birth_date)
+                : new Date(1800 + (gen * 25), 0, 1);
+            
+            const deathDate = row.death_date && new Date(row.death_date).toString() !== 'Invalid Date'
+                ? new Date(row.death_date)
+                : null;
+
+            const isDead = row.is_live === '0' || (deathDate !== null && deathDate <= new Date());
+
+            let finalDesc = row.desc?.trim();
+            if (!finalDesc) {
+                const descParts: string[] = [];
+                const fid = String(row.fid).trim();
+                const mid = String(row.mid).trim();
+                const fatherInfo = personInfoMap.get(fid);
+                const motherInfo = personInfoMap.get(mid);
+
+                if (fatherInfo && motherInfo) {
+                    descParts.push(`Là con của ông ${fatherInfo.name} và bà ${motherInfo.name}.`);
+                } else if (fatherInfo) {
+                    descParts.push(`Là con của ông ${fatherInfo.name}.`);
+                }
+
+                const childrenList = childrenOfParentMap.get(id);
+                if (childrenList && childrenList.length > 0) {
+                    childrenList.sort((a, b) => a.order - b.order);
+                    const childrenString = childrenList.map((c, i) => `${i + 1}. ${c.name}`).join('; ');
+                    descParts.push(`Sinh hạ ${childrenList.length} người con là: ${childrenString}.`);
+                }
+                finalDesc = descParts.join(' ');
+            }
+
+            const pId = new Types.ObjectId();
+            await this.personModel.create({
+                _id: pId,
+                cccd: id.padStart(10, '0'),
+                name: row.full_name || row.name || "Không tên",
+                gender: isMale ? 0 : 1,
+                birth: birthDate,
+                death: deathDate,
+                avatar: avatarUrl,
+                isDead: isDead,
+                address: row.address || "",
+                desc: finalDesc || row.note || (isMale ? `Thế hệ thứ ${gen}` : `Thành viên nữ`),
+                phone: row.phone || "",
+                job: row.job || "",
+                generation: gen,
+                branch: row.branch || "0",
+                order: parseInt(row.order) || 1,
+            });
+            personMap.set(id, { _id: pId, name: row.full_name });
+        }
+
+        console.log('💍 BƯỚC 3: THIẾT LẬP VỢ CHỒNG...');
+        const husbandTrack = new Map<string, number>();
+
+        for (const row of records) {
+            const husbandId = String(row.pid).trim();
+            const wifeId = String(row.id).trim();
+            const genderRaw = String(row.gender).trim().toLowerCase();
+            const isFemale = (genderRaw === 'nữ' || genderRaw === '1' || genderRaw === 'female');
+
+            if (husbandId && husbandId !== '0' && isFemale) {
+                const husband = personMap.get(husbandId);
+                const wife = personMap.get(wifeId);
+                
+                if (husband && wife) {
+                    let orderToUse = (husbandTrack.get(husbandId) || 0) + 1;
+                    
+                    const spouse = await spouseModel.create({
+                        husband: husband._id,
+                        wife: wife._id,
+                        husbandOrder: 1,
+                        wifeOrder: orderToUse,
+                    });
+
+                    spouseMap.set(`${husbandId}_${wifeId}`, spouse);
+                    husbandTrack.set(husbandId, orderToUse);
+                }
+            }
+        }
+
+        console.log('🌳 BƯỚC 4: KẾT NỐI CON CÁI...');
+        let connectCount = 0;
+        for (const row of records) {
+            const fid = String(row.fid).trim();
+            const mid = String(row.mid).trim();
+            const childId = String(row.id).trim();
+
+            if (fid && fid !== '0') {
+                let parentSpouse = spouseMap.get(`${fid}_${mid}`);
+                if (!parentSpouse) {
+                    const firstWifeKey = Array.from(spouseMap.keys()).find(k => k.startsWith(`${fid}_`));
+                    if (firstWifeKey) parentSpouse = spouseMap.get(firstWifeKey);
+                }
+
+                const child = personMap.get(childId);
+                if (parentSpouse && child) {
+                    await parentChildModel.create({
+                        parent: parentSpouse._id,
+                        child: child._id,
+                        isAdopted: false,
+                    });
+                    connectCount++;
+                }
+            }
+        }
+
+        console.log('--------------------------------------------------');
+        console.log(`✅ IMPORT THÀNH CÔNG! ĐÃ NỐI ${connectCount} CON CÁI TỪ CSV.`);
+        console.log('--------------------------------------------------');
+        return { message: `Import thành công! Đã nạp ${records.length} thành viên.` };
+    }
 
     async create(createPersonDto: CreatePersonDto) {
         if (!createPersonDto.avatar || createPersonDto.avatar.trim() === '') {

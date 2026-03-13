@@ -262,21 +262,35 @@ export default function PersonsView() {
         const confirmed = confirm(
             'CẢNH BÁO: Hành động này sẽ XÓA TOÀN BỘ dữ liệu hiện tại và thay thế bằng dữ liệu từ file CSV. Bạn có chắc chắn muốn tiếp tục?',
         );
-        if (!confirmed) return;
+        if (!confirmed) {
+            event.target.value = ''; // Reset input để cho phép tải lại cùng một file
+            return;
+        }
 
         setIsImporting(true);
         const formData = new FormData();
         formData.append('file', file);
 
         try {
-            // You need to create this service method
-            // await personService.importCsv(formData);
-            // For now, let's use axios directly
+            const token = localStorage.getItem('token'); // Giả định token được lưu với key 'token'
+            if (!token) {
+                toast.error('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
+                setIsImporting(false);
+                return;
+            }
+
             const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-            await axios.post(`${apiUrl}/persons/import-csv`, formData);
-            toast.success('Gửi file thành công! Dữ liệu đang được xử lý. Vui lòng tải lại trang sau vài phút.');
-        } catch (error) {
-            toast.error('Import thất bại. Vui lòng kiểm tra console.');
+            await axios.post(`${apiUrl}/persons/import-csv`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            toast.success('Import thành công! Dữ liệu đang được làm mới...');
+            refetchAll(); // Tải lại toàn bộ dữ liệu để cập nhật giao diện
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.message || 'Import thất bại. Vui lòng kiểm tra console.';
+            toast.error(errorMessage);
             console.error('Import CSV failed:', error);
         } finally {
             setIsImporting(false);

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Query, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Query, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { PersonService } from './person.service';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
@@ -49,12 +49,10 @@ export class PersonController {
         },
     })
     async importFromCsv(@UploadedFile() file: Express.Multer.File) {
-        // This is a placeholder. You need to implement the actual CSV processing logic.
-        // It should be similar to the logic in your `seed.ts` file.
-        console.log('Received file:', file.originalname);
-        // For now, just return a success message.
-        // In a real implementation, you would call a service method like `personService.importFromCsv(file.buffer)`.
-        return { message: 'File received. Processing logic needs to be implemented.' };
+        if (!file) {
+            throw new BadRequestException('No file uploaded.');
+        }
+        return this.personService.importFromCsv(file.buffer);
     }
 
     @Get()
