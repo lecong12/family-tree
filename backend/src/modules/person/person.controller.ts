@@ -1,13 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, HttpStatus, Query, UseGuards, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { PersonService } from './person.service';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
-import { ApiOperation, ApiParam, ApiResponse, ApiTags, ApiQuery, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiResponse, ApiTags, ApiQuery, ApiBearerAuth, ApiConsumes, ApiBody } from '@nestjs/swagger';
 import { Person } from './schemas/person.schema';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRoles } from '../../constants';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @ApiTags('Person')
 @ApiBearerAuth()
@@ -27,6 +28,33 @@ export class PersonController {
     create(@Body() createPersonDto: CreatePersonDto) {
         // console.log(createPersonDto);
         return this.personService.create(createPersonDto);
+    }
+
+    @Post('import-csv')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(UserRoles.ADMIN)
+    @UseInterceptors(FileInterceptor('file'))
+    @ApiConsumes('multipart/form-data')
+    @ApiOperation({ summary: 'Import persons from a CSV file. This will wipe all existing data.' })
+    @ApiBody({
+        description: 'CSV file to import',
+        schema: {
+            type: 'object',
+            properties: {
+                file: {
+                    type: 'string',
+                    format: 'binary',
+                },
+            },
+        },
+    })
+    async importFromCsv(@UploadedFile() file: Express.Multer.File) {
+        // This is a placeholder. You need to implement the actual CSV processing logic.
+        // It should be similar to the logic in your `seed.ts` file.
+        console.log('Received file:', file.originalname);
+        // For now, just return a success message.
+        // In a real implementation, you would call a service method like `personService.importFromCsv(file.buffer)`.
+        return { message: 'File received. Processing logic needs to be implemented.' };
     }
 
     @Get()
