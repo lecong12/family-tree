@@ -86,15 +86,31 @@ export class PersonService {
             }
         }
 
-        if (updatePersonDto.avatar === "") {
-            const existingPerson = await this.personModel.findById(id).select('name gender').lean().exec();
-            if (existingPerson) {
-                const tempPerson = {
-                    name: updatePersonDto.name || existingPerson.name,
-                    gender: updatePersonDto.gender !== undefined ? updatePersonDto.gender : existingPerson.gender,
-                };
-                this._ensureAvatar(tempPerson);
-                updatePersonDto.avatar = (tempPerson as any).avatar;
+        // Lấy thông tin hiện tại để kiểm tra avatar có cần cập nhật lại không (ví dụ: đổi giới tính)
+        const currentPerson = await this.personModel.findById(id).select('name gender avatar').lean().exec();
+
+        if (currentPerson) {
+            const MALE_DEFAULT = 'https://www.cartoonize.net/wp-content/uploads/2024/05/avatar-maker-photo-to-cartoon.png';
+            const FEMALE_DEFAULT = 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ3rzFZs0tioVeqNH0BKGWxnzfGNevCLpvoXN-vWtjvsjUl5gjNW6lXGyuD7AwJltJgoKk&usqp=CAU';
+
+            // Xác định giới tính sau khi sửa (nếu không sửa thì lấy giới tính cũ)
+            const nextGender = updatePersonDto.gender !== undefined ? updatePersonDto.gender : currentPerson.gender;
+            const isMale = Number(nextGender) === 0 || (nextGender as any) === 'MALE' || nextGender === Gender.MALE;
+            const correctDefaultAvatar = isMale ? MALE_DEFAULT : FEMALE_DEFAULT;
+
+            if (updatePersonDto.avatar === "") {
+                // Trường hợp 1: Người dùng chủ động xóa avatar -> Gán avatar mặc định chuẩn
+                updatePersonDto.avatar = correctDefaultAvatar;
+            } else if (updatePersonDto.avatar === undefined || updatePersonDto.avatar === null) {
+                // Trường hợp 2: Người dùng chỉ sửa thông tin khác, không gửi avatar
+                const currentAvatar = currentPerson.avatar;
+                const isInvalid = !currentAvatar || currentAvatar.trim() === '' || currentAvatar.includes('ui-avatars.com');
+                const isWrongGenderDefault = (isMale && currentAvatar === FEMALE_DEFAULT) || (!isMale && currentAvatar === MALE_DEFAULT);
+
+                // Nếu avatar hiện tại bị thiếu, là avatar tạm, hoặc là avatar mặc định SAI giới tính -> Cập nhật lại
+                if (isInvalid || isWrongGenderDefault) {
+                    updatePersonDto.avatar = correctDefaultAvatar;
+                }
             }
         }
 
