@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import { Person } from 'src/services/personService';
 import { useAuth } from 'src/context/AuthContext';
@@ -21,6 +22,7 @@ import { buildConnectedIds } from './utils';
 import FamilyTreeFlow from 'src/components/FamilyTree/FamilyTreeFlow';
 import StatsView from './components/StatsView'; // Import component thống kê mới
 import EventsView from './components/EventsView'; // Import component sự kiện mới
+import { toast } from 'react-toastify';
 
 export default function PersonsView() {
     const router = useRouter();
@@ -252,6 +254,37 @@ export default function PersonsView() {
     const handleCloseAddChildModal = useCallback(() => setAddChildModalOpen(false), []);
     const handleCloseAddPersonModal = useCallback(() => setAddPersonModalOpen(false), []);
 
+    const [isImporting, setIsImporting] = useState(false);
+    const handleImportCsv = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const confirmed = confirm(
+            'CẢNH BÁO: Hành động này sẽ XÓA TOÀN BỘ dữ liệu hiện tại và thay thế bằng dữ liệu từ file CSV. Bạn có chắc chắn muốn tiếp tục?',
+        );
+        if (!confirmed) return;
+
+        setIsImporting(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            // You need to create this service method
+            // await personService.importCsv(formData);
+            // For now, let's use axios directly
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+            await axios.post(`${apiUrl}/persons/import-csv`, formData);
+            toast.success('Gửi file thành công! Dữ liệu đang được xử lý. Vui lòng tải lại trang sau vài phút.');
+        } catch (error) {
+            toast.error('Import thất bại. Vui lòng kiểm tra console.');
+            console.error('Import CSV failed:', error);
+        } finally {
+            setIsImporting(false);
+            // Reset the input value to allow re-uploading the same file
+            event.target.value = '';
+        }
+    };
+
     // Show loading state while checking auth
     if (authLoading) return <LoadingOverlay isLoading={true} />;
     
@@ -375,6 +408,27 @@ export default function PersonsView() {
                                             />
                                             <label htmlFor="theme-dark" className="ml-2 block text-sm text-text-primary">Tối</label>
                                         </div>
+                                    </div>
+                                </div>
+
+                                {/* Import CSV */}
+                                <div>
+                                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                                        Import Dữ liệu (Nâng cao)
+                                    </label>
+                                    <div className="p-4 border border-dashed border-red-400 rounded-lg bg-red-50">
+                                        <p className="text-sm text-red-700 mb-3">
+                                            <strong>Cảnh báo:</strong> Chức năng này sẽ xóa toàn bộ dữ liệu hiện có và thay thế bằng dữ liệu từ file CSV. Chỉ sử dụng khi bạn chắc chắn.
+                                        </p>
+                                        <label
+                                            htmlFor="csv-importer"
+                                            className={`inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ${
+                                                isImporting ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                                            }`}
+                                        >
+                                            {isImporting ? 'Đang xử lý...' : 'Chọn file CSV để Import'}
+                                        </label>
+                                        <input id="csv-importer" type="file" accept=".csv" className="hidden" onChange={handleImportCsv} disabled={isImporting} />
                                     </div>
                                 </div>
 
