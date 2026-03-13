@@ -120,8 +120,8 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">{p.job || '—'}</td>
-                                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate" title={p.address}>{p.address || '—'}</td>
+                                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500" title={p.job}>{p.job || 'Chưa có'}</td>
+                                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate" title={p.address}>{p.address || 'Chưa có'}</td>
                                 <td className="px-4 py-2 whitespace-nowrap text-center text-sm text-gray-500">{birthYear || '—'}</td>
                                 <td className="px-4 py-2 whitespace-nowrap text-center">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isDeceased ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-800'}`}>
