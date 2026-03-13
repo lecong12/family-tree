@@ -277,7 +277,7 @@ export default function PersonsView() {
 
             <div className="flex-1 overflow-auto bg-bg-primary relative">
                 <div className={`absolute inset-0 p-4 ${viewMode === 'list' ? 'block' : 'hidden'}`}>
-                    <div className="max-w-[900px] mx-auto bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
+                    <div className="max-w-[900px] mx-auto bg-bg-secondary shadow-sm ring-1 ring-border-color rounded-xl overflow-hidden">
                          <PersonList
                              paginated={paginated}
                              connectedIds={connectedIds}
@@ -312,13 +312,13 @@ export default function PersonsView() {
                 </div>
 
                 {viewMode === 'settings' && (
-                    <div className="p-4 md:p-8 bg-gray-50 min-h-full">
+                    <div className="p-4 md:p-8 bg-bg-primary min-h-full">
                         <div className="max-w-2xl mx-auto bg-bg-secondary p-6 rounded-xl shadow-sm border border-border-color">
-                            <h2 className="text-xl font-bold text-gray-800 mb-6">Cài đặt hiển thị</h2>
+                            <h2 className="text-xl font-bold text-text-primary mb-6">Cài đặt hiển thị</h2>
                             <div className="space-y-6">
                                 {/* Sort by Name Preference */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-text-secondary mb-2">
                                         Sắp xếp danh sách thành viên theo
                                     </label>
                                     <div className="flex items-center gap-4">
@@ -332,7 +332,7 @@ export default function PersonsView() {
                                                 onChange={(e) => setSortByNamePreference(e.target.value as any)}
                                                 className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                                             />
-                                            <label htmlFor="sort-lastname" className="ml-2 block text-sm text-gray-900">Tên (ví dụ: An, Bình, Cúc)</label>
+                                            <label htmlFor="sort-lastname" className="ml-2 block text-sm text-text-primary">Tên (ví dụ: An, Bình, Cúc)</label>
                                         </div>
                                         <div className="flex items-center">
                                             <input
@@ -344,14 +344,14 @@ export default function PersonsView() {
                                                 onChange={(e) => setSortByNamePreference(e.target.value as any)}
                                                 className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                                             />
-                                            <label htmlFor="sort-firstname" className="ml-2 block text-sm text-gray-900">Họ và tên đệm (ví dụ: Lê Công, Nguyễn Thị)</label>
+                                            <label htmlFor="sort-firstname" className="ml-2 block text-sm text-text-primary">Họ và tên đệm (ví dụ: Lê Công, Nguyễn Thị)</label>
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Theme Setting */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-text-secondary mb-2">
                                         Giao diện
                                     </label>
                                     <div className="flex items-center gap-4">
@@ -365,7 +365,7 @@ export default function PersonsView() {
                                                 onChange={(e) => setTheme(e.target.value as any)}
                                                 className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                                             />
-                                            <label htmlFor="theme-light" className="ml-2 block text-sm text-gray-900">Sáng</label>
+                                            <label htmlFor="theme-light" className="ml-2 block text-sm text-text-primary">Sáng</label>
                                         </div>
                                         <div className="flex items-center">
                                             <input
@@ -377,7 +377,7 @@ export default function PersonsView() {
                                                 onChange={(e) => setTheme(e.target.value as any)}
                                                 className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                                             />
-                                            <label htmlFor="theme-dark" className="ml-2 block text-sm text-gray-900">Tối</label>
+                                            <label htmlFor="theme-dark" className="ml-2 block text-sm text-text-primary">Tối</label>
                                         </div>
                                     </div>
                                 </div>
