@@ -20,6 +20,7 @@ import { FilterMode, PageSize, SortDirection, SortField } from './types';
 import { buildConnectedIds } from './utils';
 import FamilyTreeFlow from 'src/components/FamilyTree/FamilyTreeFlow';
 import StatsView from './components/StatsView'; // Import component thống kê mới
+import EventsView from './components/EventsView'; // Import component sự kiện mới
 
 export default function PersonsView() {
     const router = useRouter();
@@ -261,14 +262,10 @@ export default function PersonsView() {
                     <StatsView persons={persons} spouses={spouses} />
                 </div>
 
-                {viewMode === 'events' && (
-                    <div className="flex items-center justify-center h-full text-gray-500">
-                        <div className="text-center p-10">
-                            <h3 className="text-2xl font-semibold">Dòng thời gian Sự kiện</h3>
-                            <p className="mt-2">Tính năng đang được phát triển.</p>
-                        </div>
-                    </div>
-                )}
+                <div className={`absolute inset-0 overflow-auto ${viewMode === 'events' ? 'block' : 'hidden'}`}>
+                    <EventsView persons={persons} spouses={spouses} />
+                </div>
+
                 {viewMode === 'settings' && (
                      <div className="flex items-center justify-center h-full text-gray-500">
                         <div className="text-center p-10">
