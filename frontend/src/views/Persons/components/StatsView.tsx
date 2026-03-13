@@ -10,9 +10,10 @@ ChartJS.register(ArcElement, Tooltip, Legend, CategoryScale, LinearScale, BarEle
 
 interface StatsViewProps {
     persons: Person[];
+    spouses: any[];
 }
 
-const StatsView: React.FC<StatsViewProps> = ({ persons }) => {
+const StatsView: React.FC<StatsViewProps> = ({ persons, spouses }) => {
     const genderData = useMemo(() => {
         const male = persons.filter(p => p.gender === Gender.MALE).length;
         const female = persons.filter(p => p.gender === Gender.FEMALE).length;
@@ -93,6 +94,94 @@ const StatsView: React.FC<StatsViewProps> = ({ persons }) => {
         };
     }, [persons]);
 
+    const branchData = useMemo(() => {
+        const counts: Record<string, number> = {};
+        persons.forEach(p => {
+            // @ts-ignore
+            const branch = p.branch;
+            const label = branch && branch !== '0' ? `Phái ${branch}` : 'Gốc / Chưa rõ';
+            counts[label] = (counts[label] || 0) + 1;
+        });
+
+        const labels = Object.keys(counts).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+        return {
+            labels,
+            datasets: [{
+                label: 'Thành viên',
+                data: labels.map(l => counts[l]),
+                backgroundColor: 'rgba(255, 206, 86, 0.6)',
+                borderColor: 'rgba(255, 206, 86, 1)',
+                borderWidth: 1,
+            }]
+        };
+    }, [persons]);
+
+    const generationData = useMemo(() => {
+        const counts: Record<number, number> = {};
+        let maxGen = 0;
+        persons.forEach(p => {
+            // @ts-ignore
+            if (p.generation) {
+                // @ts-ignore
+                counts[p.generation] = (counts[p.generation] || 0) + 1;
+                // @ts-ignore
+                if (p.generation > maxGen) maxGen = p.generation;
+            }
+        });
+
+        const labels = [];
+        const data = [];
+        for (let i = 1; i <= maxGen; i++) {
+            if (counts[i]) {
+                labels.push(`Đời ${i}`);
+                data.push(counts[i]);
+            }
+        }
+
+        return {
+            labels,
+            datasets: [{
+                label: 'Thành viên',
+                data,
+                backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                borderColor: 'rgba(75, 192, 192, 1)',
+                borderWidth: 1,
+            }]
+        };
+    }, [persons]);
+
+    const spouseCountData = useMemo(() => {
+        const husbandCounts: Record<string, number> = {};
+        
+        // Khởi tạo đếm cho nam giới
+        persons.forEach(p => {
+            if (p.gender === Gender.MALE && p._id) husbandCounts[p._id] = 0;
+        });
+
+        spouses.forEach(s => {
+            const husbandId = typeof s.husband === 'string' ? s.husband : s.husband?._id;
+            if (husbandId && husbandCounts[husbandId] !== undefined) husbandCounts[husbandId]++;
+        });
+
+        const data = [0, 0, 0, 0, 0]; // 0, 1, 2, 3, >3
+        Object.values(husbandCounts).forEach(c => {
+            if (c >= 4) data[4]++;
+            else data[c]++;
+        });
+
+        return {
+            labels: ['Độc thân', '1 Vợ', '2 Vợ', '3 Vợ', '>3 Vợ'],
+            datasets: [{
+                label: 'Số lượng Nam giới',
+                data,
+                backgroundColor: 'rgba(153, 102, 255, 0.6)',
+                borderColor: 'rgba(153, 102, 255, 1)',
+                borderWidth: 1,
+            }]
+        };
+    }, [persons, spouses]);
+
     if (persons.length === 0) {
         return <div className="p-10 text-center text-gray-500">Không có dữ liệu để thống kê.</div>;
     }
@@ -106,16 +195,41 @@ const StatsView: React.FC<StatsViewProps> = ({ persons }) => {
                         <Doughnut data={genderData} />
                     </div>
                 </div>
+
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ theo Tình trạng</h3>
                     <div className="w-full max-w-xs mx-auto">
                         <Doughnut data={livingStatusData} />
                     </div>
                 </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Số lượng Vợ (Nam giới)</h3>
+                    <div className="w-full h-64 mx-auto">
+                        <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={spouseCountData} />
+                    </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-2">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ theo Phái/Chi</h3>
+                    <div className="w-full h-80 mx-auto">
+                        <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={branchData} />
+                    </div>
+                </div>
+
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-2">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ theo Độ tuổi</h3>
                     <div className="w-full h-80 mx-auto">
                         <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false, }, title: { display: true, text: 'Số lượng thành viên trong các nhóm tuổi', }, }, }} data={ageDistributionData} />
+                    </div>
+                </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto mt-8">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ theo Thế hệ (Đời)</h3>
+                    <div className="w-full h-80 mx-auto">
+                        <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={generationData} />
                     </div>
                 </div>
             </div>

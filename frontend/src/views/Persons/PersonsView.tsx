@@ -255,7 +255,6 @@ export default function PersonsView() {
                         onRelationshipNodeClick={handleRelationshipClick}
                     />
                 )}
-                {viewMode === 'stats' && <StatsView persons={persons} />}
                 {viewMode === 'stats' && <StatsView persons={persons} spouses={spouses} />}
                 {viewMode === 'events' && (
                     <div className="flex items-center justify-center h-full text-gray-500">
