@@ -185,6 +185,9 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
 
     if (!person) return null;
 
+    const spouseLabel = person.gender === Gender.MALE ? 'Vợ' : 'Chồng';
+    const spouseCountLabel = spouses.length > 1 ? ` (${spouses.length})` : '';
+
     const getSpouseName = (spouse: SpouseWithDetails) => {
         // Xác định ID của husband và wife
         const husbandId = typeof spouse.husband === 'string' ? spouse.husband : spouse.husband?._id;
@@ -671,10 +674,10 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
                 {/* Spouse Relationships */}
                 <div className="bg-gray-50 p-2 md:p-4 rounded-lg">
                     <div className="flex justify-between items-center mb-3">
-                        <h3 className="font-semibold">Vợ/Chồng ({spouses.length})</h3>
+                        <h3 className="font-semibold">{spouseLabel}{spouseCountLabel}</h3>
                         {(isAdmin || isEditor) && (
                             <button onClick={() => onAddSpouse(person)} className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
-                                + Thêm vợ/chồng
+                                + Thêm {spouseLabel.toLowerCase()}
                             </button>
                         )}
                     </div>

@@ -50,7 +50,7 @@ export default function PersonsView() {
     const [filterMode, setFilterMode] = useState<FilterMode>('all');
     const [sortField, setSortField] = useState<SortField>('name');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-    const [viewMode, setViewMode] = useState<'list' | 'tree' | 'stats' | 'events' | 'settings'>('tree'); // Default view is 'tree'
+    const [viewMode, setViewMode] = useState<'list' | 'tree' | 'stats' | 'events' | 'settings'>('list'); // Default view is 'list'
 
     // Relationship index
     const connectedIds = useMemo(() => buildConnectedIds(spouses, parentChilds), [spouses, parentChilds]);
@@ -229,22 +229,23 @@ export default function PersonsView() {
 
             <LoadingOverlay isLoading={isLoading} />
 
-            <div className={`flex-1 overflow-auto bg-gray-50 ${viewMode === 'list' ? 'p-4' : ''}`}>
-                {viewMode === 'list' && (
+            <div className="flex-1 overflow-auto bg-gray-50 relative">
+                <div className={`absolute inset-0 p-4 ${viewMode === 'list' ? 'block' : 'hidden'}`}>
                     <div className="max-w-[900px] mx-auto bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
-                        <PersonList
-                            paginated={paginated}
-                            connectedIds={connectedIds}
-                            currentPage={currentPage}
-                            pageSize={pageSize}
-                            sortField={sortField}
-                            sortDirection={sortDirection}
-                            onSort={handleSort}
-                            onPersonClick={handlePersonClick}
-                        />
-                    </div>
-                )}
-                {viewMode === 'tree' && (
+                         <PersonList
+                             paginated={paginated}
+                             connectedIds={connectedIds}
+                             currentPage={currentPage}
+                             pageSize={pageSize}
+                             sortField={sortField}
+                             sortDirection={sortDirection}
+                             onSort={handleSort}
+                             onPersonClick={handlePersonClick}
+                         />
+                     </div>
+                </div>
+
+                <div className={`absolute inset-0 ${viewMode === 'tree' ? 'block' : 'hidden'}`}>
                     <FamilyTreeFlow
                         persons={persons}
                         spouses={spouses}
@@ -254,8 +255,12 @@ export default function PersonsView() {
                         onPersonNodeClick={handlePersonClick}
                         onRelationshipNodeClick={handleRelationshipClick}
                     />
-                )}
-                {viewMode === 'stats' && <StatsView persons={persons} spouses={spouses} />}
+                </div>
+
+                <div className={`absolute inset-0 overflow-auto ${viewMode === 'stats' ? 'block' : 'hidden'}`}>
+                    <StatsView persons={persons} spouses={spouses} />
+                </div>
+
                 {viewMode === 'events' && (
                     <div className="flex items-center justify-center h-full text-gray-500">
                         <div className="text-center p-10">

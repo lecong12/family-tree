@@ -18,7 +18,7 @@ export default function Header({ isolatedCount, filterMode, onFilterModeChange, 
 
     const tabs: { id: ViewMode; label: string }[] = [
         { id: 'tree', label: 'Cây gia phả' },
-        { id: 'list', label: 'Danh sách thành viên' },
+        { id: 'list', label: 'Thành viên' },
         { id: 'stats', label: 'Thống kê' },
         { id: 'events', label: 'Sự kiện' },
         { id: 'settings', label: 'Cài đặt' },
