@@ -55,16 +55,6 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                         <th
                             scope="col"
                             className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48 cursor-pointer hover:text-blue-600 hover:bg-gray-100 transition-colors"
-                            onClick={() => onSort('job' as SortField)}
-                        >
-                            <div className="flex items-center gap-1">
-                                Nghề nghiệp
-                                {sortField === 'job' && <span className="text-blue-600">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
-                            </div>
-                        </th>
-                        <th
-                            scope="col"
-                            className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48 cursor-pointer hover:text-blue-600 hover:bg-gray-100 transition-colors"
                             onClick={() => onSort('address' as SortField)}
                         >
                             <div className="flex items-center gap-1">
@@ -134,7 +124,6 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500" title={p.job}>{p.job || 'Chưa có'}</td>
                                 <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate" title={p.address}>{p.address || 'Chưa có'}</td>
                                 <td className="px-4 py-2 whitespace-nowrap text-center text-sm text-gray-500">{birthYear || '—'}</td>
                                 <td className="px-4 py-2 whitespace-nowrap text-center">
