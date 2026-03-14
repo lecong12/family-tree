@@ -52,15 +52,8 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                                 {sortField === 'name' && <span className="text-blue-600">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
                             </div>
                         </th>
-                        <th
-                            scope="col"
-                            className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48 cursor-pointer hover:text-blue-600 hover:bg-gray-100 transition-colors"
-                            onClick={() => onSort('address' as SortField)}
-                        >
-                            <div className="flex items-center gap-1">
-                                Địa chỉ
-                                {sortField === 'address' && <span className="text-blue-600">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
-                            </div>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
+                            Địa chỉ
                         </th>
                         <th
                             scope="col"
