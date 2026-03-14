@@ -35,14 +35,14 @@ export default function Header({ isolatedCount, filterMode, onFilterModeChange, 
                         onClick={() => onChangeView(tab.id)}
                         className={`whitespace-nowrap px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150 flex-shrink-0 ${
                             currentView === tab.id
-                                ? 'bg-accent text-accent-text shadow-sm'
+                                ? 'bg-blue-600 text-white shadow-sm'
                                 : 'text-text-secondary hover:bg-bg-primary hover:text-text-primary'
                         }`}
                     >
                         {tab.label}
                     </button>
                 ))}
-
+ 
                 {(currentView === 'tree' || currentView === 'list') && isolatedCount > 0 && (
                     <button
                         type="button"
