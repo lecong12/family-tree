@@ -52,8 +52,8 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                                 {sortField === 'name' && <span className="text-blue-600">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
                             </div>
                         </th>
-                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
-                            Địa chỉ
+                        <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                            Phái
                         </th>
                         <th
                             scope="col"
@@ -117,7 +117,7 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate" title={p.address}>{p.address || 'Chưa có'}</td>
+                                <td className="px-4 py-2 whitespace-nowrap text-center text-sm text-gray-500">{p.branch ? `Chi ${p.branch}` : '—'}</td>
                                 <td className="px-4 py-2 whitespace-nowrap text-center text-sm text-gray-500">{birthYear || '—'}</td>
                                 <td className="px-4 py-2 whitespace-nowrap text-center">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isDeceased ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-800'}`}>
