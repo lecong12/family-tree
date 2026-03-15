@@ -1,8 +1,9 @@
 'use client';
 
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Person } from 'src/services/personService';
 import { Spouse, SpouseWithDetails } from 'src/services/spouseService';
-import React, { useMemo } from 'react';
+
 
 interface GenealogyBookProps {
     persons: Person[];
@@ -18,18 +19,16 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     const [bookInstance, setBookInstance] = useState<any>(null); // Biến lưu instance của PageFlip
     const bookContainer = useRef<HTMLDivElement>(null);
 
-
-
     // Biến lưu trữ toàn bộ thành viên (để tìm kiếm)
     const [allMembers, setAllMembers] = useState<any[]>([]);
 
     useEffect(() => {
-
         // Khi dữ liệu persons thay đổi, cập nhật allMembers
         // Ép kiểu dữ liệu từ persons sang BookMember
         const bookMembers = persons.map(p => ({ id: (p as any)._id, full_name: p.name, generation: (p as any).generation, branch: (p as any).branch }));
         setAllMembers(bookMembers);
     }, [persons]);
+
 
     const pagesData = useMemo(() => {
         // Lọc ra những người là "Chủ hộ" (Thường là Nam giới thuộc dòng huyết thống)
@@ -198,7 +197,7 @@ export default GenealogyBook;
 
 interface BookMember {
     id: number;
-    full_name: string;
+    name: string;
     generation: number;
     branch: number;
 }
