@@ -61,7 +61,7 @@ const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPerson
     const borderColor = isMale(person.gender) ? 'border-blue-400' : 'border-pink-400';
 
     return (
-        <div className="bg-white rounded-xl shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-300 border border-gray-200 overflow-hidden group">
+        <div className="bg-white rounded-xl shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-300 border border-gray-200 overflow-hidden group ">
             <div className="p-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 group-hover:from-blue-50/50 group-hover:to-white transition-colors">
                 <div className="text-xs text-gray-500 mb-2">Phụ mẫu: {parentText}</div>
                 <div className="flex items-center gap-4">

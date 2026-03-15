@@ -37,14 +37,14 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
     return (
         <div className="overflow-x-auto shadow-sm border border-gray-200 rounded-lg bg-white">
             <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-100/80 text-gray-700">
+                <thead className="bg-gray-100">
                     <tr>
-                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                        <th scope="col" className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-16">
                             #
                         </th>
                         <th
                             scope="col"
-                            className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-blue-600 hover:bg-gray-100 transition-colors"
+                            className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:text-blue-600 hover:bg-gray-200/60 transition-colors"
                             onClick={() => onSort('name')}
                         >
                             <div className="flex items-center gap-1">
@@ -52,12 +52,12 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                                 {sortField === 'name' && <span className="text-blue-600">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
                             </div>
                         </th>
-                        <th scope="col" className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-24">
+                        <th scope="col" className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-24">
                             Phái
                         </th>
                         <th
                             scope="col"
-                            className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32 cursor-pointer hover:text-blue-600 hover:bg-gray-100 transition-colors"
+                            className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-32 cursor-pointer hover:text-blue-600 hover:bg-gray-200/60 transition-colors"
                             onClick={() => onSort('birth')}
                         >
                             <div className="flex items-center justify-center gap-1">
@@ -67,7 +67,7 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                         </th>
                         <th
                             scope="col"
-                            className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32 cursor-pointer hover:text-blue-600 hover:bg-gray-100 transition-colors"
+                            className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-32 cursor-pointer hover:text-blue-600 hover:bg-gray-200/60 transition-colors"
                             onClick={() => onSort('status')}
                         >
                             <div className="flex items-center justify-center gap-1">
@@ -91,10 +91,10 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                             <tr
                                 key={person._id ?? idx}
                                 onClick={() => onPersonClick(person)}
-                                className={`hover:bg-blue-50/60 cursor-pointer transition-colors duration-150 ${isIsolated ? 'bg-amber-50 hover:bg-amber-100' : ''}`}
+                                className={`cursor-pointer transition-colors duration-150 odd:bg-white even:bg-gray-50/50 hover:bg-blue-50 ${isIsolated ? 'bg-amber-50 hover:bg-amber-100 even:bg-amber-50/50' : ''}`}
                             >
-                                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-center">{rowNum}</td>
-                                <td className="px-4 py-2 whitespace-nowrap">
+                                <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 text-center">{rowNum}</td>
+                                <td className="px-4 py-3 whitespace-nowrap">
                                     <div className="flex items-center">
                                         <div className={`flex-shrink-0 h-10 w-10 relative`}>
                                             <Image
@@ -117,9 +117,15 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-4 py-2 whitespace-nowrap text-center text-sm text-gray-500">{p.branch ? `Chi ${p.branch}` : '—'}</td>
-                                <td className="px-4 py-2 whitespace-nowrap text-center text-sm text-gray-500">{birthYear || '—'}</td>
-                                <td className="px-4 py-2 whitespace-nowrap text-center">
+                                <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-500">
+                                    {p.branch && p.branch !== '0' ? (
+                                        <span className="px-2 py-1 inline-flex text-xs leading-4 font-medium rounded-full bg-purple-100 text-purple-800">
+                                            Phái {p.branch}
+                                        </span>) : (<span className="text-gray-400">—</span>)
+                                    }
+                                </td>
+                                <td className="px-4 py-3 whitespace-nowrap text-center text-sm text-gray-500">{birthYear || '—'}</td>
+                                <td className="px-4 py-3 whitespace-nowrap text-center">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isDeceased ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-800'}`}>
                                         {isDeceased ? 'Đã mất' : 'Còn sống'}
                                     </span>
