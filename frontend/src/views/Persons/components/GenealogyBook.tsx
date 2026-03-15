@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Person } from 'src/services/personService';
 import { Spouse, SpouseWithDetails } from 'src/services/spouseService';
-
+import React, { useMemo } from 'react';
 
 interface GenealogyBookProps {
     persons: Person[];
