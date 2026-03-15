@@ -12,7 +12,7 @@ interface LineageMemberCardProps {
     person: Person;
     allPersons: Person[];
     allSpouses: (Spouse | SpouseWithDetails)[];
-    allParentChilds: (ParentChild | any)[];
+    allParentChilds: any[];
 }
 
 const getId = (p: string | { _id: string } | undefined | null): string => {

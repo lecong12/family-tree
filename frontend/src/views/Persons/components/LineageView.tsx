@@ -9,7 +9,7 @@ import LineageMemberCard from './LineageMemberCard';
 interface LineageViewProps {
     persons: Person[];
     spouses: (Spouse | SpouseWithDetails)[];
-    parentChilds: (ParentChild | any)[];
+    parentChilds: any[];
 }
 
 const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChilds }) => {
