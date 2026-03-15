@@ -25,6 +25,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     const [allMembers, setAllMembers] = useState<any[]>([]);
 
     useEffect(() => {
+
         // Khi dữ liệu persons thay đổi, cập nhật allMembers
         // Ép kiểu dữ liệu từ persons sang BookMember
         const bookMembers = persons.map(p => ({ id: (p as any)._id, full_name: p.name, generation: (p as any).generation, branch: (p as any).branch }));
