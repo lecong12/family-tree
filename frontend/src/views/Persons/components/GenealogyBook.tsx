@@ -198,7 +198,7 @@ export default GenealogyBook;
 
 interface BookMember {
     id: number;
-    name: string;
+    full_name: string;
     generation: number;
     branch: number;
 }
