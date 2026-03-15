@@ -23,6 +23,7 @@ import { buildConnectedIds } from './utils';
 import FamilyTreeFlow from 'src/components/FamilyTree/FamilyTreeFlow';
 import StatsView from './components/StatsView'; // Import component thống kê mới
 import EventsView from './components/EventsView'; // Import component sự kiện mới
+import LineageView from './components/LineageView'; // Import component phả hệ mới
 import { toast } from 'react-toastify';
 
 export default function PersonsView() {
@@ -56,11 +57,11 @@ export default function PersonsView() {
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
     
     // Settings State with localStorage persistence
-    const [viewMode, setViewMode] = useState<'list' | 'tree' | 'stats' | 'events' | 'settings'>(() => {
+    const [viewMode, setViewMode] = useState<'list' | 'tree' | 'stats' | 'events' | 'settings' | 'phah'>(() => {
         if (typeof window !== 'undefined') {
             const savedView = localStorage.getItem('family-tree-viewMode');
             // Ensure savedView is a valid view mode, otherwise default to 'list'
-            if (savedView && ['list', 'tree', 'stats', 'events', 'settings'].includes(savedView)) {
+            if (savedView && ['list', 'tree', 'stats', 'events', 'settings', 'phah'].includes(savedView)) {
                 return savedView as any;
             }
         }
@@ -353,6 +354,14 @@ export default function PersonsView() {
                         searchGenerations={null} // TODO: Add UI to select generation depth
                         onPersonNodeClick={handlePersonClick}
                         onRelationshipNodeClick={handleRelationshipClick}
+                    />
+                )}
+
+                {viewMode === 'phah' && (
+                    <LineageView
+                        persons={persons}
+                        spouses={spouses}
+                        parentChilds={parentChilds}
                     />
                 )}
 

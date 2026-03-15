@@ -2,7 +2,7 @@ import UserMenu from 'src/components/UserMenu/UserMenu';
 import { FilterMode } from '../types';
 import { useAuth } from 'src/context/AuthContext';
 
-type ViewMode = 'list' | 'tree' | 'stats' | 'events' | 'settings';
+type ViewMode = 'list' | 'tree' | 'stats' | 'events' | 'settings' | 'phah';
 
 interface HeaderProps {
     isolatedCount: number;
@@ -19,7 +19,7 @@ export default function Header({ isolatedCount, filterMode, onFilterModeChange, 
     const tabs: { id: ViewMode | string; label: string; disabled?: boolean }[] = [
         { id: 'tree', label: 'Cây gia phả' },
         { id: 'list', label: 'Thành viên' },
-        { id: 'phah', label: 'Phả hệ', disabled: true },
+        { id: 'phah', label: 'Phả hệ' },
         { id: 'sogp', label: 'Sổ GP', disabled: true },
         { id: 'stats', label: 'Thống kê' },
         { id: 'events', label: 'Sự kiện' },
