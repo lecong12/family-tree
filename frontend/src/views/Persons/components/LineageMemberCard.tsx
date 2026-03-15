@@ -15,32 +15,33 @@ interface LineageMemberCardProps {
     allParentChilds: any[];
 }
 
+const COLORS = {
+    headerBg: '#8b1c1c', // Đỏ đô
+    subLabel: '#f1b400', // Vàng nhãn (Vợ/Con)
+    textGray: '#666666',
+    borderLight: '#e5e7eb'
+};
+
 const getId = (p: string | { _id?: string } | undefined | null): string => {
     if (!p) return '';
     if (typeof p === 'string') return p;
     return p._id || '';
 };
 
+const getAge = (birth: Date | string | undefined, death: Date | string | undefined, isDead: boolean) => {
+    if (!birth) return 0;
+    const b = new Date(birth);
+    if (isNaN(b.getTime())) return 0;
+    const end = isDead && death ? new Date(death) : new Date();
+    const age = end.getFullYear() - b.getFullYear();
+    return age > 0 ? age : 0;
+};
+
 const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPersons, allSpouses, allParentChilds }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
-    const { parentText, spouses, children } = useMemo(() => {
+    const { spouses, children } = useMemo(() => {
         const personMap = new Map(allPersons.map(p => [p._id, p]));
-
-        // Tìm cha mẹ
-        let pText = "Chưa cập nhật";
-        const childRelation = allParentChilds.find(pc => getId(pc.child) === person._id);
-        if (childRelation) {
-            const parentSpouseRelation = allSpouses.find(s => s._id === getId(childRelation.parent));
-            if (parentSpouseRelation) {
-                const father = personMap.get(getId(parentSpouseRelation.husband));
-                const mother = personMap.get(getId(parentSpouseRelation.wife));
-                if (father && mother) pText = `Ông ${father.name} và Bà ${mother.name}`;
-                else if (father) pText = `Ông ${father.name}`;
-            }
-        } else if ((person as any).generation === 1) {
-            pText = "Thủy Tổ";
-        }
 
         // Tìm vợ/chồng
         const spouseRelations = allSpouses.filter(s => getId(s.husband) === person._id || getId(s.wife) === person._id);
@@ -51,54 +52,138 @@ const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPerson
         }).filter(Boolean) as Person[];
 
         // Tìm con cái
-        const childrenList = spouseRelations.flatMap(s => allParentChilds.filter(pc => getId(pc.parent) === s._id).map(pc => personMap.get(getId(pc.child)))).filter(Boolean) as Person[];
+        const childrenList = spouseRelations.flatMap(s => 
+            allParentChilds.filter(pc => getId(pc.parent) === s._id).map(pc => personMap.get(getId(pc.child)))
+        ).filter(Boolean) as Person[];
 
-        return { parentText: pText, spouses: spouseList, children: childrenList };
+        // Sort children by order
+        childrenList.sort((a, b) => ((a as any).order || 99) - ((b as any).order || 99));
+
+        return { spouses: spouseList, children: childrenList };
     }, [person, allPersons, allSpouses, allParentChilds]);
 
+    // Helper to get stats for a child/relative (used in the list)
+    const getStats = (pId: string) => {
+        const pSpouses = allSpouses.filter(s => getId(s.husband) === pId || getId(s.wife) === pId);
+        const pSpouseIds = pSpouses.map(s => s._id);
+        const pChildrenCount = allParentChilds.filter(pc => pSpouseIds.includes(getId(pc.parent))).length;
+        return {
+            spouseCount: pSpouses.length,
+            childCount: pChildrenCount
+        };
+    };
+
     const avatarSrc = person.avatar?.trim() ? person.avatar : isMale(person.gender) ? Avatar_Male : Avatar_Female;
-    const isDeceased = person.isDead === true;
-    const borderColor = isMale(person.gender) ? 'border-orange-500' : 'border-pink-400';
+    const age = getAge(person.birth, person.death, person.isDead === true);
 
     return (
-        <div className="bg-white rounded-xl shadow-md hover:shadow-xl hover:border-orange-400 transition-all duration-300 border border-gray-200 overflow-hidden group transform hover:-translate-y-1">
-            <div className="p-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 group-hover:from-orange-50/50 group-hover:to-white transition-colors">
-                <div className="text-xs text-gray-500 mb-2">Phụ mẫu: {parentText}</div>
-                <div className="flex items-center gap-4">
-                    <div className="relative">
-                        <Image src={avatarSrc} alt={person.name} width={48} height={48} className={`rounded-full object-cover border-2 ${borderColor} ${isDeceased ? 'grayscale' : ''} ring-2 ring-white ring-offset-2 shadow-sm`} />
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden mb-4 hover:shadow-lg transition-shadow duration-300">
+            {/* HEADER: CHỦ HỘ */}
+            <div 
+                style={{ backgroundColor: COLORS.headerBg }} 
+                className="p-3 flex justify-between items-center text-white cursor-pointer select-none"
+                onClick={() => setIsExpanded(!isExpanded)}
+            >
+                <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 border-2 border-white/20 rounded flex items-center justify-center overflow-hidden bg-red-900 flex-shrink-0 relative">
+                        <Image src={avatarSrc} alt={person.name} fill className="object-cover" sizes="48px" />
                     </div>
-                    <div className="flex-1">
-                        <h3 className={`text-lg font-bold ${isDeceased ? 'text-gray-500' : 'text-gray-900'}`}>{person.name}</h3>
-                        <p className="text-sm text-gray-600">{isMale(person.gender) ? 'Nam' : 'Nữ'} • {children.length} Con</p>
+                    <div>
+                        <h3 className="font-bold text-lg leading-none uppercase flex items-center gap-2">
+                            <span className="text-[10px] opacity-60">●</span> {person.name}
+                        </h3>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs opacity-90">
+                            <span>{isMale(person.gender) ? 'Nam' : 'Nữ'}</span>
+                            <span>{age} Tuổi</span>
+                            <span>{spouses.length} {isMale(person.gender) ? 'Vợ' : 'Chồng'}</span>
+                            <span>{children.length} Con</span>
+                        </div>
                     </div>
-                    <button onClick={() => setIsExpanded(!isExpanded)} className="p-2 rounded-full hover:bg-gray-200 transition-colors" aria-label="Toggle details">
-                        <svg className={`w-5 h-5 text-gray-600 transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                    </button>
                 </div>
+                <button className="w-8 h-8 flex items-center justify-center bg-black/10 rounded-full transition-transform duration-200 hover:bg-black/20">
+                    <svg 
+                        className={`w-4 h-4 text-white transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} 
+                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                    </svg>
+                </button>
             </div>
 
-            <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isExpanded ? 'max-h-96' : 'max-h-0'}`}>
-                <div className="p-4 border-t border-gray-200 bg-orange-50/30">
-                    <div className="space-y-2">
-                        {spouses.map((s, idx) => (
-                            <div key={s._id} className="flex items-center text-sm">
-                                <span className="font-semibold text-gray-700 w-24 flex-shrink-0">Vợ/Chồng {spouses.length > 1 ? idx + 1 : ''}</span>
-                                <span className="text-gray-800">{s.name}</span>
+            {/* CHI TIẾT: VỢ & CON */}
+            <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isExpanded ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                <div className="p-1 bg-gray-50/50">
+                    {/* Hàng của Vợ/Chồng */}
+                    {spouses.map((spouse) => {
+                         const sStats = getStats(spouse._id!);
+                         return (
+                            <div key={spouse._id} className="flex items-center gap-3 p-3 border-b border-gray-100 bg-white mx-1 my-1 rounded-sm shadow-sm">
+                                <div className="relative flex-shrink-0">
+                                    <div className="w-12 h-12 bg-orange-50 rounded flex items-center justify-center overflow-hidden border border-orange-100">
+                                         <Image 
+                                            src={spouse.avatar?.trim() ? spouse.avatar : (isMale(spouse.gender) ? Avatar_Male : Avatar_Female)} 
+                                            alt={spouse.name} 
+                                            width={48} height={48} 
+                                            className="object-cover w-full h-full"
+                                        />
+                                    </div>
+                                    <span style={{ backgroundColor: COLORS.subLabel }} className="absolute -bottom-1 left-0 right-0 text-[9px] text-white text-center font-bold rounded shadow-sm">
+                                        {isMale(spouse.gender) ? 'CHỒNG' : 'VỢ'}
+                                    </span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="font-bold text-gray-800 uppercase truncate text-sm">● {spouse.name}</h4>
+                                    <p className="text-xs text-yellow-600 mt-0.5">
+                                        {isMale(spouse.gender) ? 'Nam' : 'Nữ'} · {getAge(spouse.birth, spouse.death, spouse.isDead === true)} Tuổi
+                                    </p>
+                                </div>
+                                <div className="text-xs text-gray-400 font-medium text-right flex-shrink-0">
+                                    {sStats.childCount} Con
+                                </div>
                             </div>
-                        ))}
-                        {children.map((c, idx) => (
-                            <div key={c._id} className="flex items-center text-sm">
-                                <span className="font-semibold text-gray-700 w-24 flex-shrink-0">Con thứ {idx + 1}</span>
-                                <span className="text-gray-800">{c.name}</span>
+                        );
+                    })}
+
+                    {/* Danh sách các con */}
+                    {children.map((child, idx) => {
+                        const cStats = getStats(child._id!);
+                        const isSon = isMale(child.gender);
+                        return (
+                            <div key={child._id} className="flex items-center gap-3 p-3 ml-6 border-l-2 border-dashed border-gray-300 relative">
+                                {/* Connecting line visual */}
+                                <div className="absolute top-1/2 -left-[2px] w-4 h-px bg-gray-300"></div>
+
+                                <div className="relative flex-shrink-0">
+                                    <div className="w-12 h-12 bg-gray-50 rounded flex items-center justify-center overflow-hidden border border-gray-200">
+                                        <Image 
+                                            src={child.avatar?.trim() ? child.avatar : (isSon ? Avatar_Male : Avatar_Female)} 
+                                            alt={child.name} 
+                                            width={48} height={48} 
+                                            className="object-cover w-full h-full"
+                                        />
+                                    </div>
+                                    <span style={{ backgroundColor: COLORS.subLabel }} className="absolute -bottom-1 left-0 right-0 text-[9px] text-white text-center font-bold rounded shadow-sm uppercase">
+                                        CON {idx + 1}
+                                    </span>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <h4 className="font-bold text-gray-800 uppercase truncate text-sm">● {child.name}</h4>
+                                    <p className={`text-xs mt-0.5 ${isSon ? 'text-red-700 font-medium' : 'text-yellow-600'}`}>
+                                        {isSon ? 'Nam' : 'Nữ'} · {getAge(child.birth, child.death, child.isDead === true)} Tuổi
+                                    </p>
+                                </div>
+                                <div className="text-[10px] text-gray-400 font-medium text-right flex-shrink-0 leading-tight">
+                                   {cStats.spouseCount} {isSon ? 'Vợ' : 'Chồng'} <br/> {cStats.childCount} Con
+                                </div>
                             </div>
-                        ))}
-                        {spouses.length === 0 && children.length === 0 && (
-                            <p className="text-sm text-gray-500 italic">Chưa có thông tin vợ/chồng hoặc con cái.</p>
-                        )}
-                    </div>
+                        );
+                    })}
+                    
+                    {spouses.length === 0 && children.length === 0 && (
+                        <div className="p-4 text-center text-xs text-gray-400 italic">
+                            Chưa có thông tin thành viên gia đình
+                        </div>
+                    )}
                 </div>
             </div>
         </div>
