@@ -2,13 +2,13 @@
 
 import React, { useState, useMemo } from 'react';
 import { Person } from 'src/services/personService';
-import { Spouse } from 'src/services/spouseService';
+import { Spouse, SpouseWithDetails } from 'src/services/spouseService';
 import { ParentChild } from 'src/services/parentChildService';
 import LineageMemberCard from './LineageMemberCard';
 
 interface LineageViewProps {
     persons: Person[];
-    spouses: Spouse[];
+    spouses: (Spouse | SpouseWithDetails)[];
     parentChilds: ParentChild[];
 }
 
