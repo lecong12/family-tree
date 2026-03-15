@@ -61,11 +61,13 @@ const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPerson
     const borderColor = isMale(person.gender) ? 'border-blue-400' : 'border-pink-400';
 
     return (
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
-            <div className="p-4 bg-gray-50 border-b border-gray-200">
+        <div className="bg-white rounded-xl shadow-sm hover:shadow-lg hover:border-blue-300 transition-all duration-300 border border-gray-200 overflow-hidden group">
+            <div className="p-4 bg-gradient-to-r from-gray-50 to-white border-b border-gray-200 group-hover:from-blue-50/50 group-hover:to-white transition-colors">
                 <div className="text-xs text-gray-500 mb-2">Phụ mẫu: {parentText}</div>
                 <div className="flex items-center gap-4">
-                    <Image src={avatarSrc} alt={person.name} width={48} height={48} className={`rounded-full object-cover border-2 ${borderColor} ${isDeceased ? 'grayscale' : ''}`} />
+                    <div className="relative">
+                        <Image src={avatarSrc} alt={person.name} width={48} height={48} className={`rounded-full object-cover border-2 ${borderColor} ${isDeceased ? 'grayscale' : ''} ring-2 ring-white ring-offset-1 shadow-sm`} />
+                    </div>
                     <div className="flex-1">
                         <h3 className={`text-lg font-bold ${isDeceased ? 'text-gray-500' : 'text-gray-900'}`}>{person.name}</h3>
                         <p className="text-sm text-gray-600">{isMale(person.gender) ? 'Nam' : 'Nữ'} • {children.length} Con</p>

@@ -53,12 +53,12 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
                                 <button
                                     key={gen}
                                     onClick={() => setSelectedGeneration(gen)}
-                                    className={`w-full flex justify-between items-center px-4 py-2 text-left text-sm font-medium rounded-lg transition-colors ${
-                                        isActive ? 'bg-blue-600 text-white shadow' : 'text-gray-700 hover:bg-gray-100'
+                                    className={`w-full flex justify-between items-center px-4 py-3 text-left text-sm font-medium rounded-xl transition-all duration-200 ${
+                                        isActive ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md transform scale-[1.02]' : 'text-gray-700 hover:bg-gray-100 hover:pl-5'
                                     }`}
                                 >
                                     <span>Đời thứ {gen}</span>
-                                    <span className={`px-2 py-0.5 rounded-full text-xs ${isActive ? 'bg-blue-500' : 'bg-gray-200 text-gray-600'}`}>
+                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'}`}>
                                         {stats.total}
                                     </span>
                                 </button>

@@ -35,9 +35,9 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
     }
 
     return (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto shadow-sm border border-gray-200 rounded-lg bg-white">
             <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-100/80 text-gray-700">
                     <tr>
                         <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
                             #
@@ -91,14 +91,14 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                             <tr
                                 key={person._id ?? idx}
                                 onClick={() => onPersonClick(person)}
-                                className={`hover:bg-gray-50 cursor-pointer transition-colors ${isIsolated ? 'bg-amber-50 hover:bg-amber-100' : ''}`}
+                                className={`hover:bg-blue-50/60 cursor-pointer transition-colors duration-150 ${isIsolated ? 'bg-amber-50 hover:bg-amber-100' : ''}`}
                             >
                                 <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-center">{rowNum}</td>
                                 <td className="px-4 py-2 whitespace-nowrap">
                                     <div className="flex items-center">
                                         <div className={`flex-shrink-0 h-10 w-10 relative`}>
                                             <Image
-                                                className={`rounded-full object-cover border-2 ${borderColor} ${isDeceased ? 'grayscale' : ''}`}
+                                                className={`rounded-full object-cover border-2 ${borderColor} ${isDeceased ? 'grayscale' : ''} shadow-sm ring-1 ring-white`}
                                                 src={avatarSrc}
                                                 alt={person.name}
                                                 fill

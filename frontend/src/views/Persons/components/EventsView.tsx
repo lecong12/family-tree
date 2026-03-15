@@ -17,9 +17,9 @@ interface EventsViewProps {
     spouses: SpouseWithDetails[];
 }
 
-const BirthIcon = () => <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white">👶</div>;
-const DeathIcon = () => <div className="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center text-white">🕊️</div>;
-const MarriageIcon = () => <div className="w-8 h-8 bg-pink-500 rounded-full flex items-center justify-center text-white">💍</div>;
+const BirthIcon = () => <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white shadow-md ring-4 ring-gray-50 z-10 text-lg">👶</div>;
+const DeathIcon = () => <div className="w-10 h-10 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full flex items-center justify-center text-white shadow-md ring-4 ring-gray-50 z-10 text-lg">🕊️</div>;
+const MarriageIcon = () => <div className="w-10 h-10 bg-gradient-to-br from-pink-400 to-pink-600 rounded-full flex items-center justify-center text-white shadow-md ring-4 ring-gray-50 z-10 text-lg">💍</div>;
 
 const EventsView: React.FC<EventsViewProps> = ({ persons, spouses }) => {
     const events = useMemo(() => {
@@ -84,12 +84,15 @@ const EventsView: React.FC<EventsViewProps> = ({ persons, spouses }) => {
     return (
         <div className="p-4 md:p-8 bg-gray-50 min-h-full">
             <div className="max-w-3xl mx-auto">
-                <h2 className="text-2xl font-bold text-center text-gray-800 mb-8">Dòng thời gian Sự kiện Gia tộc</h2>
-                <div className="relative border-l-2 border-gray-200 ml-4">
+                <h2 className="text-3xl font-bold text-center text-gray-800 mb-10 tracking-tight">Dòng thời gian Sự kiện Gia tộc</h2>
+                <div className="relative border-l-4 border-blue-100 ml-5 space-y-8 pb-10">
                     {events.map((event, index) => (
-                        <div key={index} className="mb-8 ml-8">
-                            <div className="absolute -left-4">{event.icon}</div>
-                            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-100">
+                        <div key={index} className="ml-10 relative group">
+                            <div className="absolute -left-[59px] top-0 transition-transform duration-300 group-hover:scale-110">{event.icon}</div>
+                            <div className={`bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 ${
+                                event.type === 'birth' ? 'border-l-4 border-l-blue-500' : 
+                                event.type === 'death' ? 'border-l-4 border-l-gray-500' : 'border-l-4 border-l-pink-500'
+                            }`}>
                                 <time className="text-sm font-semibold text-gray-500">
                                     {event.date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}
                                 </time>
