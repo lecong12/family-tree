@@ -20,7 +20,7 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
         const stats: Record<number, { total: number }> = {};
         let max = 0;
         persons.forEach(p => {
-            const gen = p.generation || 1;
+            const gen = (p as any).generation || 1;
             if (gen > max) max = gen;
             if (!stats[gen]) stats[gen] = { total: 0 };
             stats[gen].total++;
@@ -31,8 +31,8 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
     // 2. Lọc thành viên theo đời được chọn
     const membersOfSelectedGeneration = useMemo(() => {
         return persons
-            .filter(p => (p.generation || 1) === selectedGeneration)
-            .sort((a, b) => (a.order || 99) - (b.order || 99)); // Sắp xếp theo thứ tự trong đời
+            .filter(p => ((p as any).generation || 1) === selectedGeneration)
+            .sort((a, b) => ((a as any).order || 99) - ((b as any).order || 99)); // Sắp xếp theo thứ tự trong đời
     }, [persons, selectedGeneration]);
 
     if (persons.length === 0) {
