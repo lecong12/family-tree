@@ -32,12 +32,14 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     const pagesData = useMemo(() => {
         if (!persons) return [];
         return persons.filter(m => {
-            // You're casting to any here. But it would be better to modify Person type to include `fid`, `mid`
-            const mAny = m as any;
-            const isBloodline = mAny.id === 1 || mAny.fid || mAny.mid;
-            return isBloodline && m.gender === 'MALE';
-        })
+                const mAny = m as any;
+                const isBloodline = mAny.id === 1 || mAny.fid || mAny.mid;
+                return isBloodline && m.gender === 'MALE';
+            });
     }, [persons]);
+
+ 
+
 
     const generatePageContent = useCallback((father: Person) => {
         // Lưu ý: Đây là HTML string, dùng 'class' thay vì 'className'
