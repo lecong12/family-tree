@@ -36,12 +36,84 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
         return { generationStats: stats, maxGen: max };
     }, [persons]);
 
-    // 2. Lọc thành viên theo đời được chon
+    // 2. Lọc thành viên theo đời được chọn và sắp xếp theo tôn ti trật tự (Phái -> Tổ tiên -> Order)
     const membersOfSelectedGeneration = useMemo(() => {
-        return persons
-            .filter(p => ((p as any).generation || 1) === selectedGeneration)
-            .sort((a, b) => ((a as any).order || 99) - ((b as any).order || 99)); // Sắp xếp theo thứ tự trong đời
-    }, [persons, selectedGeneration]);
+        // Map dữ liệu để tra cứu nhanh
+        const personMap = new Map(persons.map(p => [p._id, p]));
+        const spouseMap = new Map(spouses.map(s => [s._id, s]));
+        const childToSpouseMap = new Map<string, string>(); // ChildID -> SpouseID (Gia đình)
+
+        parentChilds.forEach(pc => {
+            const childId = typeof pc.child === 'string' ? pc.child : pc.child?._id;
+            const parentId = typeof pc.parent === 'string' ? pc.parent : pc.parent?._id;
+            if (childId && parentId) childToSpouseMap.set(childId, parentId);
+        });
+
+        // Hàm lấy ID cha (truy ngược dòng họ)
+        const getFatherId = (personId: string): string | null => {
+            const spouseId = childToSpouseMap.get(personId);
+            if (!spouseId) return null;
+            const spouse = spouseMap.get(spouseId);
+            if (!spouse) return null;
+            return typeof spouse.husband === 'string' ? spouse.husband : (spouse.husband as any)?._id;
+        };
+
+        // Hàm dựng đường dẫn tổ tiên: [RootID, ..., FatherID, PersonID]
+        const getAncestryPath = (personId: string): string[] => {
+            const path: string[] = [personId];
+            let curr = personId;
+            const visited = new Set<string>();
+            visited.add(curr);
+
+            // Duyệt ngược lên tối đa 20 đời để tránh loop
+            for (let i = 0; i < 20; i++) {
+                const fatherId = getFatherId(curr);
+                if (!fatherId || visited.has(fatherId)) break;
+                path.unshift(fatherId);
+                curr = fatherId;
+                visited.add(curr);
+            }
+            return path;
+        };
+
+        const currentGenPersons = persons.filter(p => ((p as any).generation || 1) === selectedGeneration);
+
+        return currentGenPersons.sort((a, b) => {
+            // Ưu tiên 1: Phái (Branch)
+            const branchA = Number((a as any).branch) || 0;
+            const branchB = Number((b as any).branch) || 0;
+            if (branchA !== branchB) return branchA - branchB;
+
+            // Ưu tiên 2: Tôn ti trật tự (So sánh tổ tiên)
+            const pathA = getAncestryPath(a._id!);
+            const pathB = getAncestryPath(b._id!);
+            
+            const len = Math.min(pathA.length, pathB.length);
+            for (let i = 0; i < len; i++) {
+                if (pathA[i] !== pathB[i]) {
+                    // Tìm thấy điểm rẽ nhánh (Divergence): So sánh 2 người tổ tiên tại cấp này
+                    const ancA = personMap.get(pathA[i]);
+                    const ancB = personMap.get(pathB[i]);
+                    if (!ancA || !ancB) return 0;
+
+                    // Ai có order nhỏ hơn (con cả/anh) xếp trước
+                    const orderA = (ancA as any).order ?? 999;
+                    const orderB = (ancB as any).order ?? 999;
+                    if (orderA !== orderB) return orderA - orderB;
+
+                    // Nếu order bằng nhau, so ngày sinh (sinh trước xếp trước)
+                    const birthA = ancA.birth ? new Date(ancA.birth).getTime() : 0;
+                    const birthB = ancB.birth ? new Date(ancB.birth).getTime() : 0;
+                    if (birthA !== birthB && birthA !== 0 && birthB !== 0) return birthA - birthB;
+                }
+            }
+
+            // Nếu cùng cha mẹ (Siblings), so sánh trực tiếp
+            const orderA = (a as any).order ?? 999;
+            const orderB = (b as any).order ?? 999;
+            return orderA - orderB;
+        });
+    }, [persons, selectedGeneration, spouses, parentChilds]);
 
     // 3. Logic tìm kiếm
     const filteredResults = useMemo(() => {
