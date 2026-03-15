@@ -1,10 +1,14 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import Image from 'next/image';
 import { Person } from 'src/services/personService';
 import { Spouse, SpouseWithDetails } from 'src/services/spouseService';
 import { ParentChild } from 'src/services/parentChildService';
+import { isMale } from 'src/utils/genderUtils';
+import { Avatar_Male, Avatar_Female } from 'src/constants/imagePaths';
 import LineageMemberCard from './LineageMemberCard';
+import MemberDetailModal from './MemberDetailModal';
 
 interface LineageViewProps {
     persons: Person[];
