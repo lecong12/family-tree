@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
+import './styles.css';
 import '@xyflow/react/dist/style.css';
 import { AuthProvider } from '../context/AuthContext';
 import Providers from '../components/Providers';
