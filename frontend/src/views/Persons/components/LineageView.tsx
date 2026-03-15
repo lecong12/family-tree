@@ -28,7 +28,7 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
         return { generationStats: stats, maxGen: max };
     }, [persons]);
 
-    // 2. Lọc thành viên theo đời được chọn
+    // 2. Lọc thành viên theo đời được chon
     const membersOfSelectedGeneration = useMemo(() => {
         return persons
             .filter(p => ((p as any).generation || 1) === selectedGeneration)
@@ -52,7 +52,7 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
                             const isActive = gen === selectedGeneration;
                             return (
                                 <button
-                                    key={gen}
+                                  key={gen}
                                     onClick={() => setSelectedGeneration(gen)}
                                     className={`w-full flex flex-col md:flex-row justify-center md:justify-between items-center px-1 md:px-4 py-2 md:py-3 text-sm font-medium rounded-xl transition-all duration-300 ${
                                         isActive ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md transform scale-105 md:scale-[1.02]' : 'text-gray-700 hover:bg-gray-100 md:hover:pl-5'
