@@ -182,11 +182,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
 export default GenealogyBook;
 
 
-const useMemo = React.useMemo;
-const useEffect = React.useEffect;
-const useCallback = React.useCallback;
-
-
 interface BookMember {
     id: number;
     full_name: string;
