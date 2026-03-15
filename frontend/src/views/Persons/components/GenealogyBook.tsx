@@ -20,6 +20,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     const bookContainer = useRef<HTMLDivElement>(null);
 
 
+
     // Biến lưu trữ toàn bộ thành viên (để tìm kiếm)
     const [allMembers, setAllMembers] = useState<any[]>([]);
 
@@ -29,7 +30,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
         const bookMembers = persons.map(p => ({ id: (p as any)._id, full_name: p.name, generation: (p as any).generation, branch: (p as any).branch }));
         setAllMembers(bookMembers);
     }, [persons]);
-
 
     const pagesData = useMemo(() => {
         // Lọc ra những người là "Chủ hộ" (Thường là Nam giới thuộc dòng huyết thống)
