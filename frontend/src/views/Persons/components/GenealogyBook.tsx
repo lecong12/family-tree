@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import ReactDOM from 'react-dom';
 import { Person } from 'src/services/personService';
 import { Spouse, SpouseWithDetails } from 'src/services/spouseService';
 
@@ -19,6 +18,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     const [searchTerm, setSearchTerm] = useState('');
     const [bookInstance, setBookInstance] = useState<any>(null); // Biến lưu instance của PageFlip
     const bookContainer = useRef<HTMLDivElement>(null);
+
 
     // Biến lưu trữ toàn bộ thành viên (để tìm kiếm)
     const [allMembers, setAllMembers] = useState<any[]>([]);
