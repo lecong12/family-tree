@@ -54,13 +54,13 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
                                 <button
                                   key={gen}
                                     onClick={() => setSelectedGeneration(gen)}
-                                    className={`w-full flex flex-col md:flex-row justify-center md:justify-between items-center px-1 md:px-4 py-2 md:py-3 text-sm font-medium rounded-xl transition-all duration-300 ${
-                                        isActive ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md transform scale-105 md:scale-[1.02]' : 'text-gray-700 hover:bg-gray-100 md:hover:pl-5'
+                                    className={`w-full flex flex-col md:flex-row justify-center md:justify-between items-center px-1 md:px-4 py-2 md:py-3 text-sm font-medium rounded-xl transition-all duration-200 ease-in-out ${
+                                        isActive ? 'bg-gradient-to-r from-orange-500 to-amber-400 text-white shadow-lg transform scale-105 md:scale-[1.02]' : 'text-gray-700 hover:bg-gray-100 hover:shadow-md hover:text-orange-600'
                                     }`}
                                 >
                                     <span className="hidden md:inline">Đời thứ {gen}</span>
                                     <span className="md:hidden text-lg font-bold">{gen}</span>
-                                    <span className={`px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold mt-1 md:mt-0 ${isActive ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold mt-1 md:mt-0 ${isActive ? 'bg-white/25 text-white' : 'bg-gray-200 text-gray-600'}`}>
                                         {stats.total}
                                     </span>
                                 </button>
