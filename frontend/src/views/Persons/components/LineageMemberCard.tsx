@@ -38,7 +38,7 @@ const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPerson
                 if (father && mother) pText = `Ông ${father.name} và Bà ${mother.name}`;
                 else if (father) pText = `Ông ${father.name}`;
             }
-        } else if (person.generation === 1) {
+        } else if ((person as any).generation === 1) {
             pText = "Thủy Tổ";
         }
 
