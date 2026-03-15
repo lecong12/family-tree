@@ -285,7 +285,7 @@ export default function PersonsView() {
             }
 
             const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-            await axios.post(`${apiUrl}/persons/import-csv`, formData, {
+            await axios.post(`${apiUrl}/admin/import/csv`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data',

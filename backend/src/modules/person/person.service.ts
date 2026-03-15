@@ -68,6 +68,12 @@ export class PersonService {
             const id = String(row.id).trim();
             if (!id) continue;
 
+            // Kiểm tra trùng lặp ID trong chính file CSV để tránh lỗi Duplicate Key khi insert
+            if (personMap.has(id)) {
+                console.warn(`Cảnh báo: ID ${id} bị trùng trong file CSV. Bỏ qua dòng này.`);
+                continue;
+            }
+
             const gen = parseInt(row.generation) || 1;
             const genderRaw = String(row.gender).trim().toLowerCase();
             const isMale = (genderRaw === 'nam' || genderRaw === '0' || genderRaw === 'male');
@@ -111,10 +117,16 @@ export class PersonService {
                 finalDesc = descParts.join(' ');
             }
 
+            // Logic CCCD: Ưu tiên lấy từ CSV (cột cccd hoặc cccd_number), nếu không có thì sinh mã 12 số từ ID
+            const rawCCCD = row.cccd || row.cccd_number || row.identity_card;
+            const cccd = (rawCCCD && String(rawCCCD).trim().length > 0) 
+                ? String(rawCCCD).trim() 
+                : id.padStart(12, '0');
+
             const pId = new Types.ObjectId();
             await this.personModel.create({
                 _id: pId,
-                cccd: id.padStart(10, '0'),
+                cccd: cccd,
                 name: row.full_name || row.name || "Không tên",
                 gender: isMale ? 0 : 1,
                 birth: birthDate,
