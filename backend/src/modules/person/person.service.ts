@@ -68,6 +68,9 @@ export class PersonService {
             }
         }
 
+        const personDocs = [];
+        const usedCCCDs = new Set<string>();
+
         console.log(`🚀 BƯỚC 2: NẠP ${records.length} NHÂN VẬT TỪ CSV...`);
         for (const row of records) {
             const id = String(row.id).trim();
@@ -128,8 +131,14 @@ export class PersonService {
                 ? String(rawCCCD).trim() 
                 : id.padStart(12, '0');
 
+            if (usedCCCDs.has(cccd)) {
+                console.warn(`Cảnh báo: CCCD ${cccd} bị trùng (ID: ${id}). Bỏ qua.`);
+                continue;
+            }
+            usedCCCDs.add(cccd);
+
             const pId = new Types.ObjectId();
-            await this.personModel.create({
+            personDocs.push({
                 _id: pId,
                 cccd: cccd,
                 name: row.full_name || row.name || "Không tên",
@@ -149,8 +158,13 @@ export class PersonService {
             personMap.set(id, { _id: pId, name: row.full_name });
         }
 
+        if (personDocs.length > 0) {
+            await this.personModel.insertMany(personDocs);
+        }
+
         console.log('💍 BƯỚC 3: THIẾT LẬP VỢ CHỒNG...');
         const husbandTrack = new Map<string, number>();
+        const spouseDocs = [];
 
         for (const row of records) {
             const husbandId = String(row.pid).trim();
@@ -165,20 +179,27 @@ export class PersonService {
                 if (husband && wife) {
                     let orderToUse = (husbandTrack.get(husbandId) || 0) + 1;
                     
-                    const spouse = await spouseModel.create({
+                    const sId = new Types.ObjectId();
+                    spouseDocs.push({
+                        _id: sId,
                         husband: husband._id,
                         wife: wife._id,
                         husbandOrder: 1,
                         wifeOrder: orderToUse,
                     });
 
-                    spouseMap.set(`${husbandId}_${wifeId}`, spouse);
+                    spouseMap.set(`${husbandId}_${wifeId}`, { _id: sId });
                     husbandTrack.set(husbandId, orderToUse);
                 }
             }
         }
 
+        if (spouseDocs.length > 0) {
+            await spouseModel.insertMany(spouseDocs);
+        }
+
         console.log('🌳 BƯỚC 4: KẾT NỐI CON CÁI...');
+        const childDocs = [];
         let connectCount = 0;
         for (const row of records) {
             const fid = String(row.fid).trim();
@@ -194,7 +215,7 @@ export class PersonService {
 
                 const child = personMap.get(childId);
                 if (parentSpouse && child) {
-                    await parentChildModel.create({
+                    childDocs.push({
                         parent: parentSpouse._id,
                         child: child._id,
                         isAdopted: false,
@@ -202,6 +223,10 @@ export class PersonService {
                     connectCount++;
                 }
             }
+        }
+
+        if (childDocs.length > 0) {
+            await parentChildModel.insertMany(childDocs);
         }
 
         console.log('--------------------------------------------------');
