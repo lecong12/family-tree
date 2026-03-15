@@ -106,7 +106,7 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
                     <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 relative">
                         <div>
                             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                                Danh sách Đời thứ {selectedGeneration}
+                                Đời thứ {selectedGeneration}
                                 <span className="text-sm font-normal text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
                                     {membersOfSelectedGeneration.length} thành viên
                                 </span>
