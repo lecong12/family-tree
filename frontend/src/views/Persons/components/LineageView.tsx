@@ -42,9 +42,10 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
     return (
         <div className="flex h-full bg-gray-50">
              {/* Sidebar chọn Đời */}
-            <aside className="w-64 flex-shrink-0 border-r border-gray-200 bg-white overflow-y-auto">
-                <div className="p-4">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">Chọn Đời</h3>
+            <aside className="w-20 md:w-64 flex-shrink-0 border-r border-gray-200 bg-white overflow-y-auto transition-all duration-300 ease-in-out">
+                <div className="p-2 md:p-4">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4 hidden md:block">Chọn Đời</h3>
+                    <h3 className="text-xs font-bold text-gray-500 mb-4 uppercase text-center md:hidden">Đời</h3>
                     <div className="space-y-2">
                         {Array.from({ length: maxGen }, (_, i) => i + 1).map(gen => {
                             const stats = generationStats[gen] || { total: 0 };
@@ -53,12 +54,13 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
                                 <button
                                     key={gen}
                                     onClick={() => setSelectedGeneration(gen)}
-                                    className={`w-full flex justify-between items-center px-4 py-3 text-left text-sm font-medium rounded-xl transition-all duration-300 ${
-                                        isActive ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md transform scale-[1.02]' : 'text-gray-700 hover:bg-gray-100 hover:pl-5'
+                                    className={`w-full flex flex-col md:flex-row justify-center md:justify-between items-center px-1 md:px-4 py-2 md:py-3 text-sm font-medium rounded-xl transition-all duration-300 ${
+                                        isActive ? 'bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md transform scale-105 md:scale-[1.02]' : 'text-gray-700 hover:bg-gray-100 md:hover:pl-5'
                                     }`}
                                 >
-                                    <span>Đời thứ {gen}</span>
-                                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${isActive ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'}`}>
+                                    <span className="hidden md:inline">Đời thứ {gen}</span>
+                                    <span className="md:hidden text-lg font-bold">{gen}</span>
+                                    <span className={`px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold mt-1 md:mt-0 ${isActive ? 'bg-white/20 text-white' : 'bg-gray-200 text-gray-600'}`}>
                                         {stats.total}
                                     </span>
                                 </button>

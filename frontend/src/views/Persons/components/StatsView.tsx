@@ -212,42 +212,42 @@ const StatsView: React.FC<StatsViewProps> = ({ persons, spouses }) => {
     return (
         <div className="p-4 md:p-8 bg-gray-50 min-h-full">
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ theo Giới tính</h3>
                     <div className="w-full max-w-xs mx-auto">
                         <Doughnut data={genderData} />
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ theo Tình trạng</h3>
                     <div className="w-full max-w-xs mx-auto">
                         <Doughnut data={livingStatusData} />
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Số lượng Vợ (Nam giới)</h3>
                     <div className="w-full h-64 mx-auto">
                         <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={spouseCountData} />
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ sinh nhật (Tháng)</h3>
                     <div className="w-full h-64 mx-auto">
                         <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={birthMonthData} />
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl transition-shadow duration-300 lg:col-span-2">
+                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 lg:col-span-2">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ theo Phái/Chi</h3>
                     <div className="w-full h-80 mx-auto">
                         <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={branchData} />
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl transition-shadow duration-300 lg:col-span-2">
+                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 lg:col-span-2">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ theo Độ tuổi</h3>
                     <div className="w-full h-80 mx-auto">
                         <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false, }, title: { display: true, text: 'Số lượng thành viên trong các nhóm tuổi', }, }, }} data={ageDistributionData} />
@@ -256,7 +256,7 @@ const StatsView: React.FC<StatsViewProps> = ({ persons, spouses }) => {
             </div>
 
             <div className="max-w-7xl mx-auto mt-8">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl transition-shadow duration-300">
+                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                     <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ theo Thế hệ (Đời)</h3>
                     <div className="w-full h-80 mx-auto">
                         <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={generationData} />
