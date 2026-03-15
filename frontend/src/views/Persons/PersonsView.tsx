@@ -57,8 +57,13 @@ export default function PersonsView() {
     // Settings State with localStorage persistence
     const [viewMode, setViewMode] = useState<'list' | 'tree' | 'stats' | 'events' | 'settings'>(() => {
         if (typeof window !== 'undefined') {
-            return (localStorage.getItem('family-tree-viewMode') as any) || 'list';
+            const savedView = localStorage.getItem('family-tree-viewMode');
+            // Ensure savedView is a valid view mode, otherwise default to 'list'
+            if (savedView && ['list', 'tree', 'stats', 'events', 'settings'].includes(savedView)) {
+                return savedView as any;
+            }
         }
+        // Default to 'list' if no valid saved view is found or on server-side
         return 'list';
     });
     const [sortByNamePreference, setSortByNamePreference] = useState<'firstName' | 'lastName'>(() => {
