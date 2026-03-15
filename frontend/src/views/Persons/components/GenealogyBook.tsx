@@ -43,11 +43,9 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
 
     const generatePageContent = useCallback((father: Person) => {
         // Thay thế bằng logic tạo nội dung trang sách thực tế
-      return `<div className="text-center" style="padding: 20px; font-family: serif;">
-                    <h3 style="color: #5d4037; font-size: 1.5em;">${father.name}</h3>
-                    <p>Đời thứ: ${(father as any).generation || '...'}</p>
-                </div>`;
-    }, []);
+        return `<div className="text-center">Content for ${father.name}</div>`;
+    }, [allMembers]);
+
     useEffect(() => {
         async function loadAndInitBook() {
             //Load PageFlip library
