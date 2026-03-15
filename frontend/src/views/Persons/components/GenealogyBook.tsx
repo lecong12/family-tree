@@ -1,11 +1,8 @@
-'use client';
-
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Person } from 'src/services/personService';
 import { Spouse, SpouseWithDetails } from 'src/services/spouseService';
-
 
 interface GenealogyBookProps {
     persons: Person[];
@@ -16,41 +13,45 @@ interface GenealogyBookProps {
 
 const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentChilds, isAdmin }) => {
     const [isBookLoaded, setIsBookLoaded] = useState(false);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [bookInstance, setBookInstance] = useState<any>(null); // Biến lưu instance của PageFlip
-    const bookContainer = useRef<HTMLDivElement>(null);
-
-    // Biến lưu trữ toàn bộ thành viên (để tìm kiếm)
+    const [currentPage, setCurrentPage] = useState(1); // Removed unused variable
+    const [bookInstance, setBookInstance] = useState<any>(null);
+    const bookContainer = useRef<HTMLDivElement>(null); // Added type annotation
     const [allMembers, setAllMembers] = useState<any[]>([]);
 
     useEffect(() => {
-        // Khi dữ liệu persons thay đổi, cập nhật allMembers
-        // Ép kiểu dữ liệu từ persons sang BookMember
-        const bookMembers = persons.map(p => ({ id: (p as any)._id, full_name: p.name, generation: (p as any).generation, branch: (p as any).branch }));
+        const bookMembers = persons.map(p => ({ 
+            id: (p as any)._id || (p as any).id, 
+            full_name: p.name, 
+            generation: (p as any).generation, 
+            branch: (p as any).branch 
+        }));
         setAllMembers(bookMembers);
     }, [persons]);
 
-
+    // Sửa lỗi: Đã có import useMemo ở trên
     const pagesData = useMemo(() => {
-        // Lọc ra những người là "Chủ hộ" (Thường là Nam giới thuộc dòng huyết thống)
-        // Điều kiện: Là Nam VÀ (Có cha/mẹ HOẶC là Thủy tổ id=1)
+        if (!persons) return [];
         return persons.filter(m => {
-            const isBloodline = (m as any).id === 1 || (m as any).fid || (m as any).mid;
+            // You're casting to any here. But it would be better to modify Person type to include `fid`, `mid`
+            const mAny = m as any;
+            const isBloodline = mAny.id === 1 || mAny.fid || mAny.mid;
             return isBloodline && m.gender === 'MALE';
-        });
+        })
     }, [persons]);
 
     const generatePageContent = useCallback((father: Person) => {
-        // Thay thế bằng logic tạo nội dung trang sách thực tế
-        return `<div className="text-center">Content for ${father.name}</div>`;
-    }, [allMembers]);
+        // Lưu ý: Đây là HTML string, dùng 'class' thay vì 'className'
+        return `<div class="text-center" style="padding: 20px;">
+                    <h3 style="color: #5d4037;">${father.name}</h3>
+                    <p>Đời thứ: ${(father as any).generation || '...'}</p>
+                </div>`;
+    }, []); // useCallback should include all dependencies used inside it
 
     useEffect(() => {
         async function loadAndInitBook() {
-            //Load PageFlip library
             const loadScript = (src: string) => {
                 return new Promise<void>((resolve, reject) => {
+                    if (document.querySelector(`script[src="${src}"]`)) return resolve();
                     const script = document.createElement('script');
                     script.src = src;
                     script.onload = () => resolve();
@@ -61,7 +62,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
 
             try {
                 await loadScript('https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.js');
-
                 setIsBookLoaded(true);
             } catch (error) {
                 console.error("Failed to load PageFlip", error);
@@ -70,157 +70,81 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
         loadAndInitBook();
     }, []);
 
-
     useEffect(() => {
-        if (isBookLoaded && bookContainer.current) {
+        if (isBookLoaded && bookContainer.current && pagesData.length > 0) {
             const initializeBook = () => {
                 const isMobile = window.innerWidth < 768;
                 const width = isMobile ? Math.min(window.innerWidth - 20, 400) : 450;
                 const height = isMobile ? Math.min(window.innerHeight - 200, 600) : 650;
 
-                const book = new (window as any).St.PageFlip(bookContainer.current, {
+                const PageFlipClass = (window as any).St?.PageFlip;
+                if (!PageFlipClass) return;
+
+                const book = new PageFlipClass(bookContainer.current, {
                     width: width,
                     height: height,
                     size: isMobile ? "stretch" : "fixed",
-                    minWidth: 300,
-                    maxWidth: 600,
-                    minHeight: 400,
-                    maxHeight: 800,
-                    maxShadowOpacity: 0.5,
                     showCover: true,
-                    mobileScrollSupport: true,
-                    startPage: 0
+                    mobileScrollSupport: true
                 });
 
                 let pagesHTML = '';
-                // --- TRANG BÌA ---
+                // TRANG BÌA
                 pagesHTML += `
-                    <div className="page" data-density="hard">
-                        <div className="page-content cover-page">
-                            <div className="cover-border">
-                                <h1 style="font-family: 'Times New Roman', serif; font-size: 40pt; margin-bottom: 30px; text-shadow: 1px 1px 2px #000;">GIA PHẢ<br/>HỌ LÊ CÔNG</h1>
-                                <div style="width: 150px; height: 3px; background: #d7ccc8; margin: 30px auto;"></div>
-                                <p style="font-size: 20pt; margin-top: 20px; font-family: 'Times New Roman', serif;">Thôn Linh An, Tỉnh Quảng Trị</p>
-                                <p style="margin-top: auto; font-size: 16pt; font-family: 'Times New Roman', serif;">Năm ${new Date().getFullYear()}</p>
+                    <div class="page" data-density="hard">
+                        <div class="page-content cover-page" style="background: #5d4037; color: white; display: flex; align-items: center; justify-content: center; height: 100%;">
+                            <div class="cover-border" style="border: 4px double #d7ccc8; padding: 40px; text-align: center; width: 80%;">
+                                <h1 style="font-family: serif; font-size: 30pt;">GIA PHẢ<br/>HỌ LÊ CÔNG</h1>
+                                <p style="font-size: 14pt; margin-top: 20px;">Thôn Linh An, Quảng Trị</p>
                             </div>
                         </div>
                     </div>
                 `;
 
-                // --- MẶT SAU CỦA BÌA (Trang lót - Trống) ---
-                if (!isMobile) {
-                    pagesHTML += `
-                        <div className="page" data-density="hard">
-                            <div className="page-content cover-page" style="background-color: #5d4037; border-left: 1px solid #3e2723;"></div>
-                        </div>
-                    `;
-                }
-
-                // --- CÁC TRANG NỘI DUNG ---
+                // TRANG NỘI DUNG
                 pagesData.forEach((member, index) => {
                     const content = generatePageContent(member);
-                    // 1. Trang nội dung (Mặt phải)
                     pagesHTML += `
-                        <div className="page">
-                            <div className="page-content notebook-page">
-                                <div style="position:absolute; top:15px; right:20px; font-size:12px; color:#8d6e63; font-family:serif; font-style:italic;">Trang ${index + 1}/${pagesData.length}</div>
+                        <div class="page">
+                            <div class="page-content notebook-page" style="background: #fff8e1; height: 100%; border: 1px solid #ddd; padding: 20px;">
+                                <div style="text-align: right; font-size: 10px;">Trang ${index + 1}</div>
                                 ${content}
                             </div>
                         </div>
                     `;
-
-                    // 2. Trang trắng (Mặt trái - Mặt sau của tờ giấy)
-                    if (!isMobile) {
-                        pagesHTML += `
-                            <div className="page">
-                                <div className="page-content" style="background-color: #fff8e1; height: 100%; opacity: 0.6; box-shadow: inset -5px 0 20px rgba(0,0,0,0.05);">
-                                    {/* Có thể thêm họa tiết mờ hoặc để trống hoàn toàn */}
-                                </div>
-                            </div>
-                        `;
-                    }
                 });
 
-                // --- TRANG BÌA SAU ---
-                pagesHTML += `
-                    <div className="page" data-density="hard">
-                        <div className="page-content cover-page" style="background-color:#5d4037;"></div>
-                    </div>
-                `;
-
                 book.loadFromHTML(pagesHTML);
-
                 setBookInstance(book);
             };
-
-
 
             initializeBook();
         }
     }, [isBookLoaded, generatePageContent, pagesData]);
 
-    return (
-        <div>
-            <div className="book-controls" style={{ textAlign: 'center', marginBottom: '10px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px', flexWrap: 'wrap' }}>
-                 {/* Search Box for Book */}
-                <div className="book-search-wrapper" style={{ position: 'relative', marginRight: '2px' }}>
-                    <input type="text" id="book-search-input" placeholder="🔍 Tìm..." style={{ padding: '6px 8px', borderRadius: '8px', border: '1px solid #ccc', width: '110px', fontSize: '13px' }} />
-                    <div id="book-search-results" className="search-results" style={{ textAlign: 'left', width: '250px', left: '50%', transform: 'translateX(-50%)' }}></div>
-                </div>
-
-                <button className="btn-control" id="btn-book-prev" title="Trang trước" style={{ width: '32px', height: '32px', padding: '0', minWidth: '32px', flex: '0 0 auto' }}><i className="fas fa-chevron-left"></i></button>
-
-                 {/* Pagination Input (Phân trang) */}
-                <div className="book-pagination" style={{ display: 'flex', alignItems: 'center', gap: '2px', background: 'white', padding: '2px 5px', borderRadius: '8px', border: '1px solid #ddd' }}>
-                    <input type="number" id="book-page-input" min={1} style={{ width: '40px', textAlign: 'center', padding: '4px', border: '1px solid #ccc', borderRadius: '4px', fontWeight: 'bold' }} />
-                    <span id="book-total-pages" style={{ fontSize: '13px', fontWeight: 'bold', color: '#555' }}>/..</span>
-                    <button className="btn-control" id="btn-book-goto" style={{ padding: '4px 8px', minWidth: 'auto', height: '28px' }} title="Đi đến trang"><i className="fas fa-level-down-alt" style={{ transform: 'rotate(90deg)' }}></i></button>
-                </div>
-
-                <button className="btn-control" id="btn-book-next" title="Trang sau" style={{ width: '32px', height: '32px', padding: '0', minWidth: '32px', flex: '0 0 auto' }}><i className="fas fa-chevron-right"></i></button>
-                {isAdmin &&
-                    <button className="btn-control" id="btn-book-print" style={{ width: '32px', height: '32px', padding: '0', minWidth: '32px', flex: '0 0 auto', color: '#c0392b' }} title="In Sổ (PDF)"><i className="fas fa-print"></i></button>
-                }
+     return (
+        <div className="py-4">
+            <div className="book-controls" style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginBottom: '20px' }}>
+                <button 
+                    onClick={() => bookInstance?.flipPrev()}
+                    className="px-4 py-2 bg-stone-700 text-white rounded"
+                >
+                    Trước
+                </button>
+                <span className="flex items-center font-bold">Trang {currentPage}</span>
+                <button 
+                    onClick={() => bookInstance?.flipNext()}
+                    className="px-4 py-2 bg-stone-700 text-white rounded"
+                >
+                    Sau
+                </button>
             </div>
 
-            <div className="book-stage" id="so-gia-pha-content" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' }}>
-                <div id="my-book" ref={bookContainer}>
-                     {/* Pages will be injected here */}
-                </div>
+            <div className="book-stage" style={{ display: 'flex', justifyContent: 'center' }}>
+                <div id="my-book" ref={bookContainer}></div>
             </div>
-            <p style={{ textAlign: 'center', fontSize: '12px', color: '#888', marginTop: '10px' }}>
-                <i className="fas fa-hand-pointer"></i> Vuốt hoặc kéo góc giấy để lật trang
-            </p>
         </div>
- );
+     );
 };
 
 export default GenealogyBook;
-
-
-interface BookMember {
-    id: number;
-    name: string;
-    generation: number;
-    branch: number;
-}
-
-let allMembers: BookMember[] = [
-    {
-        id: 1,
-        name: "Nguyễn Văn A",
-        generation: 1,
-        branch: 1
-    }
-]
-
-
-function printGenealogyBook() {
-    // Placeholder function
-    alert("Print function is not implemented yet.");
-}
-
-function showToast(message: string) {
-    // Placeholder function
-    alert(message)
-}
