@@ -151,22 +151,33 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
     return (
         <div className="flex h-full bg-gray-50">
              {/* Sidebar chọn Đời - Styled theo phong cách dọc đơn giản */}
-            <aside className="w-20 flex-shrink-0 border-r border-gray-200 bg-white overflow-y-auto flex flex-col items-center py-4 gap-3 select-none">
-                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">Chọn Đời</h3>
+            <aside className="w-16 md:w-48 flex-shrink-0 border-r border-gray-200 bg-white overflow-y-auto flex flex-col items-center py-4 gap-3 select-none transition-all duration-300">
+                <h3 className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 text-center w-full">
+                    <span className="md:hidden">Đời</span>
+                    <span className="hidden md:inline">Chọn Đời</span>
+                </h3>
                 {Array.from({ length: maxGen }, (_, i) => i + 1).map(gen => {
                     const isActive = gen === selectedGeneration;
                     return (
                         <div
                             key={gen}
                             onClick={() => setSelectedGeneration(gen)}
-                            className={`w-14 cursor-pointer text-center py-2 px-1 rounded transition-all duration-200 ${
+                            className={`w-14 md:w-40 cursor-pointer text-center py-2 px-1 rounded transition-all duration-200 flex items-center justify-center ${
                                 isActive 
                                     ? 'bg-red-50 text-red-800 border-r-4 border-red-800 shadow-sm' 
                                     : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
                             }`}
                         >
-                            <span className="text-[9px] block uppercase leading-tight opacity-80">Đời</span>
-                            <span className={`text-xl font-bold block ${isActive ? 'scale-110' : ''}`}>{gen}</span>
+                            {/* Mobile: Hiển thị ngắn gọn */}
+                            <div className="md:hidden flex flex-col items-center">
+                                <span className="text-[9px] block uppercase leading-tight opacity-80">Đời</span>
+                                <span className={`text-xl font-bold block ${isActive ? 'scale-110' : ''}`}>{gen}</span>
+                            </div>
+                            
+                            {/* Desktop: Hiển thị đầy đủ */}
+                            <span className={`hidden md:block text-sm ${isActive ? 'font-bold' : 'font-medium'}`}>
+                                Đời thứ {gen}
+                            </span>
                         </div>
                     );
                 })}
