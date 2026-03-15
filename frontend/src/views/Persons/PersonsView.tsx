@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import axios from 'axios';
+import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { Person } from 'src/services/personService';
 import { useAuth } from 'src/context/AuthContext';
@@ -277,7 +278,7 @@ export default function PersonsView() {
         formData.append('file', file);
 
         try {
-            const token = localStorage.getItem('token'); // Giả định token được lưu với key 'token'
+            const token = Cookies.get('token'); // Lấy token từ cookie
             if (!token) {
                 toast.error('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
                 setIsImporting(false);
