@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import ReactDOM from 'react-dom';
 import { Person } from 'src/services/personService';
 import { Spouse, SpouseWithDetails } from 'src/services/spouseService';
-import './styles.css';
+
 
 interface GenealogyBookProps {
     persons: Person[];
@@ -16,8 +17,19 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     const [isBookLoaded, setIsBookLoaded] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
-    const [bookInstance, setBookInstance] = useState<any>(null);
+    const [bookInstance, setBookInstance] = useState<any>(null); // Biến lưu instance của PageFlip
     const bookContainer = useRef<HTMLDivElement>(null);
+
+    // Biến lưu trữ toàn bộ thành viên (để tìm kiếm)
+    const [allMembers, setAllMembers] = useState<any[]>([]);
+
+    useEffect(() => {
+        // Khi dữ liệu persons thay đổi, cập nhật allMembers
+        // Ép kiểu dữ liệu từ persons sang BookMember
+        const bookMembers = persons.map(p => ({ id: (p as any)._id, full_name: p.name, generation: (p as any).generation, branch: (p as any).branch }));
+        setAllMembers(bookMembers);
+    }, [persons]);
+
 
     const pagesData = useMemo(() => {
         // Lọc ra những người là "Chủ hộ" (Thường là Nam giới thuộc dòng huyết thống)
@@ -29,9 +41,9 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     }, [persons]);
 
     const generatePageContent = useCallback((father: Person) => {
-        // This is a placeholder, replace with your actual logic
+        // Thay thế bằng logic tạo nội dung trang sách thực tế
         return `<div className="text-center">Content for ${father.name}</div>`;
-    }, []);
+    }, [allMembers]);
 
     useEffect(() => {
         async function loadAndInitBook() {
@@ -56,6 +68,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
         }
         loadAndInitBook();
     }, []);
+
 
     useEffect(() => {
         if (isBookLoaded && bookContainer.current) {
@@ -139,6 +152,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 setBookInstance(book);
             };
 
+
             initializeBook();
         }
     }, [isBookLoaded, generatePageContent, pagesData]);
@@ -176,7 +190,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 <i className="fas fa-hand-pointer"></i> Vuốt hoặc kéo góc giấy để lật trang
             </p>
         </div>
-    );
+ );
 };
 
 export default GenealogyBook;
@@ -184,7 +198,7 @@ export default GenealogyBook;
 
 interface BookMember {
     id: number;
-    full_name: string;
+    name: string;
     generation: number;
     branch: number;
 }
@@ -192,24 +206,11 @@ interface BookMember {
 let allMembers: BookMember[] = [
     {
         id: 1,
-        full_name: "Nguyễn Văn A",
+        name: "Nguyễn Văn A",
         generation: 1,
         branch: 1
     }
 ]
-
-
-const St = {
-    PageFlip: class PageFlip {
-        constructor(element: HTMLDivElement, options: any) {
-            console.log('page flip construct')
-        }
-
-        loadFromHTML = (pages: string[]) => {
-            console.log('load from html')
-        }
-    }
-}
 
 
 function printGenealogyBook() {
