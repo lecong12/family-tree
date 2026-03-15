@@ -15,7 +15,7 @@ interface LineageMemberCardProps {
     allParentChilds: any[];
 }
 
-const getId = (p: string | { _id: string } | undefined | null): string => {
+const getId = (p: string | { _id?: string } | undefined | null): string => {
     if (!p) return '';
     if (typeof p === 'string') return p;
     return p._id || '';
