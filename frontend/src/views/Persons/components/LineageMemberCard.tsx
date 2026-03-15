@@ -13,6 +13,9 @@ interface LineageMemberCardProps {
     allPersons: Person[];
     allSpouses: (Spouse | SpouseWithDetails)[];
     allParentChilds: any[];
+    isHighlighted?: boolean;
+    id?: string;
+    onShowDetail?: (person: Person) => void;
 }
 
 const COLORS = {
@@ -37,7 +40,7 @@ const getAge = (birth: Date | string | undefined, death: Date | string | undefin
     return age > 0 ? age : 0;
 };
 
-const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPersons, allSpouses, allParentChilds }) => {
+const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPersons, allSpouses, allParentChilds, isHighlighted, id, onShowDetail }) => {
     const [isExpanded, setIsExpanded] = useState(false);
 
     const { spouses, children } = useMemo(() => {
@@ -77,7 +80,10 @@ const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPerson
     const age = getAge(person.birth, person.death, person.isDead === true);
 
     return (
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden mb-4 hover:shadow-lg transition-shadow duration-300">
+        <div 
+            id={id}
+            className={`bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden mb-4 hover:shadow-lg transition-all duration-300 ${isHighlighted ? 'ring-4 ring-yellow-400/70 shadow-xl scale-[1.01]' : ''}`}
+        >
             {/* HEADER: CHỦ HỘ */}
             <div 
                 style={{ backgroundColor: COLORS.headerBg }} 
@@ -95,8 +101,12 @@ const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPerson
                         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs opacity-90">
                             <span>{isMale(person.gender) ? 'Nam' : 'Nữ'}</span>
                             <span>{age} Tuổi</span>
-                            <span>{spouses.length} {isMale(person.gender) ? 'Vợ' : 'Chồng'}</span>
-                            <span>{children.length} Con</span>
+                            <span 
+                                className="hover:underline hover:text-yellow-300 cursor-pointer font-semibold transition-colors"
+                                onClick={(e) => { e.stopPropagation(); onShowDetail?.(person); }}
+                            >
+                                {spouses.length} {isMale(person.gender) ? 'Vợ' : 'Chồng'} • {children.length} Con
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -137,8 +147,11 @@ const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPerson
                                         {isMale(spouse.gender) ? 'Nam' : 'Nữ'} · {getAge(spouse.birth, spouse.death, spouse.isDead === true)} Tuổi
                                     </p>
                                 </div>
-                                <div className="text-xs text-gray-400 font-medium text-right flex-shrink-0">
-                                    {sStats.childCount} Con
+                                <div 
+                                    className="text-xs text-gray-400 font-medium text-right flex-shrink-0 cursor-pointer hover:text-red-500 hover:underline transition-colors"
+                                    onClick={(e) => { e.stopPropagation(); onShowDetail?.(spouse); }}
+                                >
+                                    {sStats.spouseCount > 0 ? `${sStats.spouseCount} Hôn phối` : ''}<br/>{sStats.childCount} Con
                                 </div>
                             </div>
                         );
@@ -172,7 +185,10 @@ const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPerson
                                         {isSon ? 'Nam' : 'Nữ'} · {getAge(child.birth, child.death, child.isDead === true)} Tuổi
                                     </p>
                                 </div>
-                                <div className="text-[10px] text-gray-400 font-medium text-right flex-shrink-0 leading-tight">
+                                <div 
+                                    className="text-[10px] text-gray-400 font-medium text-right flex-shrink-0 leading-tight cursor-pointer hover:text-red-500 hover:underline transition-colors"
+                                    onClick={(e) => { e.stopPropagation(); onShowDetail?.(child); }}
+                                >
                                    {cStats.spouseCount} {isSon ? 'Vợ' : 'Chồng'} <br/> {cStats.childCount} Con
                                 </div>
                             </div>

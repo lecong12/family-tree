@@ -14,6 +14,10 @@ interface LineageViewProps {
 
 const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChilds }) => {
     const [selectedGeneration, setSelectedGeneration] = useState<number>(1);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [highlightedId, setHighlightedId] = useState<string | null>(null);
+    const [detailMember, setDetailMember] = useState<Person | null>(null);
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
 
     // 1. Tính toán thống kê theo đời và tìm đời lớn nhất
     const { generationStats, maxGen } = useMemo(() => {
@@ -34,6 +38,35 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
             .filter(p => ((p as any).generation || 1) === selectedGeneration)
             .sort((a, b) => ((a as any).order || 99) - ((b as any).order || 99)); // Sắp xếp theo thứ tự trong đời
     }, [persons, selectedGeneration]);
+
+    // 3. Logic tìm kiếm
+    const filteredResults = useMemo(() => {
+        if (!searchTerm || searchTerm.trim().length < 1) return [];
+        const lowerTerm = searchTerm.toLowerCase();
+        return persons
+            .filter(p => p.name.toLowerCase().includes(lowerTerm))
+            .slice(0, 8); // Giới hạn 8 kết quả
+    }, [searchTerm, persons]);
+
+    const handleSelectResult = (person: Person) => {
+        const gen = (person as any).generation || 1;
+        setSelectedGeneration(gen);
+        setHighlightedId(person._id || null);
+        setSearchTerm('');
+        
+        // Đợi DOM render xong rồi scroll tới
+        setTimeout(() => {
+            const element = document.getElementById(`card-${person._id}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 300);
+    };
+
+    const handleOpenDetail = (person: Person) => {
+        setDetailMember(person);
+        setIsDetailOpen(true);
+    };
 
     if (persons.length === 0) {
         return <div className="p-10 text-center text-gray-500">Không có dữ liệu để hiển thị.</div>;
@@ -66,13 +99,50 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
              {/* Nội dung chính */}
             <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50/50">
                 <div className="max-w-3xl mx-auto">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-2xl font-bold text-gray-800">
-                            Danh sách Đời thứ {selectedGeneration}
-                            <span className="ml-3 text-sm font-normal text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
-                                {membersOfSelectedGeneration.length} thành viên
-                            </span>
-                        </h2>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 relative">
+                        <div>
+                            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                                Danh sách Đời thứ {selectedGeneration}
+                                <span className="text-sm font-normal text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
+                                    {membersOfSelectedGeneration.length} thành viên
+                                </span>
+                            </h2>
+                        </div>
+
+                        {/* Thanh tìm kiếm nhanh */}
+                        <div className="relative w-full md:w-72 z-20">
+                            <div className="relative">
+                                <input 
+                                    type="text" 
+                                    placeholder="Tìm thành viên..." 
+                                    className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-red-800/20 focus:border-red-800 shadow-sm"
+                                    value={searchTerm}
+                                    onChange={e => setSearchTerm(e.target.value)}
+                                />
+                                <svg className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            </div>
+
+                            {/* Dropdown kết quả tìm kiếm */}
+                            {searchTerm.length > 0 && (
+                                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-100 max-h-80 overflow-y-auto">
+                                    {filteredResults.length > 0 ? (
+                                        filteredResults.map(p => (
+                                            <div key={p._id} onClick={() => handleSelectResult(p)} className="p-2 hover:bg-red-50 cursor-pointer border-b border-gray-50 last:border-0 flex items-center gap-3 transition-colors">
+                                                <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-gray-200 relative">
+                                                    <Image src={p.avatar?.trim() ? p.avatar : (isMale(p.gender) ? Avatar_Male : Avatar_Female)} alt={p.name} fill className="object-cover" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-sm text-gray-800">{p.name}</p>
+                                                    <p className="text-[10px] text-gray-500 uppercase font-semibold">Đời {(p as any).generation || '?'}</p>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="p-3 text-sm text-gray-400 text-center italic">Không tìm thấy thành viên</div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                     
                     <div className="flex flex-col gap-4">
@@ -80,10 +150,13 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
                             membersOfSelectedGeneration.map(member => (
                                 <LineageMemberCard 
                                     key={member._id} 
+                                    id={`card-${member._id}`}
+                                    isHighlighted={highlightedId === member._id}
                                     person={member} 
                                     allPersons={persons} 
                                     allSpouses={spouses} 
                                     allParentChilds={parentChilds} 
+                                    onShowDetail={handleOpenDetail}
                                 />
                             ))
                         ) : (
@@ -96,6 +169,16 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
                         )}
                     </div>
                 </div>
+
+                {/* Modal Chi Tiết */}
+                <MemberDetailModal 
+                    member={detailMember}
+                    isOpen={isDetailOpen}
+                    onClose={() => setIsDetailOpen(false)}
+                    allPersons={persons}
+                    allSpouses={spouses}
+                    allParentChilds={parentChilds}
+                />
             </main>
         </div>
     );
