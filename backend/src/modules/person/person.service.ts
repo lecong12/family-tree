@@ -27,7 +27,12 @@ export class PersonService {
         await spouseModel.deleteMany({});
         await parentChildModel.deleteMany({});
 
-        const records: any[] = parse(fileBuffer, { columns: true, skip_empty_lines: true, trim: true, bom: true });
+        let records: any[] = [];
+        try {
+            records = parse(fileBuffer, { columns: true, skip_empty_lines: true, trim: true, bom: true });
+        } catch (error) {
+            throw new BadRequestException('File CSV bị lỗi định dạng hoặc không đọc được: ' + (error instanceof Error ? error.message : String(error)));
+        }
 
         if (records.length === 0) {
             throw new BadRequestException('File CSV rỗng hoặc không hợp lệ.');
