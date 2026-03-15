@@ -16,9 +16,11 @@ interface HeaderProps {
 export default function Header({ isolatedCount, filterMode, onFilterModeChange, onOpenGuestCodeModal, currentView, onChangeView }: HeaderProps) {
     const { isAdmin, logout, user } = useAuth();
 
-    const tabs: { id: ViewMode; label: string }[] = [
+    const tabs: { id: ViewMode | string; label: string; disabled?: boolean }[] = [
         { id: 'tree', label: 'Cây gia phả' },
         { id: 'list', label: 'Thành viên' },
+        { id: 'phah', label: 'Phả hệ', disabled: true },
+        { id: 'sogp', label: 'Sổ GP', disabled: true },
         { id: 'stats', label: 'Thống kê' },
         { id: 'events', label: 'Sự kiện' },
         { id: 'settings', label: 'Cài đặt' },
@@ -32,8 +34,9 @@ export default function Header({ isolatedCount, filterMode, onFilterModeChange, 
                     <button
                         key={tab.id}
                         type="button"
-                        onClick={() => onChangeView(tab.id)}
-                        className={`whitespace-nowrap px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150 flex-shrink-0 ${
+                        onClick={() => onChangeView(tab.id as ViewMode)}
+                        disabled={tab.disabled}
+                        className={`whitespace-nowrap px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150 flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed ${
                             currentView === tab.id
                                 ? 'bg-blue-600 text-white shadow-sm'
                                 : 'text-text-secondary hover:bg-bg-primary hover:text-text-primary'
