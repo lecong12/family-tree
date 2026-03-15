@@ -12,10 +12,10 @@ interface LineageMemberCardProps {
     person: Person;
     allPersons: Person[];
     allSpouses: (Spouse | SpouseWithDetails)[];
-    allParentChilds: ParentChild[];
+    allParentChilds: (ParentChild | any)[];
 }
 
-const getPersonId = (p: string | Person | undefined | null): string => {
+const getId = (p: string | { _id: string } | undefined | null): string => {
     if (!p) return '';
     if (typeof p === 'string') return p;
     return p._id || '';
@@ -29,12 +29,12 @@ const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPerson
 
         // Tìm cha mẹ
         let pText = "Chưa cập nhật";
-        const childRelation = allParentChilds.find(pc => pc.child === person._id);
+        const childRelation = allParentChilds.find(pc => getId(pc.child) === person._id);
         if (childRelation) {
-            const parentSpouseRelation = allSpouses.find(s => s._id === childRelation.parent);
+            const parentSpouseRelation = allSpouses.find(s => s._id === getId(childRelation.parent));
             if (parentSpouseRelation) {
-                const father = personMap.get(getPersonId(parentSpouseRelation.husband));
-                const mother = personMap.get(getPersonId(parentSpouseRelation.wife));
+                const father = personMap.get(getId(parentSpouseRelation.husband));
+                const mother = personMap.get(getId(parentSpouseRelation.wife));
                 if (father && mother) pText = `Ông ${father.name} và Bà ${mother.name}`;
                 else if (father) pText = `Ông ${father.name}`;
             }
@@ -43,15 +43,15 @@ const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPerson
         }
 
         // Tìm vợ/chồng
-        const spouseRelations = allSpouses.filter(s => getPersonId(s.husband) === person._id || getPersonId(s.wife) === person._id);
+        const spouseRelations = allSpouses.filter(s => getId(s.husband) === person._id || getId(s.wife) === person._id);
         const spouseList = spouseRelations.map(s => {
-            const hId = getPersonId(s.husband);
-            const wId = getPersonId(s.wife);
+            const hId = getId(s.husband);
+            const wId = getId(s.wife);
             return personMap.get(hId === person._id ? wId : hId);
         }).filter(Boolean) as Person[];
 
         // Tìm con cái
-        const childrenList = spouseRelations.flatMap(s => allParentChilds.filter(pc => pc.parent === s._id).map(pc => personMap.get(getPersonId(pc.child as any)))).filter(Boolean) as Person[];
+        const childrenList = spouseRelations.flatMap(s => allParentChilds.filter(pc => getId(pc.parent) === s._id).map(pc => personMap.get(getId(pc.child)))).filter(Boolean) as Person[];
 
         return { parentText: pText, spouses: spouseList, children: childrenList };
     }, [person, allPersons, allSpouses, allParentChilds]);
