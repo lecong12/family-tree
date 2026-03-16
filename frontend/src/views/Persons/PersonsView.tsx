@@ -316,7 +316,7 @@ export default function PersonsView() {
     if (!user) return <LoadingOverlay isLoading={true} />;
 
     return (
-        <div className="w-screen h-screen flex flex-col bg-gray-100 dark:bg-gray-900 text-text-primary font-sans">
+        <div className="w-screen h-screen flex flex-col bg-bg-primary text-text-primary font-sans">
             <Header
                 isolatedCount={isolatedCount}
                 filterMode={filterMode}
@@ -332,7 +332,7 @@ export default function PersonsView() {
 
             <LoadingOverlay isLoading={isLoading || authLoading} />
 
-            <div className={`flex-1 overflow-auto bg-gray-100 dark:bg-gray-900 relative ${viewMode === 'list' ? 'p-4' : ''}`}>
+            <div className={`flex-1 overflow-auto bg-bg-primary relative ${viewMode === 'list' ? 'p-4' : ''}`}>
                 {viewMode === 'list' && (
                     <div className="max-w-[900px] mx-auto bg-bg-secondary shadow-sm ring-1 ring-border-color rounded-xl overflow-hidden">
                         <PersonList
@@ -382,7 +382,7 @@ export default function PersonsView() {
                 {viewMode === 'events' && <EventsView persons={persons} spouses={spouses} />}
 
                 {viewMode === 'settings' && (
-                    <div className="p-4 md:p-8 bg-gray-100 dark:bg-gray-900 min-h-full">
+                    <div className="p-4 md:p-8 bg-bg-primary min-h-full">
                         <div className="max-w-2xl mx-auto bg-bg-secondary p-6 rounded-xl shadow-sm border border-border-color">
                             <h2 className="text-xl font-bold text-text-primary mb-6">Cài đặt hiển thị</h2>
                             <div className="space-y-6">
