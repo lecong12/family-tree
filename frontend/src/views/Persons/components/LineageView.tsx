@@ -190,9 +190,9 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
             </aside>
 
              {/* Nội dung chính */}
-            <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50/50">
+            <main className="flex-1 overflow-y-auto bg-gray-50/50">
                 <div className="max-w-3xl mx-auto">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 relative">
+                    <div className="sticky top-0 z-20 bg-gray-50/50 px-4 md:px-6 pt-4 md:pt-6 pb-4 mb-2 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
                                 Đời thứ {selectedGeneration}
@@ -203,7 +203,7 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
                         </div>
 
                         {/* Thanh tìm kiếm nhanh */}
-                        <div className="relative w-full md:w-72 z-20">
+                        <div className="relative w-full md:w-72">
                             <div className="relative">
                                 <input 
                                     type="text" 
@@ -238,7 +238,7 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
                         </div>
                     </div>
                     
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-4 px-4 md:px-6 pb-4 md:pb-6">
                         {membersOfSelectedGeneration.length > 0 ? (
                             membersOfSelectedGeneration.map(member => (
                                 <LineageMemberCard 
