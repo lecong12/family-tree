@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Person } from 'src/services/personService';
 import { Spouse, SpouseWithDetails } from 'src/services/spouseService';
 import styles from './GenealogyBook.module.css'; // Import styles
+import { isMale } from 'src/utils/genderUtils'; // Giả sử bạn có utils này, nếu không thì dùng logic check 0/1
 
 
 interface GenealogyBookProps {
@@ -32,18 +33,99 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
 
 
     const pagesData = useMemo(() => {
-        // Lọc ra những người là "Chủ hộ" (Thường là Nam giới thuộc dòng huyết thống)
-        // Điều kiện: Là Nam VÀ (Có cha/mẹ HOẶC là Thủy tổ id=1)
-        return persons.filter(m => {
-            const isBloodline = (m as any).id === 1 || (m as any).fid || (m as any).mid;
-            return isBloodline && m.gender === 'MALE';
+        // 1. Lọc ra Nam giới để làm chủ trang (theo truyền thống Gia phả)
+        // Bạn có thể bỏ filter này nếu muốn in cả Nữ giới ra trang riêng
+        const males = persons.filter(p => {
+            // Kiểm tra giới tính: 0 hoặc 'MALE' là Nam
+            return p.gender === 0 || p.gender === 'MALE' || (p as any).gender === '0';
+        });
+
+        // 2. Sắp xếp: Đời (Tăng dần) -> Phái (Tăng dần) -> Con thứ (Tăng dần)
+        return males.sort((a, b) => {
+            const genA = (a as any).generation || 999;
+            const genB = (b as any).generation || 999;
+            if (genA !== genB) return genA - genB;
+
+            const branchA = (a as any).branch || '0';
+            const branchB = (b as any).branch || '0';
+            const branchComp = String(branchA).localeCompare(String(branchB), undefined, { numeric: true });
+            if (branchComp !== 0) return branchComp;
+
+            const orderA = (a as any).order || 999;
+            const orderB = (b as any).order || 999;
+            return orderA - orderB;
         });
     }, [persons]);
 
-    const generatePageContent = useCallback((father: Person) => {
-        // Thay thế bằng logic tạo nội dung trang sách thực tế
-        return `<div class="text-center">Content for ${father.name}</div>`;
-    }, [allMembers]);
+    const generatePageContent = useCallback((person: Person) => {
+        const pId = person._id;
+        const formatDate = (d: any) => d ? new Date(d).getFullYear() : '...';
+        const birth = formatDate(person.birth);
+        const death = person.isDead ? formatDate(person.death) : 'Nay';
+        
+        // --- TÌM VỢ VÀ CON ---
+        // 1. Tìm các Spouse record mà người này là chồng
+        const mySpouses = spouses.filter(s => {
+            const hId = typeof s.husband === 'string' ? s.husband : (s.husband as any)?._id;
+            return hId === pId;
+        });
+
+        // 2. Tạo HTML cho phần Vợ & Con
+        let familyHtml = '';
+        if (mySpouses.length > 0) {
+            mySpouses.forEach((s, idx) => {
+                // Lấy thông tin Vợ
+                const wifeId = typeof s.wife === 'string' ? s.wife : (s.wife as any)?._id;
+                const wife = persons.find(p => p._id === wifeId);
+                const wifeName = wife ? wife.name : 'Không rõ';
+                
+                // Tìm con chung của cặp vợ chồng này
+                const children = parentChilds.filter(pc => {
+                    const parentId = typeof pc.parent === 'string' ? pc.parent : (pc.parent as any)?._id;
+                    return parentId === s._id; // ParentID trong bảng ParentChild chính là SpouseID
+                }).map(pc => {
+                    const cId = typeof pc.child === 'string' ? pc.child : (pc.child as any)?._id;
+                    return persons.find(p => p._id === cId);
+                }).filter(Boolean).sort((a, b) => ((a as any).order || 0) - ((b as any).order || 0));
+
+                const childrenListHtml = children.length > 0 
+                    ? `<ul style="margin: 5px 0 10px 20px; padding: 0; list-style-type: circle;">
+                        ${children.map(c => `<li>${c!.name} (${formatDate(c!.birth)})</li>`).join('')}
+                       </ul>`
+                    : '<p style="margin-left: 20px; font-style: italic; font-size: 14px;">(Chưa cập nhật con)</p>';
+
+                familyHtml += `
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-weight: bold; color: #4e342e;">★ Vợ ${idx + 1}: ${wifeName}</div>
+                        ${childrenListHtml}
+                    </div>
+                `;
+            });
+        } else {
+            familyHtml = '<p>Chưa có thông tin vợ con.</p>';
+        }
+
+        return `
+            <h2 style="text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; color: #3e2723;">${person.name}</h2>
+            <p style="text-align: center; font-style: italic; margin-bottom: 25px;">(${birth} - ${death})</p>
+            
+            <div style="font-size: 16px; line-height: 1.6; text-align: justify;">
+                <p><strong>• Đời thứ:</strong> ${(person as any).generation || 1}</p>
+                <p><strong>• Con thứ:</strong> ${(person as any).order || 1}</p>
+                <p><strong>• Thụy hiệu/Tên tự:</strong> ${(person as any).nickname || '...'}</p>
+                
+                <div style="margin-top: 20px;">
+                    <h3 style="font-size: 18px; font-weight: bold; border-bottom: 1px solid #8d6e63; padding-bottom: 5px; margin-bottom: 10px; color: #5d4037;">Tiểu sử</h3>
+                    <p>${person.desc || 'Chưa có thông tin tiểu sử chi tiết.'}</p>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <h3 style="font-size: 18px; font-weight: bold; border-bottom: 1px solid #8d6e63; padding-bottom: 5px; margin-bottom: 10px; color: #5d4037;">Gia đình</h3>
+                    ${familyHtml}
+                </div>
+            </div>
+        `;
+    }, [persons, spouses, parentChilds]);
 
     useEffect(() => {
         async function loadAndInitBook() {
