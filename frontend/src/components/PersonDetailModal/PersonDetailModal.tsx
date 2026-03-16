@@ -726,10 +726,10 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
                                         children[spouse._id] &&
                                         children[spouse._id].length > 0 && (
                                             <div className="mt-2 pl-3 border-l-2 border-gray-300">
-                                                <p className="text-xs text-gray-600 mb-1">Con cái:</p>
-                                                <div className="space-y-1">
+                                                <p className="text-xs text-gray-600 mb-2">Con cái:</p>
+                                                <div className="divide-y divide-gray-200">
                                                     {children[spouse._id].map((child) => (
-                                                        <div key={child._id} className="text-sm flex justify-between items-center group hover:bg-gray-50 rounded px-1 -mx-1">
+                                                        <div key={child._id} className="text-sm flex justify-between items-center group hover:bg-gray-50 rounded px-1 py-2 -mx-1">
                                                             <span>
                                                                 • {typeof child.child !== 'string' && child.child?.name}
                                                                 {child.isAdopted && <span className="text-xs text-gray-500"> (nuôi)</span>}
