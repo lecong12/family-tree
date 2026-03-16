@@ -19,7 +19,13 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [bookInstance, setBookInstance] = useState<any>(null); // Biến lưu instance của PageFlip
+    const [totalPages, setTotalPages] = useState(0);
+    const [isMobileView, setIsMobileView] = useState(false);
+    const [searchResults, setSearchResults] = useState<{ name: string; pageIndex: number; generation: number }[]>([]);
+    const [showSearchResults, setShowSearchResults] = useState(false);
+    
     const bookContainer = useRef<HTMLDivElement>(null);
+    const pageInputRef = useRef<HTMLInputElement>(null);
 
     // Biến lưu trữ toàn bộ thành viên (để tìm kiếm)
     const [allMembers, setAllMembers] = useState<any[]>([]);
@@ -175,6 +181,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 }
 
                 const isMobile = window.innerWidth < 768;
+                setIsMobileView(isMobile); // Lưu lại chế độ view để dùng cho logic tính trang
                 const width = isMobile ? Math.min(window.innerWidth - 20, 400) : 450;
                 const height = isMobile ? Math.min(window.innerHeight - 200, 600) : 650;
 
@@ -254,12 +261,17 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 // Sửa: Dùng class tĩnh 'page-element' để query chắc chắn tìm thấy
                 book.loadFromHTML(tempDiv.querySelectorAll('.page-element'));
 
-                // Thêm hiệu ứng âm thanh khi lật trang
-                book.on('flip', () => {
+                // Cập nhật tổng số trang sau khi load
+                setTotalPages(book.getPageCount());
+
+                // Sự kiện lật trang: Âm thanh + Cập nhật state trang hiện tại
+                book.on('flip', (e: any) => {
                     // Đảm bảo bạn đã có file này trong thư mục public/sounds/
                     const audio = new Audio('/sounds/page-flip.mp3');
                     audio.volume = 0.4; // Điều chỉnh âm lượng vừa phải
                     audio.play().catch(() => {}); // Bỏ qua lỗi nếu trình duyệt chưa cho phép autoplay
+                    
+                    setCurrentPage(e.data + 1); // e.data là index 0-based
                 });
 
                 setBookInstance(book);
@@ -277,27 +289,128 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
         };
     }, [isBookLoaded, generatePageContent, pagesData]);
 
+    // --- HANDLERS CHO CÁC NÚT ĐIỀU KHIỂN ---
+    const handlePrevPage = () => bookInstance?.flipPrev();
+    
+    const handleNextPage = () => bookInstance?.flipNext();
+    
+    const handleGotoPage = () => {
+        if (!bookInstance || !pageInputRef.current) return;
+        const pageNum = parseInt(pageInputRef.current.value);
+        if (pageNum >= 1 && pageNum <= totalPages) {
+            bookInstance.flip(pageNum - 1); // PageFlip dùng index 0
+        }
+    };
+
+    // --- LOGIC TÌM KIẾM ---
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const term = e.target.value;
+        setSearchTerm(term);
+        setShowSearchResults(!!term);
+
+        if (!term.trim()) {
+            setSearchResults([]);
+            return;
+        }
+
+        // Lọc trong pagesData
+        const results = pagesData
+            .map((p, index) => ({
+                name: p.name,
+                generation: (p as any).generation,
+                // Tính toán vị trí trang trong sách:
+                // Mobile: 1 trang bìa + index
+                // Desktop: 2 trang (Bìa + Lót) + (index * 2) (vì mỗi người 2 trang: nội dung + mặt sau)
+                pageIndex: isMobileView ? (1 + index) : (2 + index * 2)
+            }))
+            .filter(item => item.name.toLowerCase().includes(term.toLowerCase()))
+            .slice(0, 5); // Lấy tối đa 5 kết quả
+
+        setSearchResults(results);
+    };
+
+    const handleSelectResult = (pageIndex: number) => {
+        bookInstance?.flip(pageIndex);
+        setShowSearchResults(false);
+        setSearchTerm('');
+    };
+
     return (
         <div className={styles.container} id="book-tab">
             <div className={styles.controls}>
                  {/* Search Box for Book */}
                 <div className={styles.searchWrapper}>
-                    <input type="text" className={styles.searchInput} id="book-search-input" placeholder="🔍 Tìm..." />
-                    <div id="book-search-results" className="search-results" style={{ position: 'absolute', textAlign: 'left', width: '250px', left: '50%', transform: 'translateX(-50%)' }}></div>
+                    <input 
+                        type="text" 
+                        className={styles.searchInput} 
+                        placeholder="🔍 Tìm tên..." 
+                        value={searchTerm}
+                        onChange={handleSearch}
+                        onFocus={() => setShowSearchResults(!!searchTerm)}
+                    />
+                    
+                    {/* Dropdown kết quả tìm kiếm */}
+                    {showSearchResults && searchResults.length > 0 && (
+                        <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto transform -translate-x-1/4">
+                            {searchResults.map((res, idx) => (
+                                <div 
+                                    key={idx}
+                                    onClick={() => handleSelectResult(res.pageIndex)}
+                                    className="px-4 py-2 hover:bg-orange-50 cursor-pointer border-b border-gray-100 last:border-0 text-left"
+                                >
+                                    <div className="font-bold text-gray-800 text-sm">{res.name}</div>
+                                    <div className="text-xs text-gray-500">Đời {res.generation} • Trang {res.pageIndex + 1}</div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {showSearchResults && searchTerm && searchResults.length === 0 && (
+                        <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-xl z-50 p-2 text-center text-xs text-gray-500">
+                            Không tìm thấy
+                        </div>
+                    )}
                 </div>
 
-                <button className={styles.btnControl} id="btn-book-prev" title="Trang trước"><i className="fas fa-chevron-left"></i></button>
+                <button className={styles.btnControl} onClick={handlePrevPage} title="Trang trước">
+                    <i className="fas fa-chevron-left"></i>
+                </button>
 
                  {/* Pagination Input (Phân trang) */}
                 <div className={styles.pagination}>
-                    <input type="number" className={styles.pageInput} id="book-page-input" min={1} />
-                    <span id="book-total-pages" style={{ fontSize: '13px', fontWeight: 'bold', color: '#555' }}>/..</span>
-                    <button className={styles.btnControl} id="btn-book-goto" style={{ width: 'auto', padding: '0 8px', height: '28px', minWidth: 'auto' }} title="Đi đến trang"><i className="fas fa-level-down-alt" style={{ transform: 'rotate(90deg)' }}></i></button>
+                    <input 
+                        ref={pageInputRef}
+                        type="number" 
+                        className={styles.pageInput} 
+                        min={1} 
+                        max={totalPages}
+                        defaultValue={1}
+                        placeholder={currentPage.toString()}
+                        onKeyDown={(e) => e.key === 'Enter' && handleGotoPage()}
+                    />
+                    <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#555' }}>/{totalPages}</span>
+                    <button 
+                        className={styles.btnControl} 
+                        onClick={handleGotoPage}
+                        style={{ width: 'auto', padding: '0 8px', height: '28px', minWidth: 'auto' }} 
+                        title="Đi đến trang"
+                    >
+                        <i className="fas fa-level-down-alt" style={{ transform: 'rotate(90deg)' }}></i>
+                    </button>
                 </div>
 
-                <button className={styles.btnControl} id="btn-book-next" title="Trang sau"><i className="fas fa-chevron-right"></i></button>
+                <button className={styles.btnControl} onClick={handleNextPage} title="Trang sau">
+                    <i className="fas fa-chevron-right"></i>
+                </button>
+                
                 {isAdmin &&
-                    <button className={styles.btnControl} id="btn-book-print" style={{ color: '#c0392b' }} title="In Sổ (PDF)"><i className="fas fa-print"></i></button>
+                    <button 
+                        className={styles.btnControl} 
+                        style={{ color: '#c0392b' }} 
+                        title="In Sổ (PDF)"
+                        onClick={() => alert("Tính năng in đang phát triển")}
+                    >
+                        <i className="fas fa-print"></i>
+                    </button>
                 }
             </div>
 
