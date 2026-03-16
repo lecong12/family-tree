@@ -155,7 +155,7 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
     }
 
     return (
-        <div className="flex h-full bg-gray-50">
+        <div className="flex h-full bg-gray-50 w-full">
              {/* Sidebar chọn Đời - Styled theo phong cách dọc đơn giản */}
             <aside className="w-16 md:w-48 flex-shrink-0 border-r border-gray-200 bg-white overflow-y-auto flex flex-col items-center py-4 gap-3 select-none transition-all duration-300">
                 <h3 className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 text-center w-full">

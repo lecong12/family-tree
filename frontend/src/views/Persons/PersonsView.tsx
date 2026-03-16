@@ -363,11 +363,13 @@ export default function PersonsView() {
                 )}
 
                 {viewMode === 'phah' && (
-                    <LineageView
-                        persons={persons}
-                        spouses={spouses}
-                        parentChilds={parentChilds}
-                    />
+                    <div className="w-full h-full overflow-hidden">
+                        <LineageView
+                            persons={persons}
+                            spouses={spouses}
+                            parentChilds={parentChilds}
+                        />
+                    </div>
                 )}
 
                 {viewMode === 'sogp' && (
