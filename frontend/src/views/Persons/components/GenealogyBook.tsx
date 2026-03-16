@@ -59,69 +59,78 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
 
     const generatePageContent = useCallback((person: Person) => {
         const pId = person._id;
-        const formatDate = (d: any) => d ? new Date(d).getFullYear() : '...';
+        const formatDate = (d: any) => d ? new Date(d).getFullYear() : '';
         const birth = formatDate(person.birth);
-        const death = person.isDead ? formatDate(person.death) : 'Nay';
+        const death = person.isDead ? (formatDate(person.death) || '...') : 'Nay';
+        const lifeStr = birth ? `(${birth} - ${death})` : '';
         
         // --- TÌM VỢ VÀ CON ---
-        // 1. Tìm các Spouse record mà người này là chồng
         const mySpouses = spouses.filter(s => {
             const hId = typeof s.husband === 'string' ? s.husband : (s.husband as any)?._id;
             return hId === pId;
         });
 
-        // 2. Tạo HTML cho phần Vợ & Con
-        let familyHtml = '';
+        // Tạo thông tin Vợ (Mẹ của các con)
+        let motherInfoHtml = '';
         if (mySpouses.length > 0) {
-            mySpouses.forEach((s, idx) => {
-                // Lấy thông tin Vợ
-                const wifeId = typeof s.wife === 'string' ? s.wife : (s.wife as any)?._id;
-                const wife = persons.find(p => p._id === wifeId);
-                const wifeName = wife ? wife.name : 'Không rõ';
-                
-                // Tìm con chung của cặp vợ chồng này
-                const children = parentChilds.filter(pc => {
-                    const parentId = typeof pc.parent === 'string' ? pc.parent : (pc.parent as any)?._id;
-                    return parentId === s._id; // ParentID trong bảng ParentChild chính là SpouseID
-                }).map(pc => {
-                    const cId = typeof pc.child === 'string' ? pc.child : (pc.child as any)?._id;
-                    return persons.find(p => p._id === cId);
-                }).filter(Boolean).sort((a, b) => ((a as any).order || 0) - ((b as any).order || 0));
-
-                const childrenListHtml = children.length > 0 
-                    ? `<ul style="margin: 5px 0 10px 20px; padding: 0; list-style-type: circle;">
-                        ${children.map(c => `<li>${c!.name} (${formatDate(c!.birth)})</li>`).join('')}
-                       </ul>`
-                    : '<p style="margin-left: 20px; font-style: italic; font-size: 14px;">(Chưa cập nhật con)</p>';
-
-                familyHtml += `
-                    <div style="margin-bottom: 15px;">
-                        <div style="font-weight: bold; color: #4e342e;">★ Vợ ${idx + 1}: ${wifeName}</div>
-                        ${childrenListHtml}
-                    </div>
-                `;
-            });
+            const wives = mySpouses.map(s => {
+                const wId = typeof s.wife === 'string' ? s.wife : (s.wife as any)?._id;
+                return persons.find(p => p._id === wId);
+            }).filter(Boolean);
+            
+            motherInfoHtml = wives.map(w => `Bà <strong>${w?.name}</strong>`).join(', ');
+            if (motherInfoHtml) motherInfoHtml = `Sánh duyên cùng: ${motherInfoHtml}`;
         } else {
-            familyHtml = '<p>Chưa có thông tin vợ con.</p>';
+            motherInfoHtml = '(Chưa cập nhật thông tin vợ)';
         }
 
+        // Tìm tất cả con (gộp từ các đời vợ)
+        let allChildren: Person[] = [];
+        mySpouses.forEach(s => {
+            const children = parentChilds.filter(pc => {
+                const parentId = typeof pc.parent === 'string' ? pc.parent : (pc.parent as any)?._id;
+                return parentId === s._id;
+            }).map(pc => {
+                const cId = typeof pc.child === 'string' ? pc.child : (pc.child as any)?._id;
+                return persons.find(p => p._id === cId);
+            }).filter(Boolean) as Person[];
+            allChildren = [...allChildren, ...children];
+        });
+        // Sắp xếp con theo thứ tự
+        allChildren.sort((a, b) => ((a as any).order || 0) - ((b as any).order || 0));
+
+        // Tạo HTML danh sách con
+        const childrenHtml = allChildren.length > 0 
+            ? allChildren.map((c, idx) => {
+                const cBirth = formatDate(c.birth);
+                const cDeath = c.isDead ? (formatDate(c.death) || '...') : '...';
+                const cLife = cBirth ? `(${cBirth} - ${cDeath})` : '';
+                return `
+                <div class="${styles.childLine}">
+                    <span class="${styles.orderNo}">${idx + 1}.</span>
+                    <span class="${styles.childName}">${c.name}</span>
+                    <span class="${styles.lifeDates}">${cLife}</span>
+                </div>`;
+            }).join('')
+            : `<div class="${styles.childLine}" style="font-style:italic; opacity:0.7;">(Chưa có thông tin con cái)</div>`;
+
         return `
-            <h2 style="text-align: center; font-size: 24px; font-weight: bold; margin-bottom: 5px; text-transform: uppercase; color: #3e2723;">${person.name}</h2>
-            <p style="text-align: center; font-style: italic; margin-bottom: 25px;">(${birth} - ${death})</p>
-            
-            <div style="font-size: 16px; line-height: 1.6; text-align: justify;">
-                <p><strong>• Đời thứ:</strong> ${(person as any).generation || 1}</p>
-                <p><strong>• Con thứ:</strong> ${(person as any).order || 1}</p>
-                <p><strong>• Thụy hiệu/Tên tự:</strong> ${(person as any).nickname || '...'}</p>
-                
-                <div style="margin-top: 20px;">
-                    <h3 style="font-size: 18px; font-weight: bold; border-bottom: 1px solid #8d6e63; padding-bottom: 5px; margin-bottom: 10px; color: #5d4037;">Tiểu sử</h3>
-                    <p>${person.desc || 'Chưa có thông tin tiểu sử chi tiết.'}</p>
+            <div class="${styles.pageHeader}">
+                <div class="${styles.generationTitle}">
+                    Đời thứ <span class="${styles.generationNumber}">${(person as any).generation || 1}</span>
+                    ${(person as any).branch ? `<span class="${styles.branchName}">Phái ${(person as any).branch}</span>` : ''}
                 </div>
-                
-                <div style="margin-top: 20px;">
-                    <h3 style="font-size: 18px; font-weight: bold; border-bottom: 1px solid #8d6e63; padding-bottom: 5px; margin-bottom: 10px; color: #5d4037;">Gia đình</h3>
-                    ${familyHtml}
+                <div class="${styles.mainCouple}">
+                    <div class="${styles.fatherName}">${person.name}</div>
+                    <div class="${styles.lifeDates}" style="display:block; margin-top:-5px; margin-bottom:5px;">${lifeStr}</div>
+                    <div class="${styles.motherInfo}">${motherInfoHtml}</div>
+                </div>
+            </div>
+            
+            <div class="${styles.pageContentBody}">
+                <div class="${styles.sinhHaTitle}">Sinh hạ</div>
+                <div class="${styles.childrenGrid}">
+                    ${childrenHtml}
                 </div>
             </div>
         `;
@@ -176,7 +185,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 let pagesHTML = '';
                 // --- TRANG BÌA ---
                 pagesHTML += `
-                    <div class="${styles.page}" data-density="hard">
+                    <div class="${styles.page} ${styles.pageRight}" data-density="hard">
                         <div class="${styles.pageContent} ${styles.coverPage}">
                             <div class="${styles.coverBorder}">
                                 <h1 class="${styles.coverTitle}">GIA PHẢ<br/>HỌ LÊ CÔNG</h1>
@@ -191,7 +200,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 // --- MẶT SAU CỦA BÌA (Trang lót - Trống) ---
                 if (!isMobile) {
                     pagesHTML += `
-                        <div class="${styles.page}" data-density="hard">
+                        <div class="${styles.page} ${styles.pageLeft}" data-density="hard">
                             <div class="${styles.pageContent} ${styles.coverPage}" style="border-left: 1px solid #3e2723;"></div>
                         </div>
                     `;
@@ -200,9 +209,9 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 // --- CÁC TRANG NỘI DUNG ---
                 pagesData.forEach((member, index) => {
                     const content = generatePageContent(member);
-                    // 1. Trang nội dung (Mặt phải)
+                    // 1. Trang nội dung (Luôn nằm bên Phải - Recto)
                     pagesHTML += `
-                        <div class="${styles.page}">
+                        <div class="${styles.page} ${styles.pageRight}">
                             <div class="${styles.pageContent} ${styles.notebookPage}">
                                 <div class="${styles.pageNumber}">Trang ${index + 1}/${pagesData.length}</div>
                                 ${content}
@@ -210,10 +219,10 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                         </div>
                     `;
 
-                    // 2. Trang trắng (Mặt trái - Mặt sau của tờ giấy)
+                    // 2. Trang trắng (Mặt trái - Verso - Mặt sau của tờ giấy)
                     if (!isMobile) {
                         pagesHTML += `
-                            <div class="${styles.page}">
+                            <div class="${styles.page} ${styles.pageLeft}">
                                 <div class="${styles.pageContent} ${styles.emptyBackPage}">
                                 <!-- Có thể thêm họa tiết mờ hoặc để trống hoàn toàn -->
                                 </div>
@@ -224,7 +233,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
 
                 // --- TRANG BÌA SAU ---
                 pagesHTML += `
-                    <div class="${styles.page}" data-density="hard">
+                    <div class="${styles.page} ${styles.pageLeft}" data-density="hard">
                         <div class="${styles.pageContent} ${styles.coverPage}"></div>
                     </div>
                 `;
