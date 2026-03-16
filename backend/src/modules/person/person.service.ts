@@ -406,13 +406,8 @@ export class PersonService {
         }
 
         // 1. Lấy ID của tất cả vợ/chồng
-<<<<<<< HEAD
         const spouseIds = uniqueRelationships.map((rel) =>
             rel.husband.toString() === personId ? rel.wife.toString() : rel.husband.toString(),
-=======
-        const spouseIds = spouseRelationships.map((rel) =>
-            rel.husband.toString() === idStr ? rel.wife.toString() : rel.husband.toString(),
->>>>>>> 4417602083e4d2f3b2bc54b7579c21db0ed22e8a
         );
 
         // 2. Lấy toàn bộ thông tin của các vợ/chồng đó trong 1 query
@@ -513,8 +508,6 @@ export class PersonService {
                 }
             }
 
-<<<<<<< HEAD
-=======
             // After deciding which branches to display, loop through ALL original results
             // to ensure all children are collected for the next generation.
             for (const subFamily of results) {
@@ -540,7 +533,6 @@ export class PersonService {
                 return birthA - birthB; // Sắp xếp tăng dần theo ngày sinh (người lớn tuổi hơn có ngày sinh nhỏ hơn sẽ đứng trước).
             });
 
->>>>>>> 4417602083e4d2f3b2bc54b7579c21db0ed22e8a
             if (generationResult.length > 0) {
                 treeData.push(generationResult);
             }
