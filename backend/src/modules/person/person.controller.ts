@@ -11,7 +11,7 @@ import { UserRoles } from '../../constants';
 
 @ApiTags('Person')
 @ApiBearerAuth()
-@Controller('person')
+@Controller(['person', 'persons'])
 export class PersonController {
     constructor(private readonly personService: PersonService) {}
 
@@ -106,29 +106,25 @@ export class PersonController {
         return this.personService.remove(id);
     }
 
-    @Get(':id/generations/:generations')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @ApiOperation({ summary: 'Get N generations of a person including spouse relationships and children' })
+    @Get('tree/:id')
+    @ApiOperation({ summary: 'Get N generations of a person (for tree view)' })
     @ApiParam({ name: 'id', description: 'Person ID' })
-    @ApiParam({ name: 'generations', required: true, type: Number, description: 'Number of generations to get' })
+    @ApiQuery({ name: 'generations', required: false, type: Number, description: 'Number of generations to get (defaults to 10)' })
     @ApiResponse({
         status: HttpStatus.OK,
         description: 'Return N generations of the person',
-        schema: {
-            type: 'object',
-            properties: {
-                person: { type: 'object', $ref: '#/components/schemas/Person' },
-                spouseRelationships: { type: 'array', items: { $ref: '#/components/schemas/Spouse' } },
-                children: { type: 'array', items: { $ref: '#/components/schemas/ParentChild' } },
-            },
-        },
     })
     @ApiResponse({
         status: HttpStatus.NOT_FOUND,
         description: 'Person not found',
     })
-    getNGenerations(@Param('id') id: string, @Param('generations') generations: number) {
-        console.log(id, generations);
-        return this.personService.getNGenerations(id, generations);
+    getNGenerationsForTree(@Param('id') id: string, @Query('generations') generations?: string) {
+        // Frontend sends generations as a query param, and sometimes it might be missing. Default to 10.
+        const genNum = generations ? parseInt(generations, 10) : 10;
+        if (isNaN(genNum)) {
+            // Handle cases where generations is not a valid number
+            return this.personService.getNGenerations(id, 10);
+        }
+        return this.personService.getNGenerations(id, genNum);
     }
 }

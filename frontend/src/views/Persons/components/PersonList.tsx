@@ -35,16 +35,13 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
     }
 
     return (
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto shadow-sm border border-gray-200 rounded-lg bg-white">
             <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+                <thead className="bg-gray-100">
                     <tr>
-                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
-                            #
-                        </th>
                         <th
                             scope="col"
-                            className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-blue-600 hover:bg-gray-100 transition-colors"
+                                className="px-3 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:text-blue-600 hover:bg-gray-200/60 transition-colors"
                             onClick={() => onSort('name')}
                         >
                             <div className="flex items-center gap-1">
@@ -52,9 +49,19 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                                 {sortField === 'name' && <span className="text-blue-600">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
                             </div>
                         </th>
+                        <th 
+                            scope="col" 
+                            className="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-24 cursor-pointer hover:text-blue-600 hover:bg-gray-200/60 transition-colors"
+                            onClick={() => onSort('branch')}
+                        >
+                            <div className="flex items-center justify-center gap-1">
+                                Phái
+                                {sortField === 'branch' && <span className="text-blue-600">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
+                            </div>
+                        </th>
                         <th
                             scope="col"
-                            className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32 cursor-pointer hover:text-blue-600 hover:bg-gray-100 transition-colors"
+                                className="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-32 cursor-pointer hover:text-blue-600 hover:bg-gray-200/60 transition-colors"
                             onClick={() => onSort('birth')}
                         >
                             <div className="flex items-center justify-center gap-1">
@@ -64,7 +71,7 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                         </th>
                         <th
                             scope="col"
-                            className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-32 cursor-pointer hover:text-blue-600 hover:bg-gray-100 transition-colors"
+                                className="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-32 cursor-pointer hover:text-blue-600 hover:bg-gray-200/60 transition-colors"
                             onClick={() => onSort('status')}
                         >
                             <div className="flex items-center justify-center gap-1">
@@ -72,32 +79,28 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                                 {sortField === 'status' && <span className="text-blue-600">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
                             </div>
                         </th>
-                        <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-48">
-                            CCCD
-                        </th>
                     </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                     {paginated.map((person, idx) => {
-                        const isIsolated = person._id ? !connectedIds.has(person._id) : false;
-                        const isDeceased = person.isDead === true;
+                        const p = person as any; // Cast to access new fields
+                        const isIsolated = p._id ? !connectedIds.has(p._id) : false;
+                        const isDeceased = p.isDead === true;
                         const avatarSrc = person.avatar?.trim() ? person.avatar : isMale(person.gender) ? Avatar_Male : Avatar_Female;
                         const birthYear = getBirthYear(person);
-                        const rowNum = (currentPage - 1) * pageSize + idx + 1;
                         const borderColor = isMale(person.gender) ? 'border-blue-400' : 'border-pink-400';
 
                         return (
                             <tr
                                 key={person._id ?? idx}
                                 onClick={() => onPersonClick(person)}
-                                className={`hover:bg-gray-50 cursor-pointer transition-colors ${isIsolated ? 'bg-amber-50 hover:bg-amber-100' : ''}`}
+                                className={`cursor-pointer transition-colors duration-150 odd:bg-white even:bg-gray-50/50 hover:bg-blue-50 ${isIsolated ? 'bg-amber-50 hover:bg-amber-100 even:bg-amber-50/50' : ''}`}
                             >
-                                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 text-center">{rowNum}</td>
-                                <td className="px-4 py-2 whitespace-nowrap">
+                                    <td className="px-3 py-3 whitespace-nowrap">
                                     <div className="flex items-center">
                                         <div className={`flex-shrink-0 h-10 w-10 relative`}>
                                             <Image
-                                                className={`rounded-full object-cover border-2 ${borderColor} ${isDeceased ? 'grayscale' : ''}`}
+                                                className={`rounded-full object-cover border-2 ${borderColor} ${isDeceased ? 'grayscale' : ''} shadow-sm ring-1 ring-white`}
                                                 src={avatarSrc}
                                                 alt={person.name}
                                                 fill
@@ -105,19 +108,30 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                                             />
                                         </div>
                                         <div className="ml-4">
-                                            <div className={`text-sm font-medium ${isDeceased ? 'text-gray-500' : 'text-gray-900'}`}>{person.name}</div>
-                                            <div className="text-xs text-gray-500">{isMale(person.gender) ? 'Nam' : 'Nữ'}</div>
+                                            <div className={`text-sm font-medium ${isDeceased ? 'text-gray-500' : 'text-gray-900'}`}>{p.name}</div>
+                                            <div className="text-xs text-gray-500">
+                                                {isMale(p.gender) ? 'Nam' : 'Nữ'}
+                                                {p.generation && ` - Đời ${p.generation}`}
+                                                {p.branch && ` - Phái ${p.branch}`}
+                                            </div>
+                                            <div className="text-xs text-gray-500 font-mono">{p.cccd || '—'}</div>
                                             {isIsolated && <div className="text-[10px] text-amber-600 font-medium mt-0.5 max-w-[150px] truncate">⚠️ Chưa có liên hệ</div>}
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-4 py-2 whitespace-nowrap text-center text-sm text-gray-500">{birthYear || '—'}</td>
-                                <td className="px-4 py-2 whitespace-nowrap text-center">
+                                    <td className="px-3 py-3 whitespace-nowrap text-center text-sm text-gray-500">
+                                    {p.branch && p.branch !== '0' ? (
+                                        <span className="px-2 py-1 inline-flex text-xs leading-4 font-medium rounded-full bg-purple-100 text-purple-800">
+                                            Phái {p.branch}
+                                        </span>) : (<span className="text-gray-400">—</span>)
+                                    }
+                                </td>
+                                    <td className="px-3 py-3 whitespace-nowrap text-center text-sm text-gray-500">{birthYear || '—'}</td>
+                                    <td className="px-3 py-3 whitespace-nowrap text-center">
                                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${isDeceased ? 'bg-gray-100 text-gray-500' : 'bg-green-100 text-green-800'}`}>
                                         {isDeceased ? 'Đã mất' : 'Còn sống'}
                                     </span>
                                 </td>
-                                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500 font-mono">{person.cccd || '—'}</td>
                             </tr>
                         );
                     })}

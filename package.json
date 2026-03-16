@@ -3,22 +3,12 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "dev": "concurrently -k -n \"BACKEND,FRONTEND\" -c \"bgBlue.bold,bgMagenta.bold\" \"cd backend && npm run start:dev\" \"cd frontend && npm run dev\"",
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "cd backend && npm run start:dev",
-    "dev:frontend": "cd frontend && npm run dev",
-    "build": "npm run build:backend && npm run build:frontend",
-    "build:backend": "cd backend && npm run build",
-    "build:frontend": "cd frontend && npm run build",
-    "seed": "cd backend && npm run seed"
+    "build": "npm run build --prefix backend && npm run build --prefix frontend",
+    "seed": "npm run seed --prefix backend"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
-  },
-  "dependencies": {
-    "@nestjs/platform-express": "^11.1.15",
-    "csv-parser": "^3.2.0",
-    "express": "^5.2.1",
-    "slugify": "^1.6.6"
   }
 }

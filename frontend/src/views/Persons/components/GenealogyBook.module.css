@@ -1,0 +1,330 @@
+/* ===== GENEALOGY BOOK STYLES ===== */
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&display=swap');
+
+.container {
+    padding: 20px;
+    background-color: #fff9c4; /* Nền vàng nhạt để làm nổi bật cuốn sổ */
+    border-radius: 16px;
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Style cho từng trang sách của PageFlip */
+.page {
+    background-color: #fffef0; /* Màu nền giấy sáng hơn (Cream) */
+    overflow: hidden;
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.05); /* Bóng đổ nhẹ bên trong */
+    width: 100%;
+    height: 100%;
+}
+
+/* Hiệu ứng gáy sách */
+.pageLeft {
+    border-right: none;
+    box-shadow: inset -10px 0 20px -10px rgba(0, 0, 0, 0.2);
+}
+
+.pageRight {
+    border-left: none;
+    box-shadow: inset 10px 0 20px -10px rgba(0, 0, 0, 0.2);
+}
+
+.pageContent {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* COVER PAGE */
+.coverPage {
+    background-color: #5d4037;
+    color: #d7ccc8;
+    border: 2px solid #3e2723;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.coverBorder {
+    border: 3px double #d7ccc8;
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.coverTitle {
+    font-family: 'Times New Roman', serif;
+    font-size: 40pt;
+    margin-bottom: 30px;
+    text-shadow: 1px 1px 2px #000;
+    line-height: 1.2;
+    font-weight: bold;
+}
+
+.coverDivider {
+    width: 150px;
+    height: 3px;
+    background: #d7ccc8;
+    margin: 30px auto;
+}
+
+.coverText {
+    font-size: 20pt;
+    margin-top: 20px;
+    font-family: 'Times New Roman', serif;
+}
+
+.coverYear {
+    margin-top: auto;
+    font-size: 16pt;
+    font-family: 'Times New Roman', serif;
+}
+
+/* NOTEBOOK PAGE (Nội dung bên trong) */
+.notebookPage {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 30px;
+    overflow-y: auto;
+    background-color: #fffef0;
+    background-image: linear-gradient(rgba(139, 69, 19, 0.15) 1px, transparent 1px); /* Chỉ còn dòng kẻ ngang */
+    background-size: 100% 25px; /* Dòng kẻ ngang */
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.05); /* Giảm độ tối viền để trông mới hơn */
+    border: 1px solid #d2b48c;
+    font-family: 'Dancing Script', cursive;
+    color: #4b3621;
+    line-height: 25px;
+}
+
+.pageNumber {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 12px;
+    color: #5d4037;
+    font-family: 'Segoe UI', sans-serif; /* Số trang dùng font thường cho dễ đọc */
+    font-weight: bold;
+}
+
+/* Content Styles extracted from provided CSS */
+.pageHeader {
+    text-align: center;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(183, 28, 28, 0.2);
+    padding-bottom: 20px;
+}
+
+.generationTitle {
+    color: #d32f2f;
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    font-weight: 700;
+    text-shadow: 1px 1px 0px rgba(0,0,0,0.1);
+}
+
+.generationNumber {
+    font-size: 2.0rem;
+    font-weight: 700;
+}
+
+.branchName {
+    color: #f57f17;
+    font-weight: 700;
+    font-size: 0.6em; /* Relative to generationTitle */
+    display: block;
+    margin-top: 5px;
+}
+
+.mainCouple {
+    margin-top: 10px;
+}
+
+.fatherName {
+    font-size: 2rem;
+    font-weight: 700;
+    display: inline-block;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #d32f2f;
+    margin-bottom: 10px;
+}
+
+.motherInfo {
+    font-size: 1.3rem;
+    margin-top: 8px;
+    color: #5d4037;
+}
+
+.pageContentBody {
+    margin-top: 20px;
+}
+
+.sinhHaTitle {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 1.6rem;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 5px;
+}
+
+.childrenGrid {
+    display: flex;
+    flex-direction: column;
+    padding-left: 20px;
+}
+
+.childLine {
+    font-size: 1.4rem;
+    line-height: 25px; /* Khớp dòng kẻ */
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 0 5px;
+    margin-bottom: 0;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.childLine:hover {
+    background-color: rgba(183, 28, 28, 0.05);
+    color: #b71c1c;
+}
+
+.orderNo {
+    font-weight: bold;
+    color: #4b3621;
+    font-size: 0.8em;
+}
+
+.childName {
+    font-weight: 600;
+}
+
+.lifeDates {
+    font-size: 0.7em;
+    color: #5d4037;
+    margin-left: 5px;
+}
+
+.emptyBackPage {
+    background-color: #fff8e1;
+    height: 100%;
+    opacity: 0.6;
+    box-shadow: inset -5px 0 20px rgba(0,0,0,0.05);
+}
+
+/* CONTROLS (Thanh điều khiển) */
+.controls {
+    text-align: center;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: white;
+    padding: 8px 15px;
+    border-radius: 30px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+
+.btnControl {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    min-width: 32px;
+    flex: 0 0 auto;
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+    transition: all 0.2s;
+}
+
+.btnControl:hover {
+    background: #f0f0f0;
+    color: #333;
+    border-color: #bbb;
+}
+
+.searchWrapper {
+    position: relative;
+    margin-right: 2px;
+}
+
+.searchInput {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    width: 140px;
+    font-size: 13px;
+    outline: none;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: white;
+    padding: 2px 8px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.pageInput {
+    width: 45px;
+    text-align: center;
+    padding: 4px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.stage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    padding-bottom: 20px;
+    width: 100%;
+}
+
+.helperText {
+    text-align: center;
+    font-size: 12px;
+    color: #888;
+    margin-top: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    .coverTitle {
+        font-size: 24pt;
+    }
+    .coverText {
+        font-size: 14pt;
+    }
+    /* Ẩn ngày sinh/mất trên mobile để tránh vỡ dòng */
+    .lifeDates {
+        display: none;
+    }
+}

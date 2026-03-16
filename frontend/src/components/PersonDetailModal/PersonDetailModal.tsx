@@ -23,12 +23,19 @@ interface PersonDetailModalProps {
     onUpdate?: () => void; // Callback after edit/delete
 }
 
+type PersonWithDetails = Person & {
+    job?: string;
+    generation?: number;
+    branch?: string;
+    order?: number;
+};
+
 export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse, onAddChild, onUpdate }: PersonDetailModalProps) {
     const { isAdmin, isEditor } = useAuth();
     const queryClient = useQueryClient();
 
     const [isEditing, setIsEditing] = useState(false);
-    const [editForm, setEditForm] = useState<Partial<Person>>({});
+    const [editForm, setEditForm] = useState<Partial<PersonWithDetails>>({});
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
@@ -91,7 +98,7 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
 
     // Mutations
     const updatePersonMutation = useMutation({
-        mutationFn: (data: Partial<Person>) => personService.updatePerson(person!._id!, data),
+        mutationFn: (data: Partial<PersonWithDetails>) => personService.updatePerson(person!._id!, data as any),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['persons'] });
             queryClient.invalidateQueries({ queryKey: ['person', person?._id] });
@@ -157,21 +164,29 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
 
     useEffect(() => {
         if (isOpen && person?._id) {
+            const p = person as PersonWithDetails;
             setIsEditing(false);
             setEditForm({
-                name: person.name,
-                gender: person.gender,
-                cccd: person.cccd,
-                birth: person.birth,
-                death: person.death,
-                isDead: person.isDead,
-                address: person.address,
-                desc: person.desc,
+                name: p.name,
+                gender: p.gender,
+                cccd: p.cccd,
+                birth: p.birth,
+                death: p.death,
+                isDead: p.isDead,
+                address: p.address,
+                desc: p.desc,
+                job: p.job,
+                generation: p.generation,
+                branch: p.branch,
+                order: p.order,
             });
         }
     }, [isOpen, person]);
 
     if (!person) return null;
+
+    const spouseLabel = person.gender === Gender.MALE ? 'Vợ' : 'Chồng';
+    const spouseCountLabel = spouses.length > 1 ? ` (${spouses.length})` : '';
 
     const getSpouseName = (spouse: SpouseWithDetails) => {
         // Xác định ID của husband và wife
@@ -234,16 +249,21 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
     };
 
     const handleCancelEdit = () => {
+        const p = person as PersonWithDetails;
         setIsEditing(false);
         setEditForm({
-            name: person?.name,
-            gender: person?.gender,
-            cccd: person?.cccd,
-            birth: person?.birth,
-            death: person?.death,
-            isDead: person?.isDead,
-            address: person?.address,
-            desc: person?.desc,
+            name: p?.name,
+            gender: p?.gender,
+            cccd: p?.cccd,
+            birth: p?.birth,
+            death: p?.death,
+            isDead: p?.isDead,
+            address: p?.address,
+            desc: p?.desc,
+            job: p?.job,
+            generation: p?.generation,
+            branch: p?.branch,
+            order: p?.order,
         });
     };
 
@@ -452,6 +472,42 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
                                             Đã mất
                                         </label>
                                     </div>
+                                    <div>
+                                        <label className="block text-gray-700 mb-1 text-sm">Thế hệ</label>
+                                        <input
+                                            type="number"
+                                            value={editForm.generation || ''}
+                                            onChange={(e) => setEditForm({ ...editForm, generation: parseInt(e.target.value) || undefined })}
+                                            className="w-full px-3 py-2 border rounded text-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-gray-700 mb-1 text-sm">Thứ tự</label>
+                                        <input
+                                            type="number"
+                                            value={editForm.order || ''}
+                                            onChange={(e) => setEditForm({ ...editForm, order: parseInt(e.target.value) || undefined })}
+                                            className="w-full px-3 py-2 border rounded text-sm"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-gray-700 mb-1 text-sm">Phái/Chi</label>
+                                        <input
+                                            type="text"
+                                            value={editForm.branch || ''}
+                                            onChange={(e) => setEditForm({ ...editForm, branch: e.target.value })}
+                                            className="w-full px-3 py-2 border rounded text-sm"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-gray-700 mb-1 text-sm">Nghề nghiệp</label>
+                                        <input
+                                            type="text"
+                                            value={editForm.job || ''}
+                                            onChange={(e) => setEditForm({ ...editForm, job: e.target.value })}
+                                            className="w-full px-3 py-2 border rounded text-sm"
+                                        />
+                                    </div>
                                     <div className="col-span-2">
                                         <label className="block text-gray-700 mb-1">Địa chỉ</label>
                                         <input
@@ -534,6 +590,23 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
                                             </div>
                                         </div>
 
+                                        <div>
+                                            <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">Thế hệ</p>
+                                            <p className="text-gray-900 font-medium">{(person as PersonWithDetails).generation ? `Đời thứ ${(person as PersonWithDetails).generation}` : 'Chưa rõ'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">Phái/Chi</p>
+                                            <p className="text-gray-900 font-medium">{(person as PersonWithDetails).branch || 'Chưa rõ'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">Thứ tự</p>
+                                            <p className="text-gray-900 font-medium">{(person as PersonWithDetails).order ?? 'Chưa rõ'}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">Nghề nghiệp</p>
+                                            <p className="text-gray-900 font-medium">{(person as PersonWithDetails).job || 'Chưa cập nhật'}</p>
+                                        </div>
+
                                         <div className="sm:col-span-2">
                                             <p className="text-xs text-gray-500 uppercase font-semibold tracking-wider mb-1">Địa chỉ</p>
                                             <p className="text-gray-900">{person.address || 'Chưa cập nhật'}</p>
@@ -601,10 +674,10 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
                 {/* Spouse Relationships */}
                 <div className="bg-gray-50 p-2 md:p-4 rounded-lg">
                     <div className="flex justify-between items-center mb-3">
-                        <h3 className="font-semibold">Vợ/Chồng ({spouses.length})</h3>
+                        <h3 className="font-semibold">{spouseLabel}{spouseCountLabel}</h3>
                         {(isAdmin || isEditor) && (
                             <button onClick={() => onAddSpouse(person)} className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
-                                + Thêm vợ/chồng
+                                + Thêm {spouseLabel.toLowerCase()}
                             </button>
                         )}
                     </div>

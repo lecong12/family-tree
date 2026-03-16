@@ -6,32 +6,50 @@ export type PersonDocument = HydratedDocument<Person>;
 
 @Schema({ timestamps: true })
 export class Person {
-    @Prop({ required: true, unique: true })
-    cccd: string;
-
-    @Prop({ required: true })
+    @Prop({ required: true, trim: true })
     name: string;
 
-    @Prop()
-    avatar: string;
-
-    @Prop({ required: true, type: Number, enum: [Gender.MALE, Gender.FEMALE] })
+    @Prop({ type: Number, enum: Gender, required: true })
     gender: Gender;
 
-    @Prop({ default: null })
-    birth: Date | null;
+    @Prop({ unique: true, sparse: true, trim: true })
+    cccd: string;
 
-    @Prop({ default: null })
-    death: Date | null;
+    @Prop()
+    birth: Date;
+
+    @Prop()
+    death: Date;
 
     @Prop({ default: false })
     isDead: boolean;
+
+    @Prop()
+    avatar: string;
 
     @Prop()
     address: string;
 
     @Prop()
     desc: string;
+
+    @Prop()
+    phone: string;
+
+    @Prop()
+    job: string;
+
+    @Prop()
+    generation: number;
+
+    @Prop()
+    branch: string;
+
+    @Prop()
+    order: number;
 }
 
 export const PersonSchema = SchemaFactory.createForClass(Person);
+
+// Thêm index để tối ưu tìm kiếm theo tên
+PersonSchema.index({ name: 'text' });

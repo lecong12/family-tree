@@ -1,0 +1,435 @@
+'use client';
+
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { Person } from 'src/services/personService';
+import { Spouse, SpouseWithDetails } from 'src/services/spouseService';
+import styles from './GenealogyBook.module.css'; // Import styles
+import { isMale } from 'src/utils/genderUtils';
+
+interface GenealogyBookProps {
+    persons: Person[];
+    spouses: (Spouse | SpouseWithDetails)[];
+    parentChilds: any[];
+    isAdmin: boolean;
+}
+
+// --- Icons (SVG) ---
+const IconChevronLeft = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>;
+const IconChevronRight = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>;
+const IconPrinter = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M19 8h-1V3H6v5H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM8 5h8v3H8V5zm8 12v2H8v-4h8v2zm2-2v-2H6v2H4v-4c0-.55.45-1 1-1h14c.55 0 1 .45 1 1v4h-2z"/>
+        <circle cx="18" cy="11.5" r="1"/>
+    </svg>
+);
+const IconHand = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 11.5a.5.5 0 0 0 .5-.5V6h.5a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1v-1a.5.5 0 0 0-1 0v1h-1v1a.5.5 0 0 0 .5.5h.5v5a.5.5 0 0 0 .5.5z"/>
+        <path d="M4 11a4 4 0 1 1 8 0v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1z"/>
+    </svg>
+);
+
+const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentChilds, isAdmin }) => {
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [bookInstance, setBookInstance] = useState<any>(null); // Biến lưu instance của PageFlip
+    const [isMobileView, setIsMobileView] = useState(false);
+    const [searchResults, setSearchResults] = useState<{ name: string; pageIndex: number; generation: number }[]>([]);
+    const [showSearchResults, setShowSearchResults] = useState(false);
+    
+    const bookContainer = useRef<HTMLDivElement>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
+
+    // --- TỐI ƯU HÓA DỮ LIỆU (INDEXING) ---
+    const personsMap = useMemo(() => {
+        return new Map(persons.map(p => [p._id, p]));
+    }, [persons]);
+
+    const spousesByHusband = useMemo(() => {
+        const map = new Map<string, (Spouse | SpouseWithDetails)[]>();
+        spouses.forEach(s => {
+            const hId = typeof s.husband === 'string' ? s.husband : (s.husband as any)?._id;
+            if (hId) {
+                if (!map.has(hId)) map.set(hId, []);
+                map.get(hId)?.push(s);
+            }
+        });
+        return map;
+    }, [spouses]);
+
+    const childrenBySpouseId = useMemo(() => {
+        const map = new Map<string, string[]>();
+        parentChilds.forEach(pc => {
+            const parentRelId = typeof pc.parent === 'string' ? pc.parent : (pc.parent as any)?._id; 
+            const childId = typeof pc.child === 'string' ? pc.child : (pc.child as any)?._id;
+            if (parentRelId && childId) {
+                if (!map.has(parentRelId)) map.set(parentRelId, []);
+                map.get(parentRelId)?.push(childId);
+            }
+        });
+        return map;
+    }, [parentChilds]);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            audioRef.current = new Audio('/sounds/page-flip.mp3');
+            audioRef.current.volume = 0.4;
+        }
+    }, []);
+
+    const pagesData = useMemo(() => {
+        const males = persons.filter(p => {
+            return p.gender === 0 || p.gender === 'MALE' || (p as any).gender === '0';
+        });
+
+        return males.sort((a, b) => {
+            const genA = (a as any).generation || 999;
+            const genB = (b as any).generation || 999;
+            if (genA !== genB) return genA - genB;
+
+            const branchA = (a as any).branch || '0';
+            const branchB = (b as any).branch || '0';
+            const branchComp = String(branchA).localeCompare(String(branchB), undefined, { numeric: true });
+            if (branchComp !== 0) return branchComp;
+
+            const orderA = (a as any).order || 999;
+            const orderB = (b as any).order || 999;
+            return orderA - orderB;
+        });
+    }, [persons]);
+
+    const generatePageContent = useCallback((person: Person, css: any = styles) => {
+        const pId = person._id;
+        const formatDate = (d: any) => d ? new Date(d).getFullYear() : '';
+        const birth = formatDate(person.birth);
+        const death = person.isDead ? (formatDate(person.death) || '...') : 'Nay';
+        const lifeStr = birth ? `(${birth} - ${death})` : '';
+        
+        const mySpouses = pId ? (spousesByHusband.get(pId) || []) : [];
+
+        let motherInfoHtml = '';
+        if (mySpouses.length > 0) {
+            const wives = mySpouses.map(s => {
+                const wId = typeof s.wife === 'string' ? s.wife : (s.wife as any)?._id;
+                return wId ? personsMap.get(wId) : undefined;
+            }).filter(Boolean);
+            
+            motherInfoHtml = wives.map(w => `Bà <strong>${w?.name}</strong>`).join(', ');
+            if (motherInfoHtml) motherInfoHtml = `Sánh duyên cùng: ${motherInfoHtml}`;
+        } else {
+            motherInfoHtml = '(Chưa cập nhật thông tin vợ)';
+        }
+
+        let allChildren: Person[] = [];
+        mySpouses.forEach(s => {
+            const childIds = s._id ? (childrenBySpouseId.get(s._id) || []) : [];
+            const children = childIds
+                .map(cId => personsMap.get(cId))
+                .filter(Boolean) as Person[];
+            allChildren = [...allChildren, ...children];
+        });
+        allChildren.sort((a, b) => ((a as any).order || 0) - ((b as any).order || 0));
+
+        const childrenHtml = allChildren.length > 0 
+            ? allChildren.map((c, idx) => {
+                const cBirth = formatDate(c.birth);
+                const cDeath = c.isDead ? (formatDate(c.death) || '...') : '...';
+                const cLife = cBirth ? `(${cBirth} - ${cDeath})` : '';
+                return `
+                <div class="${css.childLine}">
+                    <span class="${css.orderNo}">${idx + 1}.</span>
+                    <span class="${css.childName}">${c.name}</span>
+                    <span class="${css.lifeDates}">${cLife}</span>
+                </div>`;
+            }).join('')
+            : `<div class="${css.childLine}" style="font-style:italic; opacity:0.7;">(Chưa có thông tin con cái)</div>`;
+
+        return `
+            <div class="${css.pageHeader}">
+                <div class="${css.generationTitle}">
+                    Đời thứ <span class="${css.generationNumber}">${(person as any).generation || 1}</span>
+                    ${(person as any).branch ? `<span class="${css.branchName}">Phái ${(person as any).branch}</span>` : ''}
+                </div>
+                <div class="${css.mainCouple}">
+                    <div class="${css.fatherName}">${person.name}</div>
+                    <div class="${css.lifeDates}" style="display:block; margin-top:-5px; margin-bottom:5px;">${lifeStr}</div>
+                    <div class="${css.motherInfo}">${motherInfoHtml}</div>
+                </div>
+            </div>
+            
+            <div class="${css.pageContentBody}">
+                <div class="${css.sinhHaTitle}">Sinh hạ</div>
+                <div class="${css.childrenGrid}">
+                    ${childrenHtml}
+                </div>
+            </div>
+        `;
+    }, [personsMap, spousesByHusband, childrenBySpouseId]);
+
+    useEffect(() => {
+        let activeBook: any = null;
+        let script: HTMLScriptElement | null = null;
+
+        const doInit = (PageFlip: any) => {
+            if (!bookContainer.current) return;
+
+            bookContainer.current.innerHTML = '';
+
+            const isMobile = window.innerWidth < 768;
+            setIsMobileView(isMobile);
+            const width = isMobile ? Math.min(window.innerWidth - 20, 400) : 450;
+            const height = isMobile ? Math.min(window.innerHeight - 200, 600) : 650;
+
+            const book = new PageFlip(bookContainer.current, { width, height, size: isMobile ? "stretch" : "fixed", minWidth: 300, maxWidth: 600, minHeight: 400, maxHeight: 800, maxShadowOpacity: 0.5, showCover: true, mobileScrollSupport: true, startPage: 0 });
+
+            let pagesHTML = '';
+            // Bìa trước
+            pagesHTML += `<div class="${styles.page} ${styles.pageRight} page-element" data-density="hard"><div class="${styles.pageContent} ${styles.coverPage}"><div class="${styles.coverBorder}"><h1 class="${styles.coverTitle}">GIA PHẢ<br/>HỌ LÊ CÔNG</h1><div class="${styles.coverDivider}"></div><p class="${styles.coverText}">Thôn Linh An, Tỉnh Quảng Trị</p><p class="${styles.coverYear}">Năm ${new Date().getFullYear()}</p></div></div></div>`;
+            // Lót bìa trước
+            if (!isMobile) {
+                pagesHTML += `<div class="${styles.page} ${styles.pageLeft} page-element" data-density="hard"><div class="${styles.pageContent} ${styles.coverPage}" style="border-left: 1px solid #3e2723;"></div></div>`;
+            }
+            // Nội dung
+            pagesData.forEach((member, index) => {
+                const content = generatePageContent(member);
+                pagesHTML += `<div class="${styles.page} ${styles.pageRight} page-element"><div class="${styles.pageContent} ${styles.notebookPage}"><div class="${styles.pageNumber}">Trang ${index + 1}/${pagesData.length}</div>${content}</div></div>`;
+                if (!isMobile) {
+                    pagesHTML += `<div class="${styles.page} ${styles.pageLeft} page-element"><div class="${styles.pageContent} ${styles.emptyBackPage}"><!-- Back page --></div></div>`;
+                }
+            });
+            // Bìa sau
+            pagesHTML += `<div class="${styles.page} ${styles.pageLeft} page-element" data-density="hard"><div class="${styles.pageContent} ${styles.coverPage}"></div></div>`;
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = pagesHTML;
+            book.loadFromHTML(tempDiv.querySelectorAll('.page-element'));
+
+            book.on('flip', (e: any) => {
+                if (audioRef.current) {
+                    audioRef.current.currentTime = 0;
+                    audioRef.current.play().catch(() => {});
+                }
+                
+                let newPage = 0;
+                if (isMobile) {
+                    newPage = e.data;
+                } else {
+                    if (e.data === 0) newPage = 0;
+                    else newPage = Math.floor((e.data + 1) / 2);
+                }
+                setCurrentPage(newPage);
+            });
+
+            activeBook = book;
+            setBookInstance(book);
+        };
+
+        if ((window as any).St?.PageFlip) {
+            doInit((window as any).St.PageFlip);
+        } else {
+            script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.js';
+            script.onload = () => {
+                if ((window as any).St?.PageFlip) {
+                    doInit((window as any).St.PageFlip);
+                } else {
+                    console.error("PageFlip script loaded but window.St.PageFlip is not available.");
+                }
+            };
+            script.onerror = () => console.error("Failed to load PageFlip script.");
+            document.head.appendChild(script);
+        }
+
+        return () => {
+            if (activeBook) {
+                activeBook.destroy();
+            }
+            if (script && script.parentNode) {
+                script.parentNode.removeChild(script);
+            }
+        };
+    }, [generatePageContent, pagesData]);
+
+    const handlePrevPage = () => bookInstance?.flipPrev();
+    
+    const handleNextPage = () => bookInstance?.flipNext();
+    
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const term = e.target.value;
+        setSearchTerm(term);
+        setShowSearchResults(!!term);
+
+        if (!term.trim()) {
+            setSearchResults([]);
+            return;
+        }
+
+        const results = pagesData
+            .map((p, index) => ({
+                name: p.name,
+                generation: (p as any).generation,
+                pageIndex: isMobileView ? (1 + index) : (2 + index * 2)
+            }))
+            .filter(item => item.name.toLowerCase().includes(term.toLowerCase()))
+            .slice(0, 5);
+
+        setSearchResults(results);
+    };
+
+    const handleSelectResult = (pageIndex: number) => {
+        bookInstance?.flip(pageIndex);
+        setShowSearchResults(false);
+        setSearchTerm('');
+    };
+
+    const handlePrintBook = () => {
+        const printCss = {
+            pageHeader: 'page-header',
+            generationTitle: 'generation-title',
+            generationNumber: 'generation-number',
+            branchName: 'branch-name',
+            mainCouple: 'main-couple',
+            fatherName: 'father-name',
+            lifeDates: 'life-dates',
+            motherInfo: 'mother-info',
+            pageContentBody: 'page-content-body',
+            sinhHaTitle: 'sinh-ha-title',
+            childrenGrid: 'children-grid',
+            childLine: 'child-line',
+            orderNo: 'order-no',
+            childName: 'child-name',
+        };
+
+        const printContent = pagesData.map((member, index) => {
+            const content = generatePageContent(member, printCss);
+            return `
+                <div class="print-page">
+                    <div class="page-number">Trang ${index + 1}</div>
+                    ${content}
+                </div>
+            `;
+        }).join('');
+
+        const coverPage = `
+            <div class="cover-page">
+                <div class="cover-border">
+                    <h1 class="cover-title">GIA PHẢ<br/>HỌ LÊ CÔNG</h1>
+                    <div class="cover-divider"></div>
+                    <p class="cover-text">Thôn Linh An, Tỉnh Quảng Trị</p>
+                    <p class="cover-year">Năm ${new Date().getFullYear()}</p>
+                </div>
+            </div>
+        `;
+
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>In Sổ Gia Phả</title>
+                    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;500;600;700&display=swap" rel="stylesheet">
+                    <link href="https://fonts.googleapis.com/css2?family=Times+New+Roman:wght@400;700&display=swap" rel="stylesheet">
+                    <style>
+                        @page { size: A4; margin: 0; }
+                        body { margin: 0; padding: 0; background-color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                        .cover-page { width: 210mm; height: 297mm; page-break-after: always; background-color: #5d4037; color: #d7ccc8; display: flex; justify-content: center; align-items: center; padding: 20mm; box-sizing: border-box; }
+                        .cover-border { border: 5px double #d7ccc8; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+                        .cover-title { font-family: 'Times New Roman', serif; font-size: 40pt; margin-bottom: 30px; font-weight: bold; }
+                        .cover-divider { width: 150px; height: 3px; background: #d7ccc8; margin: 30px auto; }
+                        .cover-text { font-size: 20pt; margin-top: 20px; font-family: 'Times New Roman', serif; }
+                        .cover-year { margin-top: auto; font-size: 16pt; font-family: 'Times New Roman', serif; }
+                        .print-page { width: 210mm; height: 297mm; page-break-after: always; position: relative; background-color: #fffef0; background-image: linear-gradient(rgba(139, 69, 19, 0.15) 1px, transparent 1px); background-size: 100% 25px; padding: 25mm 20mm; box-sizing: border-box; font-family: 'Dancing Script', cursive; color: #4b3621; }
+                        .page-header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid rgba(93, 64, 55, 0.3); padding-bottom: 15px; }
+                        .generation-title { color: #b71c1c; font-size: 24pt; font-weight: 700; margin-bottom: 5px; }
+                        .generation-number { font-family: 'Times New Roman', serif; font-size: 24pt; }
+                        .branch-name { display: block; font-size: 14pt; color: #e65100; font-weight: bold; margin-top: 5px; }
+                        .main-couple { margin-top: 15px; }
+                        .father-name { font-size: 26pt; font-weight: 700; border-bottom: 2px solid #b71c1c; display: inline-block; margin-bottom: 5px; }
+                        .life-dates { display: block; font-size: 12pt; color: #5d4037; margin-bottom: 5px; font-family: 'Times New Roman', serif; }
+                        .mother-info { font-size: 16pt; color: #3e2723; margin-top: 5px; }
+                        .page-content-body { margin-top: 30px; }
+                        .sinh-ha-title { text-align: center; font-size: 20pt; font-weight: bold; text-decoration: underline; margin-bottom: 15px; color: #3e2723; }
+                        .children-grid { padding-left: 10px; }
+                        .child-line { font-size: 15pt; line-height: 25px; display: flex; align-items: baseline; margin-bottom: 5px; }
+                        .order-no { font-family: 'Times New Roman', serif; font-weight: bold; margin-right: 10px; width: 25px; text-align: right; }
+                        .child-name { font-weight: 600; }
+                        .page-number { position: absolute; bottom: 15mm; right: 15mm; font-family: 'Times New Roman', serif; font-size: 11pt; color: #5d4037; }
+                    </style>
+                </head>
+                <body>${coverPage}${printContent}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => { printWindow.print(); printWindow.close(); }, 1000);
+        }
+    };
+
+    return (
+        <div className={styles.container} id="book-tab">
+            <div className={styles.controls}>
+                <div className={styles.searchWrapper}>
+                    <input 
+                        type="text" 
+                        className={styles.searchInput} 
+                        placeholder="🔍 Tìm tên..." 
+                        value={searchTerm}
+                        onChange={handleSearch}
+                        onFocus={() => setShowSearchResults(!!searchTerm)}
+                    />
+                    
+                    {showSearchResults && searchResults.length > 0 && (
+                        <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto transform -translate-x-1/4">
+                            {searchResults.map((res, idx) => (
+                                <div 
+                                    key={idx}
+                                    onClick={() => handleSelectResult(res.pageIndex)}
+                                    className="px-4 py-2 hover:bg-orange-50 cursor-pointer border-b border-gray-100 last:border-0 text-left"
+                                >
+                                    <div className="font-bold text-gray-800 text-sm">{res.name}</div>
+                                    <div className="text-xs text-gray-500">Đời {res.generation} • Trang {res.pageIndex + 1}</div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {showSearchResults && searchTerm && searchResults.length === 0 && (
+                        <div className="absolute top-full left-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-xl z-50 p-2 text-center text-xs text-gray-500">
+                            Không tìm thấy
+                        </div>
+                    )}
+                </div>
+
+                <button className={styles.btnControl} onClick={handlePrevPage} title="Trang trước" style={{ padding: '8px' }}>
+                    <IconChevronLeft />
+                </button>
+
+                <button className={styles.btnControl} onClick={handleNextPage} title="Trang sau" style={{ padding: '8px' }}>
+                    <IconChevronRight />
+                </button>
+                
+                {isAdmin &&
+                    <button 
+                        className={styles.btnControl} 
+                        style={{ color: '#c0392b' }} 
+                        title="In Sổ (PDF)"
+                        onClick={handlePrintBook}
+                    >
+                        <IconPrinter />
+                    </button>
+                }
+            </div>
+
+            <div className={styles.stage} id="so-gia-pha-content">
+                <div id="my-book" ref={bookContainer}>
+                     {/* Pages will be injected here */}
+                </div>
+            </div>
+            <p className={styles.helperText}>
+                <span className="inline-block mr-1"><IconHand /></span> Vuốt hoặc kéo góc giấy để lật trang
+            </p>
+        </div>
+    );
+};
+
+export default GenealogyBook;

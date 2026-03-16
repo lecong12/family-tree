@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AdminController } from './admin.controller';
+import { PersonModule } from './modules/person/person.module';
 
 @Module({
+  imports: [PersonModule], // Import PersonModule để AdminController có thể inject PersonService
   controllers: [AdminController],
-  providers: [], // Thêm AdminService vào đây nếu bạn tạo service để xử lý logic
+  providers: [],
 })
 export class AdminModule {}

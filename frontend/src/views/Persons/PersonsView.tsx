@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useCallback, useMemo, useEffect } from 'react';
+import axios from 'axios';
+import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
 import { Person } from 'src/services/personService';
 import { useAuth } from 'src/context/AuthContext';
@@ -19,6 +21,11 @@ import Pagination from './components/Pagination';
 import { FilterMode, PageSize, SortDirection, SortField } from './types';
 import { buildConnectedIds } from './utils';
 import FamilyTreeFlow from 'src/components/FamilyTree/FamilyTreeFlow';
+import StatsView from './components/StatsView'; // Import component thống kê mới
+import EventsView from './components/EventsView'; // Import component sự kiện mới
+import LineageView from './components/LineageView'; // Import component phả hệ mới
+import GenealogyBook from './components/GenealogyBook'; // Import component Sổ GP
+import { toast } from 'react-toastify';
 
 export default function PersonsView() {
     const router = useRouter();
@@ -49,7 +56,31 @@ export default function PersonsView() {
     const [filterMode, setFilterMode] = useState<FilterMode>('all');
     const [sortField, setSortField] = useState<SortField>('name');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
-    const [viewMode, setViewMode] = useState<'list' | 'tree'>('list');
+    
+    // Settings State with localStorage persistence
+    const [viewMode, setViewMode] = useState<'list' | 'tree' | 'stats' | 'events' | 'settings' | 'phah' | 'sogp'>(() => {
+        if (typeof window !== 'undefined') {
+            const savedView = localStorage.getItem('family-tree-viewMode');
+            // Ensure savedView is a valid view mode, otherwise default to 'list'
+            if (savedView && ['list', 'tree', 'stats', 'events', 'settings', 'phah', 'sogp'].includes(savedView)) {
+                return savedView as any;
+            }
+        }
+        // Default to 'list' if no valid saved view is found or on server-side
+        return 'list';
+    });
+    const [sortByNamePreference, setSortByNamePreference] = useState<'firstName' | 'lastName'>(() => {
+        if (typeof window !== 'undefined') {
+            return (localStorage.getItem('family-tree-sortByName') as any) || 'lastName';
+        }
+        return 'lastName';
+    });
+    const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+        if (typeof window !== 'undefined') {
+            return (localStorage.getItem('family-tree-theme') as any) || 'light';
+        }
+        return 'light';
+    });
 
     // Relationship index
     const connectedIds = useMemo(() => buildConnectedIds(spouses, parentChilds), [spouses, parentChilds]);
@@ -84,20 +115,51 @@ export default function PersonsView() {
         });
 
         return result.sort((a, b) => {
+            // --- CỐ ĐỊNH THỨ TỰ TÔN TI TRẬT TỰ (HIERARCHY) ---
+            // 1. Đời (Generation) - Luôn tăng dần
+            const genA = (a as any).generation || 999;
+            const genB = (b as any).generation || 999;
+            if (genA !== genB) return genA - genB;
+
+            // 2. Phái (Branch) - Luôn tăng dần
+            const branchA = (a as any).branch || '0';
+            const branchB = (b as any).branch || '0';
+            const branchComp = String(branchA).localeCompare(String(branchB), undefined, { numeric: true });
+            if (branchComp !== 0) return branchComp;
+
+            // 3. Thứ tự (Order) - Luôn tăng dần (Anh trước em, Bác trước Chú)
+            const orderA = (a as any).order ?? 999;
+            const orderB = (b as any).order ?? 999;
+            if (orderA !== orderB) return orderA - orderB;
+
+            // 4. Giới tính (Gender) - Nam trước Nữ (Chồng trước Vợ)
+            // Giả sử: 0 là Nam, 1 là Nữ. Nếu dữ liệu khác, cần điều chỉnh.
+            const genderA = (a as any).gender ?? 1;
+            const genderB = (b as any).gender ?? 1;
+            if (genderA !== genderB) return genderA - genderB;
+
+            // --- SẮP XẾP PHỤ (TIE-BREAKER) ---
+            // Chỉ chạy khi tất cả các yếu tố trên bằng nhau
             let res = 0;
             switch (sortField) {
                 case 'name': {
-                    const getName = (name: string) => {
+                    const getFirstName = (name: string) => {
                         const parts = name.trim().split(/\s+/);
-                        // Lấy tên cuối cùng, nếu không có thì lấy chuỗi trống
+                        return parts.length > 1 ? parts.slice(0, -1).join(' ') : '';
+                    };
+                    const getLastName = (name: string) => {
+                        const parts = name.trim().split(/\s+/);
                         return parts.length > 0 ? parts[parts.length - 1] : '';
                     };
-                    const nameA = getName(a.name);
-                    const nameB = getName(b.name);
-                    // Dùng localeCompare để sort tiếng Việt chuẩn
+
+                    const nameA = sortByNamePreference === 'lastName' ? getLastName(a.name) : getFirstName(a.name);
+                    const nameB = sortByNamePreference === 'lastName' ? getLastName(b.name) : getFirstName(b.name);
                     res = nameA.localeCompare(nameB, 'vi');
-                    // Nếu tên giống nhau thì so sánh full name
                     if (res === 0) res = a.name.localeCompare(b.name, 'vi');
+                    break;
+                }
+                case 'branch': {
+                    // Đã xử lý ở trên
                     break;
                 }
                 case 'birth': {
@@ -119,7 +181,27 @@ export default function PersonsView() {
             }
             return sortDirection === 'asc' ? res : -res;
         });
-    }, [persons, search, filterMode, connectedIds, sortField, sortDirection]);
+    }, [persons, search, filterMode, connectedIds, sortField, sortDirection, sortByNamePreference]);
+
+    // Effect to save settings to localStorage
+    useEffect(() => {
+        localStorage.setItem('family-tree-viewMode', viewMode);
+    }, [viewMode]);
+
+    useEffect(() => {
+        localStorage.setItem('family-tree-sortByName', sortByNamePreference);
+    }, [sortByNamePreference]);
+
+    useEffect(() => {
+        localStorage.setItem('family-tree-theme', theme);
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, [theme]);
+
+
 
     const isolatedCount = useMemo(() => persons.filter((p) => p._id && !connectedIds.has(p._id)).length, [persons, connectedIds]);
 
@@ -205,6 +287,51 @@ export default function PersonsView() {
     const handleCloseAddChildModal = useCallback(() => setAddChildModalOpen(false), []);
     const handleCloseAddPersonModal = useCallback(() => setAddPersonModalOpen(false), []);
 
+    const [isImporting, setIsImporting] = useState(false);
+    const handleImportCsv = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const confirmed = confirm(
+            'CẢNH BÁO: Hành động này sẽ XÓA TOÀN BỘ dữ liệu hiện tại và thay thế bằng dữ liệu từ file CSV. Bạn có chắc chắn muốn tiếp tục?',
+        );
+        if (!confirmed) {
+            event.target.value = ''; // Reset input để cho phép tải lại cùng một file
+            return;
+        }
+
+        setIsImporting(true);
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const token = Cookies.get('token'); // Lấy token từ cookie
+            if (!token) {
+                toast.error('Không tìm thấy token xác thực. Vui lòng đăng nhập lại.');
+                setIsImporting(false);
+                return;
+            }
+
+            const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+            await axios.post(`${apiUrl}/admin/import/csv`, formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data',
+                },
+            });
+            toast.success('Import thành công! Dữ liệu đang được làm mới...');
+            refetchAll(); // Tải lại toàn bộ dữ liệu để cập nhật giao diện
+        } catch (error: any) {
+            const errorMessage = error.response?.data?.message || 'Import thất bại. Vui lòng kiểm tra console.';
+            toast.error(errorMessage);
+            console.error('Import CSV failed:', error);
+        } finally {
+            setIsImporting(false);
+            // Reset the input value to allow re-uploading the same file
+            event.target.value = '';
+        }
+    };
+
     // Show loading state while checking auth
     if (authLoading) return <LoadingOverlay isLoading={true} />;
     
@@ -212,7 +339,7 @@ export default function PersonsView() {
     if (!user) return <LoadingOverlay isLoading={true} />;
 
     return (
-        <div className="w-screen h-screen flex flex-col bg-gray-50">
+        <div className="w-screen h-screen flex flex-col bg-bg-primary text-text-primary font-sans">
             <Header
                 isolatedCount={isolatedCount}
                 filterMode={filterMode}
@@ -226,11 +353,11 @@ export default function PersonsView() {
                 <Toolbar search={search} onSearchChange={handleSearch} pageSize={pageSize} onPageSizeChange={handlePageSizeChange} onAddPerson={() => setAddPersonModalOpen(true)} />
             )}
 
-            <LoadingOverlay isLoading={isLoading} />
+            <LoadingOverlay isLoading={isLoading || authLoading} />
 
-            <div className={`flex-1 overflow-auto bg-gray-50 ${viewMode === 'list' ? 'p-4' : ''}`}>
-                {viewMode === 'list' ? (
-                    <div className="max-w-[900px] mx-auto bg-white shadow-sm ring-1 ring-gray-900/5 rounded-xl overflow-hidden">
+            <div className={`flex-1 bg-bg-primary relative ${viewMode === 'tree' ? 'overflow-hidden' : 'overflow-auto'} ${viewMode === 'list' ? 'p-4' : ''}`}>
+                {viewMode === 'list' && (
+                    <div className="max-w-[900px] mx-auto bg-bg-secondary shadow-sm ring-1 ring-border-color rounded-xl overflow-hidden">
                         <PersonList
                             paginated={paginated}
                             connectedIds={connectedIds}
@@ -242,16 +369,142 @@ export default function PersonsView() {
                             onPersonClick={handlePersonClick}
                         />
                     </div>
-                ) : (
-                    <FamilyTreeFlow
+                )}
+
+                {viewMode === 'tree' && (
+                    <div className="w-full h-full relative isolate overflow-hidden">
+                        <FamilyTreeFlow
+                            persons={persons}
+                            spouses={spouses}
+                            parentChilds={parentChilds}
+                            searchRootPersonId={null} // TODO: Add UI to select root person
+                            searchGenerations={null} // TODO: Add UI to select generation depth
+                            onPersonNodeClick={handlePersonClick}
+                            onRelationshipNodeClick={handleRelationshipClick}
+                        />
+                    </div>
+                )}
+
+                {viewMode === 'phah' && (
+                    <div className="w-full h-full overflow-hidden">
+                        <LineageView
+                            persons={persons}
+                            spouses={spouses}
+                            parentChilds={parentChilds}
+                        />
+                    </div>
+                )}
+
+                {viewMode === 'sogp' && (
+                    <GenealogyBook
                         persons={persons}
                         spouses={spouses}
                         parentChilds={parentChilds}
-                        searchRootPersonId={null} // TODO: Add UI to select root person
-                        searchGenerations={null} // TODO: Add UI to select generation depth
-                        onPersonNodeClick={handlePersonClick}
-                        onRelationshipNodeClick={handleRelationshipClick}
+                        isAdmin={isAdmin || isEditor}
                     />
+                )}
+
+                {viewMode === 'stats' && <StatsView persons={persons} spouses={spouses} />}
+
+                {viewMode === 'events' && <EventsView persons={persons} spouses={spouses} />}
+
+                {viewMode === 'settings' && (
+                    <div className="p-4 md:p-8 bg-bg-primary min-h-full">
+                        <div className="max-w-2xl mx-auto bg-bg-secondary p-6 rounded-xl shadow-sm border border-border-color">
+                            <h2 className="text-xl font-bold text-text-primary mb-6">Cài đặt hiển thị</h2>
+                            <div className="space-y-6">
+                                {/* Sort by Name Preference */}
+                                <div>
+                                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                                        Sắp xếp danh sách thành viên theo
+                                    </label>
+                                    <div className="flex flex-col gap-3">
+                                        <div className="flex items-center gap-4 flex-wrap">
+                                        <div className="flex items-center">
+                                            <input
+                                                id="sort-lastname"
+                                                type="radio"
+                                                name="sortPreference"
+                                                value="lastName"
+                                                checked={sortByNamePreference === 'lastName'}
+                                                onChange={(e) => setSortByNamePreference(e.target.value as any)}
+                                                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                            />
+                                            <label htmlFor="sort-lastname" className="ml-2 block text-sm text-text-primary">Tên (ví dụ: An, Bình, Cúc)</label>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <input
+                                                id="sort-firstname"
+                                                type="radio"
+                                                name="sortPreference"
+                                                value="firstName"
+                                                checked={sortByNamePreference === 'firstName'}
+                                                onChange={(e) => setSortByNamePreference(e.target.value as any)}
+                                                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                            />
+                                            <label htmlFor="sort-firstname" className="ml-2 block text-sm text-text-primary">Họ và tên đệm (ví dụ: Lê Công, Nguyễn Thị)</label>
+                                        </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Theme Setting */}
+                                <div>
+                                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                                        Giao diện
+                                    </label>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex items-center">
+                                            <input
+                                                id="theme-light"
+                                                type="radio"
+                                                name="themePreference"
+                                                value="light"
+                                                checked={theme === 'light'}
+                                                onChange={(e) => setTheme(e.target.value as any)}
+                                                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                            />
+                                            <label htmlFor="theme-light" className="ml-2 block text-sm text-text-primary">Sáng</label>
+                                        </div>
+                                        <div className="flex items-center">
+                                            <input
+                                                id="theme-dark"
+                                                type="radio"
+                                                name="themePreference"
+                                                value="dark"
+                                                checked={theme === 'dark'}
+                                                onChange={(e) => setTheme(e.target.value as any)}
+                                                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                            />
+                                            <label htmlFor="theme-dark" className="ml-2 block text-sm text-text-primary">Tối</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Import CSV */}
+                                <div>
+                                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                                        Import Dữ liệu (Nâng cao)
+                                    </label>
+                                    <div className="p-4 border border-dashed border-red-400 rounded-lg bg-red-50">
+                                        <p className="text-sm text-red-700 mb-3">
+                                            <strong>Cảnh báo:</strong> Chức năng này sẽ xóa toàn bộ dữ liệu hiện có và thay thế bằng dữ liệu từ file CSV. Chỉ sử dụng khi bạn chắc chắn.
+                                        </p>
+                                        <label
+                                            htmlFor="csv-importer"
+                                            className={`inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 ${
+                                                isImporting ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+                                            }`}
+                                        >
+                                            {isImporting ? 'Đang xử lý...' : 'Chọn file CSV để Import'}
+                                        </label>
+                                        <input id="csv-importer" type="file" accept=".csv" className="hidden" onChange={handleImportCsv} disabled={isImporting} />
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
                 )}
             </div>
 
