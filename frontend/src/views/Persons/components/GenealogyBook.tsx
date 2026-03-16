@@ -34,7 +34,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [bookInstance, setBookInstance] = useState<any>(null); // Biến lưu instance của PageFlip
-    const [totalPages, setTotalPages] = useState(0);
     const [isMobileView, setIsMobileView] = useState(false);
     const [searchResults, setSearchResults] = useState<{ name: string; pageIndex: number; generation: number }[]>([]);
     const [showSearchResults, setShowSearchResults] = useState(false);
@@ -223,8 +222,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
             tempDiv.innerHTML = pagesHTML;
             book.loadFromHTML(tempDiv.querySelectorAll('.page-element'));
 
-            setTotalPages(book.getPageCount());
-
             book.on('flip', (e: any) => {
                 if (audioRef.current) {
                     audioRef.current.currentTime = 0; // Reset về đầu để lật liên tục nhanh hơn
@@ -269,14 +266,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     
     const handleNextPage = () => bookInstance?.flipNext();
     
-    const handleGotoPage = () => {
-        if (!bookInstance || !pageInputRef.current) return;
-        const pageNum = parseInt(pageInputRef.current.value);
-        if (pageNum >= 1 && pageNum <= totalPages) {
-            bookInstance.flip(pageNum - 1); // PageFlip dùng index 0
-        }
-    };
-
     // --- LOGIC TÌM KIẾM ---
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const term = e.target.value;
