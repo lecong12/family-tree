@@ -56,7 +56,7 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                         >
                             <div className="flex items-center justify-center gap-1">
                                 Phái
-                                {sortField === 'branch' && <span className="text-blue-600">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
+                                {(sortField as any) === 'branch' && <span className="text-blue-600">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
                             </div>
                         </th>
                         <th
