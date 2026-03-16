@@ -193,10 +193,15 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
             <main className="flex-1 flex flex-col min-w-0 bg-gray-50/50 h-full overflow-hidden">
                 <div className="flex-shrink-0 z-20 bg-gray-50/80 backdrop-blur-md border-b border-gray-200">
                     <div className="max-w-3xl mx-auto px-4 md:px-6 pt-4 md:pt-6 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="max-w-3xl mx-auto px-3 py-2 md:px-6 md:py-4 flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4">
                         <div>
                             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
                                 Đời thứ {selectedGeneration}
                                 <span className="text-sm font-normal text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full">
+                            <h2 className="text-lg md:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                                <span className="md:hidden">Đời {selectedGeneration}</span>
+                                <span className="hidden md:inline">Đời thứ {selectedGeneration}</span>
+                                <span className="text-xs md:text-sm font-normal text-gray-500 bg-gray-200 px-2 py-0.5 rounded-full whitespace-nowrap">
                                     {membersOfSelectedGeneration.length} thành viên
                                 </span>
                             </h2>

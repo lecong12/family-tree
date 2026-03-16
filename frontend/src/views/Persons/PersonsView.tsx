@@ -68,7 +68,7 @@ export default function PersonsView() {
         // Default to 'list' if no valid saved view is found or on server-side
         return 'list';
     });
-    const [sortByNamePreference, setSortByNamePreference] = useState<'firstName' | 'lastName' | 'generation' | 'branch'>(() => {
+    const [sortByNamePreference, setSortByNamePreference] = useState<'firstName' | 'lastName'>(() => {
         if (typeof window !== 'undefined') {
             return (localStorage.getItem('family-tree-sortByName') as any) || 'lastName';
         }
@@ -117,43 +117,25 @@ export default function PersonsView() {
             let res = 0;
             switch (sortField) {
                 case 'name': {
-                    if (sortByNamePreference === 'generation') {
-                        // Sắp xếp theo Đời
-                        const genA = (a as any).generation || 999;
-                        const genB = (b as any).generation || 999;
-                        res = genA - genB;
-                        // Nếu cùng đời thì sắp xếp theo Phái
-                        if (res === 0) {
-                            const branchA = (a as any).branch || '0';
-                            const branchB = (b as any).branch || '0';
-                            res = branchA.toString().localeCompare(branchB.toString(), undefined, { numeric: true });
-                        }
-                    } else if (sortByNamePreference === 'branch') {
-                        // Sắp xếp theo Phái
-                        const branchA = (a as any).branch || '0';
-                        const branchB = (b as any).branch || '0';
-                        res = branchA.toString().localeCompare(branchB.toString(), undefined, { numeric: true });
-                        // Nếu cùng phái thì sắp xếp theo Đời
-                        if (res === 0) {
-                            const genA = (a as any).generation || 999;
-                            const genB = (b as any).generation || 999;
-                            res = genA - genB;
-                        }
-                    } else {
-                        const getFirstName = (name: string) => {
-                            const parts = name.trim().split(/\s+/);
-                            return parts.length > 1 ? parts.slice(0, -1).join(' ') : '';
-                        };
-                        const getLastName = (name: string) => {
-                            const parts = name.trim().split(/\s+/);
-                            return parts.length > 0 ? parts[parts.length - 1] : '';
-                        };
+                    const getFirstName = (name: string) => {
+                        const parts = name.trim().split(/\s+/);
+                        return parts.length > 1 ? parts.slice(0, -1).join(' ') : '';
+                    };
+                    const getLastName = (name: string) => {
+                        const parts = name.trim().split(/\s+/);
+                        return parts.length > 0 ? parts[parts.length - 1] : '';
+                    };
 
-                        const nameA = sortByNamePreference === 'lastName' ? getLastName(a.name) : getFirstName(a.name);
-                        const nameB = sortByNamePreference === 'lastName' ? getLastName(b.name) : getFirstName(b.name);
-                        res = nameA.localeCompare(nameB, 'vi');
-                        if (res === 0) res = a.name.localeCompare(b.name, 'vi');
-                    }
+                    const nameA = sortByNamePreference === 'lastName' ? getLastName(a.name) : getFirstName(a.name);
+                    const nameB = sortByNamePreference === 'lastName' ? getLastName(b.name) : getFirstName(b.name);
+                    res = nameA.localeCompare(nameB, 'vi');
+                    if (res === 0) res = a.name.localeCompare(b.name, 'vi');
+                    break;
+                }
+                case 'branch' as any: {
+                    const branchA = (a as any).branch || '0';
+                    const branchB = (b as any).branch || '0';
+                    res = branchA.toString().localeCompare(branchB.toString(), undefined, { numeric: true });
                     break;
                 }
                 case 'birth': {
@@ -425,32 +407,6 @@ export default function PersonsView() {
                                             />
                                             <label htmlFor="sort-firstname" className="ml-2 block text-sm text-text-primary">Họ và tên đệm (ví dụ: Lê Công, Nguyễn Thị)</label>
                                         </div>
-                                        </div>
-                                        <div className="flex items-center gap-4 flex-wrap">
-                                            <div className="flex items-center">
-                                                <input
-                                                    id="sort-generation"
-                                                    type="radio"
-                                                    name="sortPreference"
-                                                    value="generation"
-                                                    checked={sortByNamePreference === 'generation'}
-                                                    onChange={(e) => setSortByNamePreference(e.target.value as any)}
-                                                    className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                                />
-                                                <label htmlFor="sort-generation" className="ml-2 block text-sm text-text-primary">Đời (Thế hệ)</label>
-                                            </div>
-                                            <div className="flex items-center">
-                                                <input
-                                                    id="sort-branch"
-                                                    type="radio"
-                                                    name="sortPreference"
-                                                    value="branch"
-                                                    checked={sortByNamePreference === 'branch'}
-                                                    onChange={(e) => setSortByNamePreference(e.target.value as any)}
-                                                    className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                                />
-                                                <label htmlFor="sort-branch" className="ml-2 block text-sm text-text-primary">Phái / Chi</label>
-                                            </div>
                                         </div>
                                     </div>
                                 </div>
