@@ -332,7 +332,7 @@ export default function PersonsView() {
 
             <LoadingOverlay isLoading={isLoading || authLoading} />
 
-            <div className={`flex-1 overflow-auto bg-bg-primary relative ${viewMode === 'list' ? 'p-4' : ''}`}>
+            <div className={`flex-1 bg-bg-primary relative ${viewMode === 'tree' ? 'overflow-hidden' : 'overflow-auto'} ${viewMode === 'list' ? 'p-4' : ''}`}>
                 {viewMode === 'list' && (
                     <div className="max-w-[900px] mx-auto bg-bg-secondary shadow-sm ring-1 ring-border-color rounded-xl overflow-hidden">
                         <PersonList
@@ -349,15 +349,17 @@ export default function PersonsView() {
                 )}
 
                 {viewMode === 'tree' && (
-                    <FamilyTreeFlow
-                        persons={persons}
-                        spouses={spouses}
-                        parentChilds={parentChilds}
-                        searchRootPersonId={null} // TODO: Add UI to select root person
-                        searchGenerations={null} // TODO: Add UI to select generation depth
-                        onPersonNodeClick={handlePersonClick}
-                        onRelationshipNodeClick={handleRelationshipClick}
-                    />
+                    <div className="w-full h-full">
+                        <FamilyTreeFlow
+                            persons={persons}
+                            spouses={spouses}
+                            parentChilds={parentChilds}
+                            searchRootPersonId={null} // TODO: Add UI to select root person
+                            searchGenerations={null} // TODO: Add UI to select generation depth
+                            onPersonNodeClick={handlePersonClick}
+                            onRelationshipNodeClick={handleRelationshipClick}
+                        />
+                    </div>
                 )}
 
                 {viewMode === 'phah' && (

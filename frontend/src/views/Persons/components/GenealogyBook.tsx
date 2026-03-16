@@ -42,7 +42,50 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     
     const bookContainer = useRef<HTMLDivElement>(null);
     const pageInputRef = useRef<HTMLInputElement>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
+    // --- TỐI ƯU HÓA DỮ LIỆU (INDEXING) ---
+    // Thay vì dùng .filter() và .find() trong vòng lặp (gây chậm), ta tạo Map để tra cứu tức thì (O(1))
+    
+    // 1. Map: ID người -> Thông tin người (Tra cứu nhanh tên, ngày sinh...)
+    const personsMap = useMemo(() => {
+        return new Map(persons.map(p => [p._id, p]));
+    }, [persons]);
+
+    // 2. Map: ID Chồng -> Danh sách các Vợ (Spouse objects)
+    const spousesByHusband = useMemo(() => {
+        const map = new Map<string, (Spouse | SpouseWithDetails)[]>();
+        spouses.forEach(s => {
+            const hId = typeof s.husband === 'string' ? s.husband : (s.husband as any)?._id;
+            if (hId) {
+                if (!map.has(hId)) map.set(hId, []);
+                map.get(hId)?.push(s);
+            }
+        });
+        return map;
+    }, [spouses]);
+
+    // 3. Map: ID Mối quan hệ vợ chồng (SpouseID) -> Danh sách ID con cái
+    const childrenBySpouseId = useMemo(() => {
+        const map = new Map<string, string[]>();
+        parentChilds.forEach(pc => {
+            const parentRelId = typeof pc.parent === 'string' ? pc.parent : (pc.parent as any)?._id; // Đây là ID của Spouse record
+            const childId = typeof pc.child === 'string' ? pc.child : (pc.child as any)?._id;
+            if (parentRelId && childId) {
+                if (!map.has(parentRelId)) map.set(parentRelId, []);
+                map.get(parentRelId)?.push(childId);
+            }
+        });
+        return map;
+    }, [parentChilds]);
+
+    // Khởi tạo âm thanh 1 lần duy nhất
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            audioRef.current = new Audio('/sounds/page-flip.mp3');
+            audioRef.current.volume = 0.4;
+        }
+    }, []);
 
     const pagesData = useMemo(() => {
         // 1. Lọc ra Nam giới để làm chủ trang (theo truyền thống Gia phả)
@@ -77,17 +120,15 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
         const lifeStr = birth ? `(${birth} - ${death})` : '';
         
         // --- TÌM VỢ VÀ CON ---
-        const mySpouses = spouses.filter(s => {
-            const hId = typeof s.husband === 'string' ? s.husband : (s.husband as any)?._id;
-            return hId === pId;
-        });
+        // Dùng Map đã index để lấy ngay lập tức, không cần filter lại toàn bộ mảng
+        const mySpouses = pId ? (spousesByHusband.get(pId) || []) : [];
 
         // Tạo thông tin Vợ (Mẹ của các con)
         let motherInfoHtml = '';
         if (mySpouses.length > 0) {
             const wives = mySpouses.map(s => {
                 const wId = typeof s.wife === 'string' ? s.wife : (s.wife as any)?._id;
-                return persons.find(p => p._id === wId);
+                return wId ? personsMap.get(wId) : undefined;
             }).filter(Boolean);
             
             motherInfoHtml = wives.map(w => `Bà <strong>${w?.name}</strong>`).join(', ');
@@ -99,13 +140,10 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
         // Tìm tất cả con (gộp từ các đời vợ)
         let allChildren: Person[] = [];
         mySpouses.forEach(s => {
-            const children = parentChilds.filter(pc => {
-                const parentId = typeof pc.parent === 'string' ? pc.parent : (pc.parent as any)?._id;
-                return parentId === s._id;
-            }).map(pc => {
-                const cId = typeof pc.child === 'string' ? pc.child : (pc.child as any)?._id;
-                return persons.find(p => p._id === cId);
-            }).filter(Boolean) as Person[];
+            const childIds = s._id ? (childrenBySpouseId.get(s._id) || []) : [];
+            const children = childIds
+                .map(cId => personsMap.get(cId))
+                .filter(Boolean) as Person[];
             allChildren = [...allChildren, ...children];
         });
         // Sắp xếp con theo thứ tự
@@ -146,7 +184,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 </div>
             </div>
         `;
-    }, [persons, spouses, parentChilds]);
+    }, [personsMap, spousesByHusband, childrenBySpouseId]); // Dependencies thay đổi sang Maps
 
     useEffect(() => {
         let activeBook: any = null;
@@ -190,9 +228,10 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
             setTotalPages(book.getPageCount());
 
             book.on('flip', (e: any) => {
-                const audio = new Audio('/sounds/page-flip.mp3');
-                audio.volume = 0.4;
-                audio.play().catch(() => {});
+                if (audioRef.current) {
+                    audioRef.current.currentTime = 0; // Reset về đầu để lật liên tục nhanh hơn
+                    audioRef.current.play().catch(() => {});
+                }
                 setCurrentPage(e.data + 1);
             });
 

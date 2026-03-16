@@ -13,7 +13,7 @@
 
 /* Style cho từng trang sách của PageFlip */
 .page {
-    background-color: #f4ecd8; /* Màu nền giấy ngả vàng (Sepia) */
+    background-color: #fffef0; /* Màu nền giấy sáng hơn (Cream) */
     overflow: hidden;
     box-shadow: inset 0 0 30px rgba(0,0,0,0.05); /* Bóng đổ nhẹ bên trong */
     width: 100%;
@@ -97,10 +97,10 @@
     margin: 0;
     padding: 30px;
     overflow-y: auto;
-    background-color: #f4ecd8;
-    background-image: linear-gradient(90deg, rgba(139, 69, 19, 0.15) 1px, transparent 1px), linear-gradient(rgba(139, 69, 19, 0.15) 1px, transparent 1px);
-    background-size: 25px 25px; /* Ô ly */
-    box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.1);
+    background-color: #fffef0;
+    background-image: linear-gradient(rgba(139, 69, 19, 0.15) 1px, transparent 1px); /* Chỉ còn dòng kẻ ngang */
+    background-size: 100% 25px; /* Dòng kẻ ngang */
+    box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.05); /* Giảm độ tối viền để trông mới hơn */
     border: 1px solid #d2b48c;
     font-family: 'Dancing Script', cursive;
     color: #4b3621;
