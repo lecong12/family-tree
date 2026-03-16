@@ -210,57 +210,103 @@ const StatsView: React.FC<StatsViewProps> = ({ persons, spouses }) => {
     }
 
     return (
-        <div className="p-4 md:p-8 bg-gray-50 min-h-full">
-            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ theo Giới tính</h3>
-                    <div className="w-full max-w-xs mx-auto">
-                        <Doughnut data={genderData} />
+        <div className="p-4 md:p-8 min-h-full bg-slate-50/50">
+            <div className="max-w-7xl mx-auto space-y-8">
+                {/* Header Section */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-800">Thống kê Gia tộc</h2>
+                        <p className="text-gray-500 text-sm mt-1">Tổng quan dữ liệu về thành viên và các mối quan hệ</p>
+                    </div>
+                    <div className="bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200 text-sm font-medium text-gray-600">
+                        Tổng số: <span className="text-blue-600 font-bold text-lg ml-1">{persons.length}</span> thành viên
                     </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ theo Tình trạng</h3>
-                    <div className="w-full max-w-xs mx-auto">
-                        <Doughnut data={livingStatusData} />
+                {/* Dashboard Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                    
+                    {/* 1. Giới tính - Doughnut */}
+                    <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 xl:col-span-1">
+                        <div className="px-5 py-4 border-b border-gray-50 flex items-center gap-3 bg-gradient-to-r from-blue-50/50 to-white">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm">👥</div>
+                            <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Giới tính</h3>
+                        </div>
+                        <div className="p-6 flex justify-center">
+                            <div className="w-48">
+                                <Doughnut data={genderData} options={{ plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } } } }} />
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Số lượng Vợ (Nam giới)</h3>
-                    <div className="w-full h-64 mx-auto">
-                        <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={spouseCountData} />
+                    {/* 2. Tình trạng - Doughnut */}
+                    <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 xl:col-span-1">
+                        <div className="px-5 py-4 border-b border-gray-50 flex items-center gap-3 bg-gradient-to-r from-green-50/50 to-white">
+                            <div className="w-8 h-8 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-sm">❤️</div>
+                            <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Tình trạng</h3>
+                        </div>
+                        <div className="p-6 flex justify-center">
+                             <div className="w-48">
+                                <Doughnut data={livingStatusData} options={{ plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8 } } } }} />
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ sinh nhật (Tháng)</h3>
-                    <div className="w-full h-64 mx-auto">
-                        <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={birthMonthData} />
+                    {/* 3. Số lượng Vợ (Nam giới) - Bar (Vertical) */}
+                    <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 xl:col-span-1">
+                        <div className="px-5 py-4 border-b border-gray-50 flex items-center gap-3 bg-gradient-to-r from-purple-50/50 to-white">
+                            <div className="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center text-sm">💍</div>
+                            <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Hôn phối (Nam)</h3>
+                        </div>
+                        <div className="p-4 h-64">
+                            <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={spouseCountData} />
+                        </div>
                     </div>
-                </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 lg:col-span-2">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ theo Phái/Chi</h3>
-                    <div className="w-full h-80 mx-auto">
-                        <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={branchData} />
+                     {/* 4. Độ tuổi - Bar (Vertical) */}
+                     <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 xl:col-span-1">
+                        <div className="px-5 py-4 border-b border-gray-50 flex items-center gap-3 bg-gradient-to-r from-orange-50/50 to-white">
+                            <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-sm">🎂</div>
+                            <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Độ tuổi</h3>
+                        </div>
+                        <div className="p-4 h-64">
+                            <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: false } } }} data={ageDistributionData} />
+                        </div>
                     </div>
-                </div>
+                    
+                    {/* 5. Phân bổ theo Phái/Chi */}
+                    <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 xl:col-span-2">
+                        <div className="px-5 py-4 border-b border-gray-50 flex items-center gap-3 bg-gradient-to-r from-yellow-50/50 to-white">
+                            <div className="w-8 h-8 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-sm">🌿</div>
+                            <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Phân bổ theo Phái / Chi</h3>
+                        </div>
+                        <div className="p-5 h-80">
+                            <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={branchData} />
+                        </div>
+                    </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 lg:col-span-2">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ theo Độ tuổi</h3>
-                    <div className="w-full h-80 mx-auto">
-                        <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false, }, title: { display: true, text: 'Số lượng thành viên trong các nhóm tuổi', }, }, }} data={ageDistributionData} />
+                    {/* 6. Phân bổ sinh nhật (Tháng) */}
+                    <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 xl:col-span-2">
+                        <div className="px-5 py-4 border-b border-gray-50 flex items-center gap-3 bg-gradient-to-r from-cyan-50/50 to-white">
+                            <div className="w-8 h-8 rounded-full bg-cyan-100 text-cyan-600 flex items-center justify-center text-sm">📅</div>
+                            <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Sinh nhật theo Tháng</h3>
+                        </div>
+                         <div className="p-5 h-80">
+                            <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={birthMonthData} />
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <div className="max-w-7xl mx-auto mt-8">
-                <div className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">Phân bổ theo Thế hệ (Đời)</h3>
-                    <div className="w-full h-80 mx-auto">
-                        <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={generationData} />
+                    {/* 7. Phân bổ theo Thế hệ (Đời) - Full width */}
+                    <div className="bg-white rounded-xl shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)] border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 xl:col-span-4">
+                        <div className="px-5 py-4 border-b border-gray-50 flex items-center gap-3 bg-gradient-to-r from-indigo-50/50 to-white">
+                            <div className="w-8 h-8 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">🌳</div>
+                            <h3 className="font-bold text-gray-700 text-sm uppercase tracking-wide">Thành viên qua các Thế hệ</h3>
+                        </div>
+                         <div className="p-5 h-96">
+                            <Bar options={{ responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }} data={generationData} />
+                        </div>
                     </div>
+
                 </div>
             </div>
         </div>
