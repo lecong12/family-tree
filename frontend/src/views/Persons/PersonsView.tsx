@@ -24,6 +24,7 @@ import FamilyTreeFlow from 'src/components/FamilyTree/FamilyTreeFlow';
 import StatsView from './components/StatsView'; // Import component thống kê mới
 import EventsView from './components/EventsView'; // Import component sự kiện mới
 import LineageView from './components/LineageView'; // Import component phả hệ mới
+import GenealogyBook from './components/GenealogyBook'; // Import component Sổ GP
 import { toast } from 'react-toastify';
 
 export default function PersonsView() {
@@ -364,6 +365,15 @@ export default function PersonsView() {
                         persons={persons}
                         spouses={spouses}
                         parentChilds={parentChilds}
+                    />
+                )}
+
+                {viewMode === 'sogp' && (
+                    <GenealogyBook
+                        persons={persons}
+                        spouses={spouses}
+                        parentChilds={parentChilds}
+                        isAdmin={isAdmin || isEditor}
                     />
                 )}
 

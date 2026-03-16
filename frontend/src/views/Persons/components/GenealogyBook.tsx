@@ -41,7 +41,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
 
     const generatePageContent = useCallback((father: Person) => {
         // Thay thế bằng logic tạo nội dung trang sách thực tế
-        return `<div className="text-center">Content for ${father.name}</div>`;
+        return `<div class="text-center">Content for ${father.name}</div>`;
     }, [allMembers]);
 
     useEffect(() => {
@@ -93,9 +93,9 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 let pagesHTML = '';
                 // --- TRANG BÌA ---
                 pagesHTML += `
-                    <div className="page" data-density="hard">
-                        <div className="page-content cover-page">
-                            <div className="cover-border">
+                    <div class="page" data-density="hard">
+                        <div class="page-content cover-page">
+                            <div class="cover-border">
                                 <h1 style="font-family: 'Times New Roman', serif; font-size: 40pt; margin-bottom: 30px; text-shadow: 1px 1px 2px #000;">GIA PHẢ<br/>HỌ LÊ CÔNG</h1>
                                 <div style="width: 150px; height: 3px; background: #d7ccc8; margin: 30px auto;"></div>
                                 <p style="font-size: 20pt; margin-top: 20px; font-family: 'Times New Roman', serif;">Thôn Linh An, Tỉnh Quảng Trị</p>
@@ -108,8 +108,8 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 // --- MẶT SAU CỦA BÌA (Trang lót - Trống) ---
                 if (!isMobile) {
                     pagesHTML += `
-                        <div className="page" data-density="hard">
-                            <div className="page-content cover-page" style="background-color: #5d4037; border-left: 1px solid #3e2723;"></div>
+                        <div class="page" data-density="hard">
+                            <div class="page-content cover-page" style="background-color: #5d4037; border-left: 1px solid #3e2723;"></div>
                         </div>
                     `;
                 }
@@ -119,8 +119,8 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                     const content = generatePageContent(member);
                     // 1. Trang nội dung (Mặt phải)
                     pagesHTML += `
-                        <div className="page">
-                            <div className="page-content notebook-page">
+                        <div class="page">
+                            <div class="page-content notebook-page">
                                 <div style="position:absolute; top:15px; right:20px; font-size:12px; color:#8d6e63; font-family:serif; font-style:italic;">Trang ${index + 1}/${pagesData.length}</div>
                                 ${content}
                             </div>
@@ -130,8 +130,8 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                     // 2. Trang trắng (Mặt trái - Mặt sau của tờ giấy)
                     if (!isMobile) {
                         pagesHTML += `
-                            <div className="page">
-                                <div className="page-content" style="background-color: #fff8e1; height: 100%; opacity: 0.6; box-shadow: inset -5px 0 20px rgba(0,0,0,0.05);">
+                            <div class="page">
+                                <div class="page-content" style="background-color: #fff8e1; height: 100%; opacity: 0.6; box-shadow: inset -5px 0 20px rgba(0,0,0,0.05);">
                                     {/* Có thể thêm họa tiết mờ hoặc để trống hoàn toàn */}
                                 </div>
                             </div>
@@ -141,8 +141,8 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
 
                 // --- TRANG BÌA SAU ---
                 pagesHTML += `
-                    <div className="page" data-density="hard">
-                        <div className="page-content cover-page" style="background-color:#5d4037;"></div>
+                    <div class="page" data-density="hard">
+                        <div class="page-content cover-page" style="background-color:#5d4037;"></div>
                     </div>
                 `;
 
@@ -195,31 +195,3 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
 };
 
 export default GenealogyBook;
-
-
-interface BookMember {
-    id: number;
-    name: string;
-    generation: number;
-    branch: number;
-}
-
-let allMembers: BookMember[] = [
-    {
-        id: 1,
-        name: "Nguyễn Văn A",
-        generation: 1,
-        branch: 1
-    }
-]
-
-
-function printGenealogyBook() {
-    // Placeholder function
-    alert("Print function is not implemented yet.");
-}
-
-function showToast(message: string) {
-    // Placeholder function
-    alert(message)
-}
