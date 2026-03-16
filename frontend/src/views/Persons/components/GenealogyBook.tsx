@@ -14,6 +14,23 @@ interface GenealogyBookProps {
     isAdmin: boolean;
 }
 
+// --- Icons (SVG) ---
+const IconChevronLeft = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/></svg>;
+const IconChevronRight = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>;
+const IconEnter = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path fillRule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8z"/></svg>;
+const IconPrinter = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M19 8h-1V3H6v5H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zM8 5h8v3H8V5zm8 12v2H8v-4h8v2zm2-2v-2H6v2H4v-4c0-.55.45-1 1-1h14c.55 0 1 .45 1 1v4h-2z"/>
+        <circle cx="18" cy="11.5" r="1"/>
+    </svg>
+);
+const IconHand = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 11.5a.5.5 0 0 0 .5-.5V6h.5a.5.5 0 0 0 .5-.5v-1a.5.5 0 0 0-.5-.5h-1v-1a.5.5 0 0 0-1 0v1h-1v1a.5.5 0 0 0 .5.5h.5v5a.5.5 0 0 0 .5.5z"/>
+        <path d="M4 11a4 4 0 1 1 8 0v1a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-1z"/>
+    </svg>
+);
+
 const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentChilds, isAdmin }) => {
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
@@ -385,8 +402,8 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                     )}
                 </div>
 
-                <button className={styles.btnControl} onClick={handlePrevPage} title="Trang trước">
-                    <i className="fas fa-chevron-left"></i>
+                <button className={styles.btnControl} onClick={handlePrevPage} title="Trang trước" style={{ padding: '8px' }}>
+                    <IconChevronLeft />
                 </button>
 
                  {/* Pagination Input (Phân trang) */}
@@ -408,12 +425,12 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                         style={{ width: 'auto', padding: '0 8px', height: '28px', minWidth: 'auto' }} 
                         title="Đi đến trang"
                     >
-                        <i className="fas fa-level-down-alt" style={{ transform: 'rotate(90deg)' }}></i>
+                        <IconEnter />
                     </button>
                 </div>
 
-                <button className={styles.btnControl} onClick={handleNextPage} title="Trang sau">
-                    <i className="fas fa-chevron-right"></i>
+                <button className={styles.btnControl} onClick={handleNextPage} title="Trang sau" style={{ padding: '8px' }}>
+                    <IconChevronRight />
                 </button>
                 
                 {isAdmin &&
@@ -423,7 +440,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                         title="In Sổ (PDF)"
                         onClick={handlePrintBook}
                     >
-                        <i className="fas fa-print"></i>
+                        <IconPrinter />
                     </button>
                 }
             </div>
@@ -434,7 +451,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 </div>
             </div>
             <p className={styles.helperText}>
-                <i className="fas fa-hand-pointer"></i> Vuốt hoặc kéo góc giấy để lật trang
+                <span className="inline-block mr-1"><IconHand /></span> Vuốt hoặc kéo góc giấy để lật trang
             </p>
         </div>
  );
