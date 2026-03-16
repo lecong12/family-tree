@@ -1,0 +1,207 @@
+/* ===== GENEALOGY BOOK STYLES ===== */
+.container {
+    padding: 20px;
+    background-color: #fff9c4; /* Nền vàng nhạt để làm nổi bật cuốn sổ */
+    border-radius: 16px;
+    min-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Style cho từng trang sách của PageFlip */
+.page {
+    background-color: #f4ecd8; /* Màu nền giấy ngả vàng (Sepia) */
+    overflow: hidden;
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.05); /* Bóng đổ nhẹ bên trong */
+    width: 100%;
+    height: 100%;
+}
+
+.pageContent {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+/* COVER PAGE */
+.coverPage {
+    background-color: #5d4037;
+    color: #d7ccc8;
+    border: 2px solid #3e2723;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.coverBorder {
+    border: 3px double #d7ccc8;
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.coverTitle {
+    font-family: 'Times New Roman', serif;
+    font-size: 40pt;
+    margin-bottom: 30px;
+    text-shadow: 1px 1px 2px #000;
+    line-height: 1.2;
+    font-weight: bold;
+}
+
+.coverDivider {
+    width: 150px;
+    height: 3px;
+    background: #d7ccc8;
+    margin: 30px auto;
+}
+
+.coverText {
+    font-size: 20pt;
+    margin-top: 20px;
+    font-family: 'Times New Roman', serif;
+}
+
+.coverYear {
+    margin-top: auto;
+    font-size: 16pt;
+    font-family: 'Times New Roman', serif;
+}
+
+/* NOTEBOOK PAGE (Nội dung bên trong) */
+.notebookPage {
+    background-image: linear-gradient(#e1dccd 1px, transparent 1px);
+    background-size: 100% 1.5em; /* Dòng kẻ ngang */
+    line-height: 1.5em;
+    padding: 20px;
+    padding-top: 3em;
+    color: #4e342e;
+    font-family: 'Times New Roman', serif;
+}
+
+.pageNumber {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 12px;
+    color: #8d6e63;
+    font-family: serif;
+    font-style: italic;
+}
+
+.emptyBackPage {
+    background-color: #fff8e1;
+    height: 100%;
+    opacity: 0.6;
+    box-shadow: inset -5px 0 20px rgba(0,0,0,0.05);
+}
+
+/* CONTROLS (Thanh điều khiển) */
+.controls {
+    text-align: center;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    background: white;
+    padding: 8px 15px;
+    border-radius: 30px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+
+.btnControl {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    min-width: 32px;
+    flex: 0 0 auto;
+    border: 1px solid #ddd;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+    transition: all 0.2s;
+}
+
+.btnControl:hover {
+    background: #f0f0f0;
+    color: #333;
+    border-color: #bbb;
+}
+
+.searchWrapper {
+    position: relative;
+    margin-right: 2px;
+}
+
+.searchInput {
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    width: 140px;
+    font-size: 13px;
+    outline: none;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: white;
+    padding: 2px 8px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.pageInput {
+    width: 45px;
+    text-align: center;
+    padding: 4px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.stage {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    padding-bottom: 20px;
+    width: 100%;
+}
+
+.helperText {
+    text-align: center;
+    font-size: 12px;
+    color: #888;
+    margin-top: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    .coverTitle {
+        font-size: 24pt;
+    }
+    .coverText {
+        font-size: 14pt;
+    }
+}
