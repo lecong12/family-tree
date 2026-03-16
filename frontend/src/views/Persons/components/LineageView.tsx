@@ -190,9 +190,9 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
             </aside>
 
              {/* Nội dung chính */}
-            <main className="flex-1 overflow-y-auto bg-gray-50/50">
-                <div className="max-w-3xl mx-auto">
-                    <div className="sticky top-0 z-20 bg-gray-50/50 px-4 md:px-6 pt-4 md:pt-6 pb-4 mb-2 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <main className="flex-1 flex flex-col min-w-0 bg-gray-50/50 h-full overflow-hidden">
+                <div className="flex-shrink-0 z-20 bg-gray-50/80 backdrop-blur-md border-b border-gray-200">
+                    <div className="max-w-3xl mx-auto px-4 md:px-6 pt-4 md:pt-6 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
                                 Đời thứ {selectedGeneration}
@@ -217,7 +217,7 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
 
                             {/* Dropdown kết quả tìm kiếm */}
                             {searchTerm.length > 0 && (
-                                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-100 max-h-80 overflow-y-auto">
+                                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border border-gray-100 max-h-80 overflow-y-auto z-50">
                                     {filteredResults.length > 0 ? (
                                         filteredResults.map(p => (
                                             <div key={p._id} onClick={() => handleSelectResult(p)} className="p-2 hover:bg-red-50 cursor-pointer border-b border-gray-50 last:border-0 flex items-center gap-3 transition-colors">
@@ -237,8 +237,10 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
                             )}
                         </div>
                     </div>
-                    
-                    <div className="flex flex-col gap-4 px-4 md:px-6 pb-4 md:pb-6">
+                </div>
+
+                <div className="flex-1 overflow-y-auto">
+                    <div className="max-w-3xl mx-auto flex flex-col gap-4 px-4 md:px-6 py-4 md:py-6">
                         {membersOfSelectedGeneration.length > 0 ? (
                             membersOfSelectedGeneration.map(member => (
                                 <LineageMemberCard 
