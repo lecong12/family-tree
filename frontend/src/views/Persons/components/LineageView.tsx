@@ -137,10 +137,10 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
                 // "Nhảy ngay đến": dùng 'auto' thay vì 'smooth' để cuộn tức thì
                 element.scrollIntoView({ behavior: 'auto', block: 'center' });
 
-                // "Nháy lên 1 tí": bỏ highlight sau 2 giây để tạo hiệu ứng tạm thời
-                setTimeout(() => {
-                    setHighlightedId(null);
-                }, 2000);
+                // Hiệu ứng nhấp nháy 2 lần (Bật -> Tắt -> Bật -> Tắt)
+                setTimeout(() => setHighlightedId(null), 500);  // Tắt lần 1
+                setTimeout(() => setHighlightedId(person._id || null), 1000); // Bật lần 2
+                setTimeout(() => setHighlightedId(null), 2000); // Tắt hẳn
             }
         }, 300);
     };

@@ -115,6 +115,31 @@ export default function PersonsView() {
         });
 
         return result.sort((a, b) => {
+            // --- CỐ ĐỊNH THỨ TỰ TÔN TI TRẬT TỰ (HIERARCHY) ---
+            // 1. Đời (Generation) - Luôn tăng dần
+            const genA = (a as any).generation || 999;
+            const genB = (b as any).generation || 999;
+            if (genA !== genB) return genA - genB;
+
+            // 2. Phái (Branch) - Luôn tăng dần
+            const branchA = (a as any).branch || '0';
+            const branchB = (b as any).branch || '0';
+            const branchComp = String(branchA).localeCompare(String(branchB), undefined, { numeric: true });
+            if (branchComp !== 0) return branchComp;
+
+            // 3. Thứ tự (Order) - Luôn tăng dần (Anh trước em, Bác trước Chú)
+            const orderA = (a as any).order ?? 999;
+            const orderB = (b as any).order ?? 999;
+            if (orderA !== orderB) return orderA - orderB;
+
+            // 4. Giới tính (Gender) - Nam trước Nữ (Chồng trước Vợ)
+            // Giả sử: 0 là Nam, 1 là Nữ. Nếu dữ liệu khác, cần điều chỉnh.
+            const genderA = (a as any).gender ?? 1;
+            const genderB = (b as any).gender ?? 1;
+            if (genderA !== genderB) return genderA - genderB;
+
+            // --- SẮP XẾP PHỤ (TIE-BREAKER) ---
+            // Chỉ chạy khi tất cả các yếu tố trên bằng nhau
             let res = 0;
             switch (sortField) {
                 case 'name': {
@@ -134,9 +159,7 @@ export default function PersonsView() {
                     break;
                 }
                 case 'branch': {
-                    const branchA = (a as any).branch || '0';
-                    const branchB = (b as any).branch || '0';
-                    res = branchA.toString().localeCompare(branchB.toString(), undefined, { numeric: true });
+                    // Đã xử lý ở trên
                     break;
                 }
                 case 'birth': {
