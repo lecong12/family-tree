@@ -372,7 +372,7 @@ export default function PersonsView() {
                 )}
 
                 {viewMode === 'tree' && (
-                    <div className="w-full h-full">
+                    <div className="w-full h-full relative isolate overflow-hidden">
                         <FamilyTreeFlow
                             persons={persons}
                             spouses={spouses}
