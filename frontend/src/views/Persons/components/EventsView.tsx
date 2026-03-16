@@ -82,7 +82,7 @@ const EventsView: React.FC<EventsViewProps> = ({ persons, spouses }) => {
     }
 
     return (
-        <div className="p-4 md:p-8 bg-gray-50 min-h-full">
+        <div className="p-4 md:p-8 bg-gray-100 dark:bg-gray-900 min-h-full">
             <div className="max-w-3xl mx-auto">
                 <h2 className="text-3xl font-bold text-center text-gray-800 mb-10 tracking-tight">Dòng thời gian Sự kiện Gia tộc</h2>
                 <div className="relative border-l-4 border-blue-100 ml-5 space-y-8 pb-10">

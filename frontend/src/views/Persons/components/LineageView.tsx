@@ -155,7 +155,7 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
     }
 
     return (
-        <div className="flex h-full bg-gray-50">
+        <div className="flex h-full bg-gray-100 dark:bg-gray-900">
              {/* Sidebar chọn Đời - Styled theo phong cách dọc đơn giản */}
             <aside className="w-16 md:w-48 flex-shrink-0 border-r border-gray-200 bg-white overflow-y-auto flex flex-col items-center py-4 gap-3 select-none transition-all duration-300">
                 <h3 className="text-[10px] md:text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 text-center w-full">
@@ -190,8 +190,8 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
             </aside>
 
              {/* Nội dung chính */}
-            <main className="flex-1 flex flex-col min-w-0 bg-gray-50/50 h-full overflow-hidden">
-                <div className="flex-shrink-0 z-20 bg-gray-50/80 backdrop-blur-md border-b border-gray-200">
+            <main className="flex-1 flex flex-col min-w-0 bg-gray-100 dark:bg-gray-900 h-full overflow-hidden">
+                <div className="flex-shrink-0 z-20 bg-gray-100/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200">
                     <div className="max-w-3xl mx-auto px-3 py-2 md:px-6 md:py-4 flex flex-col md:flex-row md:items-center justify-between gap-2 md:gap-4">
                         <div>
                             <h2 className="text-lg md:text-2xl font-bold text-gray-800 flex items-center gap-2">

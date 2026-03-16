@@ -210,7 +210,7 @@ const StatsView: React.FC<StatsViewProps> = ({ persons, spouses }) => {
     }
 
     return (
-        <div className="p-4 md:p-8 min-h-full bg-slate-50/50">
+        <div className="p-4 md:p-8 min-h-full bg-gray-100 dark:bg-gray-900">
             <div className="max-w-7xl mx-auto space-y-8">
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
