@@ -132,7 +132,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                         pagesHTML += `
                             <div class="page">
                                 <div class="page-content" style="background-color: #fff8e1; height: 100%; opacity: 0.6; box-shadow: inset -5px 0 20px rgba(0,0,0,0.05);">
-                                    {/* Có thể thêm họa tiết mờ hoặc để trống hoàn toàn */}
+                                <!-- Có thể thêm họa tiết mờ hoặc để trống hoàn toàn -->
                                 </div>
                             </div>
                         `;
