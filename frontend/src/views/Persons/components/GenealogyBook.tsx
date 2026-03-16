@@ -162,8 +162,15 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
 
 
     useEffect(() => {
+        let activeBook: any = null;
+
         if (isBookLoaded && bookContainer.current) {
             const initializeBook = () => {
+                // QUAN TRỌNG: Xóa nội dung cũ trong container trước khi tạo sách mới
+                if (bookContainer.current) {
+                    bookContainer.current.innerHTML = '';
+                }
+
                 const isMobile = window.innerWidth < 768;
                 const width = isMobile ? Math.min(window.innerWidth - 20, 400) : 450;
                 const height = isMobile ? Math.min(window.innerHeight - 200, 600) : 650;
@@ -244,13 +251,18 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 book.loadFromHTML(tempDiv.querySelectorAll(`.${styles.page}`));
 
                 setBookInstance(book);
+                activeBook = book;
             };
-
-
-
 
             initializeBook();
         }
+
+        // Cleanup function: Hủy instance khi component unmount hoặc re-render
+        return () => {
+            if (activeBook) {
+                activeBook.destroy();
+            }
+        };
     }, [isBookLoaded, generatePageContent, pagesData]);
 
     return (
