@@ -164,7 +164,10 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     useEffect(() => {
         let activeBook: any = null;
 
-        if (isBookLoaded && bookContainer.current) {
+        // Kiểm tra St.PageFlip có tồn tại không trước khi chạy
+        const PageFlip = (window as any).St?.PageFlip;
+
+        if (isBookLoaded && bookContainer.current && PageFlip) {
             const initializeBook = () => {
                 // QUAN TRỌNG: Xóa nội dung cũ trong container trước khi tạo sách mới
                 if (bookContainer.current) {
@@ -175,7 +178,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 const width = isMobile ? Math.min(window.innerWidth - 20, 400) : 450;
                 const height = isMobile ? Math.min(window.innerHeight - 200, 600) : 650;
 
-                const book = new (window as any).St.PageFlip(bookContainer.current, {
+                const book = new PageFlip(bookContainer.current, {
                     width: width,
                     height: height,
                     size: isMobile ? "stretch" : "fixed",
@@ -192,7 +195,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 let pagesHTML = '';
                 // --- TRANG BÌA ---
                 pagesHTML += `
-                    <div class="${styles.page} ${styles.pageRight}" data-density="hard">
+                    <div class="${styles.page} ${styles.pageRight} page-element" data-density="hard">
                         <div class="${styles.pageContent} ${styles.coverPage}">
                             <div class="${styles.coverBorder}">
                                 <h1 class="${styles.coverTitle}">GIA PHẢ<br/>HỌ LÊ CÔNG</h1>
@@ -207,7 +210,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 // --- MẶT SAU CỦA BÌA (Trang lót - Trống) ---
                 if (!isMobile) {
                     pagesHTML += `
-                        <div class="${styles.page} ${styles.pageLeft}" data-density="hard">
+                        <div class="${styles.page} ${styles.pageLeft} page-element" data-density="hard">
                             <div class="${styles.pageContent} ${styles.coverPage}" style="border-left: 1px solid #3e2723;"></div>
                         </div>
                     `;
@@ -218,7 +221,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                     const content = generatePageContent(member);
                     // 1. Trang nội dung (Luôn nằm bên Phải - Recto)
                     pagesHTML += `
-                        <div class="${styles.page} ${styles.pageRight}">
+                        <div class="${styles.page} ${styles.pageRight} page-element">
                             <div class="${styles.pageContent} ${styles.notebookPage}">
                                 <div class="${styles.pageNumber}">Trang ${index + 1}/${pagesData.length}</div>
                                 ${content}
@@ -229,7 +232,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                     // 2. Trang trắng (Mặt trái - Verso - Mặt sau của tờ giấy)
                     if (!isMobile) {
                         pagesHTML += `
-                            <div class="${styles.page} ${styles.pageLeft}">
+                            <div class="${styles.page} ${styles.pageLeft} page-element">
                                 <div class="${styles.pageContent} ${styles.emptyBackPage}">
                                 <!-- Có thể thêm họa tiết mờ hoặc để trống hoàn toàn -->
                                 </div>
@@ -240,7 +243,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
 
                 // --- TRANG BÌA SAU ---
                 pagesHTML += `
-                    <div class="${styles.page} ${styles.pageLeft}" data-density="hard">
+                    <div class="${styles.page} ${styles.pageLeft} page-element" data-density="hard">
                         <div class="${styles.pageContent} ${styles.coverPage}"></div>
                     </div>
                 `;
@@ -248,7 +251,16 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 // Chuyển đổi chuỗi HTML thành NodeList vì loadFromHTML yêu cầu Node, không phải string
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = pagesHTML;
-                book.loadFromHTML(tempDiv.querySelectorAll(`.${styles.page}`));
+                // Sửa: Dùng class tĩnh 'page-element' để query chắc chắn tìm thấy
+                book.loadFromHTML(tempDiv.querySelectorAll('.page-element'));
+
+                // Thêm hiệu ứng âm thanh khi lật trang
+                book.on('flip', () => {
+                    // Đảm bảo bạn đã có file này trong thư mục public/sounds/
+                    const audio = new Audio('/sounds/page-flip.mp3');
+                    audio.volume = 0.4; // Điều chỉnh âm lượng vừa phải
+                    audio.play().catch(() => {}); // Bỏ qua lỗi nếu trình duyệt chưa cho phép autoplay
+                });
 
                 setBookInstance(book);
                 activeBook = book;
