@@ -15,7 +15,6 @@ interface GenealogyBookProps {
 }
 
 const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentChilds, isAdmin }) => {
-    const [isBookLoaded, setIsBookLoaded] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState('');
     const [bookInstance, setBookInstance] = useState<any>(null); // Biến lưu instance của PageFlip
@@ -26,16 +25,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     
     const bookContainer = useRef<HTMLDivElement>(null);
     const pageInputRef = useRef<HTMLInputElement>(null);
-
-    // Biến lưu trữ toàn bộ thành viên (để tìm kiếm)
-    const [allMembers, setAllMembers] = useState<any[]>([]);
-
-    useEffect(() => {
-        // Khi dữ liệu persons thay đổi, cập nhật allMembers
-        // Ép kiểu dữ liệu từ persons sang BookMember
-        const bookMembers = persons.map(p => ({ id: (p as any)._id, full_name: p.name, generation: (p as any).generation, branch: (p as any).branch }));
-        setAllMembers(bookMembers);
-    }, [persons]);
 
 
     const pagesData = useMemo(() => {
@@ -143,88 +132,22 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     }, [persons, spouses, parentChilds]);
 
     useEffect(() => {
-        async function loadAndInitBook() {
-            //Load PageFlip library
-            const loadScript = (src: string) => {
-                return new Promise<void>((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.src = src;
-                    script.onload = () => resolve();
-                    script.onerror = () => reject();
-                    document.head.appendChild(script);
-                });
-            };
-
-            try {
-                await loadScript('https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.js');
-
-                setIsBookLoaded(true);
-            } catch (error) {
-                console.error("Failed to load PageFlip", error);
-            }
-        }
-        loadAndInitBook();
-    }, []);
-
-
-    useEffect(() => {
         let activeBook: any = null;
         let script: HTMLScriptElement | null = null;
 
-        // Kiểm tra St.PageFlip có tồn tại không trước khi chạy
-        const PageFlip = (window as any).St?.PageFlip;
         const doInit = (PageFlip: any) => {
             if (!bookContainer.current) return;
 
-        if (isBookLoaded && bookContainer.current && PageFlip) {
-            const initializeBook = () => {
-                // QUAN TRỌNG: Xóa nội dung cũ trong container trước khi tạo sách mới
-                if (bookContainer.current) {
-                    bookContainer.current.innerHTML = '';
-                }
             // QUAN TRỌNG: Xóa nội dung cũ trong container trước khi tạo sách mới
             bookContainer.current.innerHTML = '';
 
-                const isMobile = window.innerWidth < 768;
-                setIsMobileView(isMobile); // Lưu lại chế độ view để dùng cho logic tính trang
-                const width = isMobile ? Math.min(window.innerWidth - 20, 400) : 450;
-                const height = isMobile ? Math.min(window.innerHeight - 200, 600) : 650;
             const isMobile = window.innerWidth < 768;
             setIsMobileView(isMobile);
             const width = isMobile ? Math.min(window.innerWidth - 20, 400) : 450;
             const height = isMobile ? Math.min(window.innerHeight - 200, 600) : 650;
 
-                const book = new PageFlip(bookContainer.current, {
-                    width: width,
-                    height: height,
-                    size: isMobile ? "stretch" : "fixed",
-                    minWidth: 300,
-                    maxWidth: 600,
-                    minHeight: 400,
-                    maxHeight: 800,
-                    maxShadowOpacity: 0.5,
-                    showCover: true,
-                    mobileScrollSupport: true,
-                    startPage: 0
-                });
             const book = new PageFlip(bookContainer.current, { width, height, size: isMobile ? "stretch" : "fixed", minWidth: 300, maxWidth: 600, minHeight: 400, maxHeight: 800, maxShadowOpacity: 0.5, showCover: true, mobileScrollSupport: true, startPage: 0 });
 
-                let pagesHTML = '';
-                // --- TRANG BÌA ---
-                pagesHTML += `
-                    <div class="${styles.page} ${styles.pageRight} page-element" data-density="hard">
-                        <div class="${styles.pageContent} ${styles.coverPage}">
-                            <div class="${styles.coverBorder}">
-                                <h1 class="${styles.coverTitle}">GIA PHẢ<br/>HỌ LÊ CÔNG</h1>
-                                <div class="${styles.coverDivider}"></div>
-                                <p class="${styles.coverText}">Thôn Linh An, Tỉnh Quảng Trị</p>
-                                <p class="${styles.coverYear}">Năm ${new Date().getFullYear()}</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                // --- MẶT SAU CỦA BÌA (Trang lót - Trống) ---
             let pagesHTML = '';
             // Bìa trước
             pagesHTML += `<div class="${styles.page} ${styles.pageRight} page-element" data-density="hard"><div class="${styles.pageContent} ${styles.coverPage}"><div class="${styles.coverBorder}"><h1 class="${styles.coverTitle}">GIA PHẢ<br/>HỌ LÊ CÔNG</h1><div class="${styles.coverDivider}"></div><p class="${styles.coverText}">Thôn Linh An, Tỉnh Quảng Trị</p><p class="${styles.coverYear}">Năm ${new Date().getFullYear()}</p></div></div></div>`;
@@ -237,52 +160,18 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 const content = generatePageContent(member);
                 pagesHTML += `<div class="${styles.page} ${styles.pageRight} page-element"><div class="${styles.pageContent} ${styles.notebookPage}"><div class="${styles.pageNumber}">Trang ${index + 1}/${pagesData.length}</div>${content}</div></div>`;
                 if (!isMobile) {
-                    pagesHTML += `
-                        <div class="${styles.page} ${styles.pageLeft} page-element" data-density="hard">
-                            <div class="${styles.pageContent} ${styles.coverPage}" style="border-left: 1px solid #3e2723;"></div>
-                        </div>
-                    `;
                     pagesHTML += `<div class="${styles.page} ${styles.pageLeft} page-element"><div class="${styles.pageContent} ${styles.emptyBackPage}"><!-- Back page --></div></div>`;
                 }
             });
             // Bìa sau
             pagesHTML += `<div class="${styles.page} ${styles.pageLeft} page-element" data-density="hard"><div class="${styles.pageContent} ${styles.coverPage}"></div></div>`;
 
-                // --- CÁC TRANG NỘI DUNG ---
-                pagesData.forEach((member, index) => {
-                    const content = generatePageContent(member);
-                    // 1. Trang nội dung (Luôn nằm bên Phải - Recto)
-                    pagesHTML += `
-                        <div class="${styles.page} ${styles.pageRight} page-element">
-                            <div class="${styles.pageContent} ${styles.notebookPage}">
-                                <div class="${styles.pageNumber}">Trang ${index + 1}/${pagesData.length}</div>
-                                ${content}
-                            </div>
-                        </div>
-                    `;
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = pagesHTML;
             book.loadFromHTML(tempDiv.querySelectorAll('.page-element'));
 
-                    // 2. Trang trắng (Mặt trái - Verso - Mặt sau của tờ giấy)
-                    if (!isMobile) {
-                        pagesHTML += `
-                            <div class="${styles.page} ${styles.pageLeft} page-element">
-                                <div class="${styles.pageContent} ${styles.emptyBackPage}">
-                                <!-- Có thể thêm họa tiết mờ hoặc để trống hoàn toàn -->
-                                </div>
-                            </div>
-                        `;
-                    }
-                });
             setTotalPages(book.getPageCount());
 
-                // --- TRANG BÌA SAU ---
-                pagesHTML += `
-                    <div class="${styles.page} ${styles.pageLeft} page-element" data-density="hard">
-                        <div class="${styles.pageContent} ${styles.coverPage}"></div>
-                    </div>
-                `;
             book.on('flip', (e: any) => {
                 const audio = new Audio('/sounds/page-flip.mp3');
                 audio.volume = 0.4;
@@ -290,30 +179,10 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 setCurrentPage(e.data + 1);
             });
 
-                // Chuyển đổi chuỗi HTML thành NodeList vì loadFromHTML yêu cầu Node, không phải string
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = pagesHTML;
-                // Sửa: Dùng class tĩnh 'page-element' để query chắc chắn tìm thấy
-                book.loadFromHTML(tempDiv.querySelectorAll('.page-element'));
             activeBook = book;
             setBookInstance(book);
         };
 
-                // Cập nhật tổng số trang sau khi load
-                setTotalPages(book.getPageCount());
-
-                // Sự kiện lật trang: Âm thanh + Cập nhật state trang hiện tại
-                book.on('flip', (e: any) => {
-                    // Đảm bảo bạn đã có file này trong thư mục public/sounds/
-                    const audio = new Audio('/sounds/page-flip.mp3');
-                    audio.volume = 0.4; // Điều chỉnh âm lượng vừa phải
-                    audio.play().catch(() => {}); // Bỏ qua lỗi nếu trình duyệt chưa cho phép autoplay
-                    
-                    setCurrentPage(e.data + 1); // e.data là index 0-based
-                });
-
-                setBookInstance(book);
-                activeBook = book;
         if ((window as any).St?.PageFlip) {
             doInit((window as any).St.PageFlip);
         } else {
@@ -326,8 +195,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                     console.error("PageFlip script loaded but window.St.PageFlip is not available.");
                 }
             };
-
-            initializeBook();
             script.onerror = () => console.error("Failed to load PageFlip script.");
             document.head.appendChild(script);
         }
@@ -341,7 +208,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 script.parentNode.removeChild(script);
             }
         };
-    }, [isBookLoaded, generatePageContent, pagesData]);
     }, [generatePageContent, pagesData]);
 
     // --- HANDLERS CHO CÁC NÚT ĐIỀU KHIỂN ---
