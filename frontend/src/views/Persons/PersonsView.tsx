@@ -132,7 +132,7 @@ export default function PersonsView() {
                     if (res === 0) res = a.name.localeCompare(b.name, 'vi');
                     break;
                 }
-                case 'branch' as any: {
+                case 'branch': {
                     const branchA = (a as any).branch || '0';
                     const branchB = (b as any).branch || '0';
                     res = branchA.toString().localeCompare(branchB.toString(), undefined, { numeric: true });

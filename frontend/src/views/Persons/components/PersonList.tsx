@@ -52,11 +52,11 @@ export default function PersonList({ paginated, connectedIds, currentPage, pageS
                         <th 
                             scope="col" 
                             className="px-3 py-3 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider w-24 cursor-pointer hover:text-blue-600 hover:bg-gray-200/60 transition-colors"
-                            onClick={() => onSort('branch' as any)}
+                            onClick={() => onSort('branch')}
                         >
                             <div className="flex items-center justify-center gap-1">
                                 Phái
-                                {(sortField as any) === 'branch' && <span className="text-blue-600">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
+                                {sortField === 'branch' && <span className="text-blue-600">{sortDirection === 'asc' ? '↑' : '↓'}</span>}
                             </div>
                         </th>
                         <th
