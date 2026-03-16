@@ -146,7 +146,10 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                     </div>
                 `;
 
-                book.loadFromHTML(pagesHTML);
+                // Chuyển đổi chuỗi HTML thành NodeList vì loadFromHTML yêu cầu Node, không phải string
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = pagesHTML;
+                book.loadFromHTML(tempDiv.querySelectorAll('.page'));
 
                 setBookInstance(book);
             };
