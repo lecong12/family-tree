@@ -2,7 +2,7 @@ import UserMenu from 'src/components/UserMenu/UserMenu';
 import { FilterMode } from '../types';
 import { useAuth } from 'src/context/AuthContext';
 
-type ViewMode = 'list' | 'tree' | 'stats' | 'events' | 'settings' | 'phah';
+type ViewMode = 'list' | 'tree' | 'stats' | 'events' | 'settings' | 'phah' | 'sogp';
 
 interface HeaderProps {
     isolatedCount: number;
