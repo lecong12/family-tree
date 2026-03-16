@@ -130,11 +130,17 @@ const LineageView: React.FC<LineageViewProps> = ({ persons, spouses, parentChild
         setHighlightedId(person._id || null);
         setSearchTerm('');
         
-        // Đợi DOM render xong rồi scroll tới
+        // Đợi DOM render xong rồi scroll tới và highlight
         setTimeout(() => {
             const element = document.getElementById(`card-${person._id}`);
             if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                // "Nhảy ngay đến": dùng 'auto' thay vì 'smooth' để cuộn tức thì
+                element.scrollIntoView({ behavior: 'auto', block: 'center' });
+
+                // "Nháy lên 1 tí": bỏ highlight sau 2 giây để tạo hiệu ứng tạm thời
+                setTimeout(() => {
+                    setHighlightedId(null);
+                }, 2000);
             }
         }, 300);
     };
