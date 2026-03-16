@@ -20,7 +20,8 @@ interface LineageMemberCardProps {
 
 const COLORS = {
     headerBg: '#8b1c1c', // Đỏ đô
-    subLabel: '#f1b400', // Vàng nhãn (Vợ/Con)
+    subLabelSpouse: '#ec4899', // Hồng nhạt (Vợ/Chồng)
+    subLabelChild: '#f1b400', // Vàng nhãn (Con)
     textGray: '#666666',
     borderLight: '#e5e7eb'
 };
@@ -31,13 +32,11 @@ const getId = (p: string | { _id?: string } | undefined | null): string => {
     return p._id || '';
 };
 
-const getAge = (birth: Date | string | undefined, death: Date | string | undefined, isDead: boolean) => {
-    if (!birth) return 0;
+const getBirthDisplay = (birth: Date | string | undefined) => {
+    if (!birth) return '';
     const b = new Date(birth);
-    if (isNaN(b.getTime())) return 0;
-    const end = isDead && death ? new Date(death) : new Date();
-    const age = end.getFullYear() - b.getFullYear();
-    return age > 0 ? age : 0;
+    if (isNaN(b.getTime())) return '';
+    return `SN: ${b.getFullYear()}`;
 };
 
 const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPersons, allSpouses, allParentChilds, isHighlighted, id, onShowDetail }) => {
@@ -77,7 +76,7 @@ const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPerson
     };
 
     const avatarSrc = person.avatar?.trim() ? person.avatar : isMale(person.gender) ? Avatar_Male : Avatar_Female;
-    const age = getAge(person.birth, person.death, person.isDead === true);
+    const birthDisplay = getBirthDisplay(person.birth);
 
     return (
         <div 
@@ -100,7 +99,7 @@ const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPerson
                         </h3>
                         <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs opacity-90">
                             <span>{isMale(person.gender) ? 'Nam' : 'Nữ'}</span>
-                            <span>{age} Tuổi</span>
+                            {birthDisplay && <span>{birthDisplay}</span>}
                             <span 
                                 className="hover:underline hover:text-yellow-300 cursor-pointer font-semibold transition-colors"
                                 onClick={(e) => { e.stopPropagation(); onShowDetail?.(person); }}
@@ -126,6 +125,7 @@ const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPerson
                     {/* Hàng của Vợ/Chồng */}
                     {spouses.map((spouse) => {
                          const sStats = getStats(spouse._id!);
+                         const sBirthDisplay = getBirthDisplay(spouse.birth);
                          return (
                             <div key={spouse._id} className="flex items-center gap-3 p-3 border-b border-gray-100 bg-white mx-1 my-1 rounded-sm shadow-sm">
                                 <div className="relative flex-shrink-0">
@@ -137,14 +137,14 @@ const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPerson
                                             className="object-cover w-full h-full"
                                         />
                                     </div>
-                                    <span style={{ backgroundColor: COLORS.subLabel }} className="absolute -bottom-1 left-0 right-0 text-[9px] text-white text-center font-bold rounded shadow-sm">
+                                    <span style={{ backgroundColor: COLORS.subLabelSpouse }} className="absolute -bottom-1 left-0 right-0 text-[9px] text-white text-center font-bold rounded shadow-sm">
                                         {isMale(spouse.gender) ? 'CHỒNG' : 'VỢ'}
                                     </span>
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <h4 className="font-bold text-gray-800 uppercase truncate text-sm">● {spouse.name}</h4>
                                     <p className="text-xs text-yellow-600 mt-0.5">
-                                        {isMale(spouse.gender) ? 'Nam' : 'Nữ'} · {getAge(spouse.birth, spouse.death, spouse.isDead === true)} Tuổi
+                                        {isMale(spouse.gender) ? 'Nam' : 'Nữ'}{sBirthDisplay ? ` · ${sBirthDisplay}` : ''}
                                     </p>
                                 </div>
                                 <div 
@@ -161,6 +161,7 @@ const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPerson
                     {children.map((child, idx) => {
                         const cStats = getStats(child._id!);
                         const isSon = isMale(child.gender);
+                        const cBirthDisplay = getBirthDisplay(child.birth);
                         return (
                             <div key={child._id} className="flex items-center gap-3 p-3 ml-6 border-l-2 border-dashed border-gray-300 relative">
                                 {/* Connecting line visual */}
@@ -175,14 +176,14 @@ const LineageMemberCard: React.FC<LineageMemberCardProps> = ({ person, allPerson
                                             className="object-cover w-full h-full"
                                         />
                                     </div>
-                                    <span style={{ backgroundColor: COLORS.subLabel }} className="absolute -bottom-1 left-0 right-0 text-[9px] text-white text-center font-bold rounded shadow-sm uppercase">
+                                    <span style={{ backgroundColor: COLORS.subLabelChild }} className="absolute -bottom-1 left-0 right-0 text-[9px] text-white text-center font-bold rounded shadow-sm uppercase">
                                         CON {idx + 1}
                                     </span>
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <h4 className="font-bold text-gray-800 uppercase truncate text-sm">● {child.name}</h4>
                                     <p className={`text-xs mt-0.5 ${isSon ? 'text-red-700 font-medium' : 'text-yellow-600'}`}>
-                                        {isSon ? 'Nam' : 'Nữ'} · {getAge(child.birth, child.death, child.isDead === true)} Tuổi
+                                        {isSon ? 'Nam' : 'Nữ'}{cBirthDisplay ? ` · ${cBirthDisplay}` : ''}
                                     </p>
                                 </div>
                                 <div 

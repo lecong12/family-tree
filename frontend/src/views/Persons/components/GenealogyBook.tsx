@@ -4,8 +4,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Person } from 'src/services/personService';
 import { Spouse, SpouseWithDetails } from 'src/services/spouseService';
 import styles from './GenealogyBook.module.css'; // Import styles
-import { isMale } from 'src/utils/genderUtils'; // Giả sử bạn có utils này, nếu không thì dùng logic check 0/1
-
+import { isMale } from 'src/utils/genderUtils';
 
 interface GenealogyBookProps {
     persons: Person[];
@@ -42,14 +41,10 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     // --- TỐI ƯU HÓA DỮ LIỆU (INDEXING) ---
-    // Thay vì dùng .filter() và .find() trong vòng lặp (gây chậm), ta tạo Map để tra cứu tức thì (O(1))
-    
-    // 1. Map: ID người -> Thông tin người (Tra cứu nhanh tên, ngày sinh...)
     const personsMap = useMemo(() => {
         return new Map(persons.map(p => [p._id, p]));
     }, [persons]);
 
-    // 2. Map: ID Chồng -> Danh sách các Vợ (Spouse objects)
     const spousesByHusband = useMemo(() => {
         const map = new Map<string, (Spouse | SpouseWithDetails)[]>();
         spouses.forEach(s => {
@@ -62,11 +57,10 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
         return map;
     }, [spouses]);
 
-    // 3. Map: ID Mối quan hệ vợ chồng (SpouseID) -> Danh sách ID con cái
     const childrenBySpouseId = useMemo(() => {
         const map = new Map<string, string[]>();
         parentChilds.forEach(pc => {
-            const parentRelId = typeof pc.parent === 'string' ? pc.parent : (pc.parent as any)?._id; // Đây là ID của Spouse record
+            const parentRelId = typeof pc.parent === 'string' ? pc.parent : (pc.parent as any)?._id; 
             const childId = typeof pc.child === 'string' ? pc.child : (pc.child as any)?._id;
             if (parentRelId && childId) {
                 if (!map.has(parentRelId)) map.set(parentRelId, []);
@@ -76,7 +70,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
         return map;
     }, [parentChilds]);
 
-    // Khởi tạo âm thanh 1 lần duy nhất
     useEffect(() => {
         if (typeof window !== 'undefined') {
             audioRef.current = new Audio('/sounds/page-flip.mp3');
@@ -85,14 +78,10 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     }, []);
 
     const pagesData = useMemo(() => {
-        // 1. Lọc ra Nam giới để làm chủ trang (theo truyền thống Gia phả)
-        // Bạn có thể bỏ filter này nếu muốn in cả Nữ giới ra trang riêng
         const males = persons.filter(p => {
-            // Kiểm tra giới tính: 0 hoặc 'MALE' là Nam
             return p.gender === 0 || p.gender === 'MALE' || (p as any).gender === '0';
         });
 
-        // 2. Sắp xếp: Đời (Tăng dần) -> Phái (Tăng dần) -> Con thứ (Tăng dần)
         return males.sort((a, b) => {
             const genA = (a as any).generation || 999;
             const genB = (b as any).generation || 999;
@@ -116,11 +105,8 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
         const death = person.isDead ? (formatDate(person.death) || '...') : 'Nay';
         const lifeStr = birth ? `(${birth} - ${death})` : '';
         
-        // --- TÌM VỢ VÀ CON ---
-        // Dùng Map đã index để lấy ngay lập tức, không cần filter lại toàn bộ mảng
         const mySpouses = pId ? (spousesByHusband.get(pId) || []) : [];
 
-        // Tạo thông tin Vợ (Mẹ của các con)
         let motherInfoHtml = '';
         if (mySpouses.length > 0) {
             const wives = mySpouses.map(s => {
@@ -134,7 +120,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
             motherInfoHtml = '(Chưa cập nhật thông tin vợ)';
         }
 
-        // Tìm tất cả con (gộp từ các đời vợ)
         let allChildren: Person[] = [];
         mySpouses.forEach(s => {
             const childIds = s._id ? (childrenBySpouseId.get(s._id) || []) : [];
@@ -143,10 +128,8 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 .filter(Boolean) as Person[];
             allChildren = [...allChildren, ...children];
         });
-        // Sắp xếp con theo thứ tự
         allChildren.sort((a, b) => ((a as any).order || 0) - ((b as any).order || 0));
 
-        // Tạo HTML danh sách con
         const childrenHtml = allChildren.length > 0 
             ? allChildren.map((c, idx) => {
                 const cBirth = formatDate(c.birth);
@@ -181,7 +164,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 </div>
             </div>
         `;
-    }, [personsMap, spousesByHusband, childrenBySpouseId]); // Dependencies thay đổi sang Maps
+    }, [personsMap, spousesByHusband, childrenBySpouseId]);
 
     useEffect(() => {
         let activeBook: any = null;
@@ -190,7 +173,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
         const doInit = (PageFlip: any) => {
             if (!bookContainer.current) return;
 
-            // QUAN TRỌNG: Xóa nội dung cũ trong container trước khi tạo sách mới
             bookContainer.current.innerHTML = '';
 
             const isMobile = window.innerWidth < 768;
@@ -224,10 +206,18 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
 
             book.on('flip', (e: any) => {
                 if (audioRef.current) {
-                    audioRef.current.currentTime = 0; // Reset về đầu để lật liên tục nhanh hơn
+                    audioRef.current.currentTime = 0;
                     audioRef.current.play().catch(() => {});
                 }
-                setCurrentPage(e.data + 1);
+                
+                let newPage = 0;
+                if (isMobile) {
+                    newPage = e.data;
+                } else {
+                    if (e.data === 0) newPage = 0;
+                    else newPage = Math.floor((e.data + 1) / 2);
+                }
+                setCurrentPage(newPage);
             });
 
             activeBook = book;
@@ -250,7 +240,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
             document.head.appendChild(script);
         }
 
-        // Cleanup function: Hủy instance khi component unmount hoặc re-render
         return () => {
             if (activeBook) {
                 activeBook.destroy();
@@ -261,12 +250,10 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
         };
     }, [generatePageContent, pagesData]);
 
-    // --- HANDLERS CHO CÁC NÚT ĐIỀU KHIỂN ---
     const handlePrevPage = () => bookInstance?.flipPrev();
     
     const handleNextPage = () => bookInstance?.flipNext();
     
-    // --- LOGIC TÌM KIẾM ---
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const term = e.target.value;
         setSearchTerm(term);
@@ -277,18 +264,14 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
             return;
         }
 
-        // Lọc trong pagesData
         const results = pagesData
             .map((p, index) => ({
                 name: p.name,
                 generation: (p as any).generation,
-                // Tính toán vị trí trang trong sách:
-                // Mobile: 1 trang bìa + index
-                // Desktop: 2 trang (Bìa + Lót) + (index * 2) (vì mỗi người 2 trang: nội dung + mặt sau)
                 pageIndex: isMobileView ? (1 + index) : (2 + index * 2)
             }))
             .filter(item => item.name.toLowerCase().includes(term.toLowerCase()))
-            .slice(0, 5); // Lấy tối đa 5 kết quả
+            .slice(0, 5);
 
         setSearchResults(results);
     };
@@ -299,9 +282,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
         setSearchTerm('');
     };
 
-    // --- LOGIC IN ẤN ---
     const handlePrintBook = () => {
-        // 1. Định nghĩa map CSS class cho bản in (không dùng hash của module)
         const printCss = {
             pageHeader: 'page-header',
             generationTitle: 'generation-title',
@@ -319,7 +300,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
             childName: 'child-name',
         };
 
-        // 2. Tạo nội dung HTML cho từng trang
         const printContent = pagesData.map((member, index) => {
             const content = generatePageContent(member, printCss);
             return `
@@ -330,7 +310,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
             `;
         }).join('');
 
-        // 3. Tạo trang Bìa
         const coverPage = `
             <div class="cover-page">
                 <div class="cover-border">
@@ -342,7 +321,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
             </div>
         `;
 
-        // 4. Mở cửa sổ in
         const printWindow = window.open('', '_blank');
         if (printWindow) {
             printWindow.document.write(`
@@ -355,17 +333,13 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                     <style>
                         @page { size: A4; margin: 0; }
                         body { margin: 0; padding: 0; background-color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                        
-                        /* Cover Page Styles */
                         .cover-page { width: 210mm; height: 297mm; page-break-after: always; background-color: #5d4037; color: #d7ccc8; display: flex; justify-content: center; align-items: center; padding: 20mm; box-sizing: border-box; }
                         .cover-border { border: 5px double #d7ccc8; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
                         .cover-title { font-family: 'Times New Roman', serif; font-size: 40pt; margin-bottom: 30px; font-weight: bold; }
                         .cover-divider { width: 150px; height: 3px; background: #d7ccc8; margin: 30px auto; }
                         .cover-text { font-size: 20pt; margin-top: 20px; font-family: 'Times New Roman', serif; }
                         .cover-year { margin-top: auto; font-size: 16pt; font-family: 'Times New Roman', serif; }
-
-                        /* Content Page Styles */
-                        .print-page { width: 210mm; height: 297mm; page-break-after: always; position: relative; background-color: #f4ecd8; background-image: linear-gradient(90deg, rgba(139, 69, 19, 0.1) 1px, transparent 1px), linear-gradient(rgba(139, 69, 19, 0.1) 1px, transparent 1px); background-size: 25px 25px; padding: 25mm 20mm; box-sizing: border-box; font-family: 'Dancing Script', cursive; color: #4b3621; }
+                        .print-page { width: 210mm; height: 297mm; page-break-after: always; position: relative; background-color: #fffef0; background-image: linear-gradient(rgba(139, 69, 19, 0.15) 1px, transparent 1px); background-size: 100% 25px; padding: 25mm 20mm; box-sizing: border-box; font-family: 'Dancing Script', cursive; color: #4b3621; }
                         .page-header { text-align: center; margin-bottom: 20px; border-bottom: 1px solid rgba(93, 64, 55, 0.3); padding-bottom: 15px; }
                         .generation-title { color: #b71c1c; font-size: 24pt; font-weight: 700; margin-bottom: 5px; }
                         .generation-number { font-family: 'Times New Roman', serif; font-size: 24pt; }
@@ -395,7 +369,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
     return (
         <div className={styles.container} id="book-tab">
             <div className={styles.controls}>
-                 {/* Search Box for Book */}
                 <div className={styles.searchWrapper}>
                     <input 
                         type="text" 
@@ -406,7 +379,6 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                         onFocus={() => setShowSearchResults(!!searchTerm)}
                     />
                     
-                    {/* Dropdown kết quả tìm kiếm */}
                     {showSearchResults && searchResults.length > 0 && (
                         <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-60 overflow-y-auto transform -translate-x-1/4">
                             {searchResults.map((res, idx) => (
@@ -457,7 +429,7 @@ const GenealogyBook: React.FC<GenealogyBookProps> = ({ persons, spouses, parentC
                 <span className="inline-block mr-1"><IconHand /></span> Vuốt hoặc kéo góc giấy để lật trang
             </p>
         </div>
- );
+    );
 };
 
 export default GenealogyBook;
