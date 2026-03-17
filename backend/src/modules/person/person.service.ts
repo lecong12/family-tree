@@ -443,6 +443,8 @@ export class PersonService {
                     spouseOrder: relationship.wifeOrder,
                     marriageDate: relationship.marriageDate,
                     divorceDate: relationship.divorceDate,
+                    husbandOrder: relationship.husbandOrder,
+                    wifeOrder: relationship.wifeOrder,
                     children: children,
                 });
             } else {
@@ -452,6 +454,8 @@ export class PersonService {
                     spouseOrder: relationship.husbandOrder,
                     marriageDate: relationship.marriageDate,
                     divorceDate: relationship.divorceDate,
+                    husbandOrder: relationship.husbandOrder,
+                    wifeOrder: relationship.wifeOrder,
                     children: children,
                 });
             }
