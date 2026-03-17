@@ -163,7 +163,8 @@ export class PersonService {
         }
 
         console.log('💍 BƯỚC 3: THIẾT LẬP VỢ CHỒNG...');
-        const husbandTrack = new Map<string, number>();
+        const husbandWifeCount = new Map<string, number>(); // Đếm số vợ của một người chồng
+        const wifeHusbandCount = new Map<string, number>(); // Đếm số chồng của một người vợ
         const spouseDocs = [];
 
         for (const row of records) {
@@ -182,19 +183,21 @@ export class PersonService {
                 const wife = personMap.get(wifeId);
                 
                 if (husband && wife) {
-                    let orderToUse = (husbandTrack.get(husbandId) || 0) + 1;
+                    const wifeOrder = (husbandWifeCount.get(husbandId) || 0) + 1;
+                    const husbandOrder = (wifeHusbandCount.get(wifeId) || 0) + 1;
                     
                     const sId = new Types.ObjectId();
                     spouseDocs.push({
                         _id: sId,
                         husband: husband._id,
                         wife: wife._id,
-                        husbandOrder: 1,
-                        wifeOrder: orderToUse,
+                        husbandOrder: husbandOrder,
+                        wifeOrder: wifeOrder,
                     });
 
                     spouseMap.set(`${husbandId}_${wifeId}`, { _id: sId });
-                    husbandTrack.set(husbandId, orderToUse);
+                    husbandWifeCount.set(husbandId, wifeOrder);
+                    wifeHusbandCount.set(wifeId, husbandOrder);
                 }
             }
         }

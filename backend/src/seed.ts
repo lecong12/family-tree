@@ -159,7 +159,7 @@ async function seed() {
                 }
 
                 console.log('💍 BƯỚC 3: THIẾT LẬP VỢ CHỒNG (GHI ĐÈ TRỰC TIẾP DB)...');
-                const husbandTrack = new Map<string, number>();
+                const husbandbandCount = new Map<string, number>(); // Đếm số chồng của một người vợ
 
                 for (const row of records) {
                     const husbandId = String(row.pid).trim();
@@ -177,21 +177,19 @@ async function seed() {
                         const wife = personMap.get(wifeId);
                         
                         if (husband && wife) {
-                            let orderToUse = (husbandTrack.get(husbandId) || 0) + 1;
+                            const wifeOrder =  + 1;
                             
                             // Ghi trực tiếp vào Model - Không thông qua Service để tránh lỗi Conflict 409
                             const spouse = await spouseModel.create({
                                 husband: husband._id,
                                 wife: wife._id,
-                                husbandOrder: 1,
-                                wifeOrder: orderToUse,
-                            });
-
-                            spouseMap.set(`${husbandId}_${wifeId}`, spouse);
-                            husbandTrack.set(husbandId, orderToUse);
+                                husbandOrder: husbandOrder,
+                                wifeOrder: wifeOrder,
+                            });seMap.set(`$wifeId}`, spouse);
+                            husbandWifeCount.set(husbandId, wifeOrder);
+                            wifeHusbandCount.set(wifeId, husbandOrder);
                         }
                     }
-                }
 
                 console.log('🌳 BƯỚC 4: KẾT NỐI CON CÁI...');
                 let connectCount = 0;
