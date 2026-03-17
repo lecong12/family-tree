@@ -102,7 +102,9 @@ export class PersonService {
 
             const isDead = row.is_live === '0' || (deathDate !== null && deathDate <= new Date());
 
-            let finalDesc = row.desc?.trim();
+            // let finalDesc = row.desc?.trim(); // Tạm bỏ qua trường desc từ CSV theo yêu cầu để tránh lỗi
+            let finalDesc = null;
+
             if (!finalDesc) {
                 const descParts: string[] = [];
                 const fid = String(row.fid).trim();

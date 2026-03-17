@@ -108,7 +108,9 @@ async function seed() {
                     const isDead = row.is_live === '0' || (deathDate !== null && deathDate <= new Date());
 
                     // Description logic: Prioritize CSV 'desc', then generate, then fallback to 'note' or simple text.
-                    let finalDesc = row.desc?.trim();
+                    // let finalDesc = row.desc?.trim(); // Tạm bỏ qua trường desc từ CSV theo yêu cầu để tránh lỗi
+                    let finalDesc = null;
+
                     if (!finalDesc) {
                         const descParts: string[] = [];
 
