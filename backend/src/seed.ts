@@ -168,6 +168,11 @@ async function seed() {
                     const isFemale = (genderRaw === 'nữ' || genderRaw === '1' || genderRaw === 'female');
 
                     if (husbandId && husbandId !== '0' && isFemale) {
+                        // Kiểm tra trùng lặp để tránh tạo 2 quan hệ vợ chồng cho cùng 1 cặp
+                        if (spouseMap.has(`${husbandId}_${wifeId}`)) {
+                            continue;
+                        }
+
                         const husband = personMap.get(husbandId);
                         const wife = personMap.get(wifeId);
                         

@@ -173,6 +173,11 @@ export class PersonService {
             const isFemale = (genderRaw === 'nữ' || genderRaw === '1' || genderRaw === 'female');
 
             if (husbandId && husbandId !== '0' && isFemale) {
+                // Kiểm tra xem cặp đôi này đã được xử lý chưa để tránh trùng lặp (x2)
+                if (spouseMap.has(`${husbandId}_${wifeId}`)) {
+                    continue;
+                }
+
                 const husband = personMap.get(husbandId);
                 const wife = personMap.get(wifeId);
                 
@@ -544,6 +549,82 @@ export class PersonService {
             personData: personData,
             treeData: treeData,
         };
+    }
+
+    async getDetails(id: string) {
+        if (!Types.ObjectId.isValid(id)) {
+            throw new NotFoundException(`Invalid person ID: ${id}`);
+        }
+
+        // 1. Get the main person, this also validates existence
+        const person = await this.findOne(id);
+
+        const spouseModel = this.personModel.db.model('Spouse');
+        const parentChildModel = this.personModel.db.model('ParentChild');
+
+        // 2. Get Spouses and their children
+        const spouseRelationships = await spouseModel
+            .find({
+                $or: [{ husband: new Types.ObjectId(id) }, { wife: new Types.ObjectId(id) }],
+            })
+            .lean()
+            .exec() as any[];
+
+        const spousesWithChildren = await Promise.all(
+            spouseRelationships.map(async (spouseRel) => {
+                const husband = await this.findOne(spouseRel.husband.toString());
+                const wife = await this.findOne(spouseRel.wife.toString());
+
+                const childrenRels = await parentChildModel.find({ parent: spouseRel._id }).lean().exec();
+                const children = await Promise.all(
+                    childrenRels.map(async (childRel) => {
+                        const childPerson = await this.findOne(childRel.child.toString());
+                        return {
+                            ...childRel,
+                            child: childPerson,
+                        };
+                    }),
+                );
+                // Sort children by birth date
+                children.sort((a, b) => {
+                    if (!a.child.birth || !b.child.birth) return 0;
+                    return new Date(a.child.birth).getTime() - new Date(b.child.birth).getTime();
+                });
+
+                return {
+                    ...spouseRel,
+                    husband,
+                    wife,
+                    children,
+                };
+            }),
+        );
+        // Sort spouses by marriage date or order
+        spousesWithChildren.sort((a, b) => {
+            if (a.marriageDate && b.marriageDate) {
+                return new Date(a.marriageDate).getTime() - new Date(b.marriageDate).getTime();
+            }
+            const personId = person._id.toString();
+            const orderA = a.husband._id.toString() === personId ? a.wifeOrder : a.husbandOrder;
+            const orderB = b.husband._id.toString() === personId ? b.wifeOrder : b.husbandOrder;
+            return (orderA || 99) - (orderB || 99);
+        });
+
+        // 3. Get Parents
+        const parentRelationships = await parentChildModel.find({ child: new Types.ObjectId(id) }).lean().exec() as any[];
+        const parents = await Promise.all(
+            parentRelationships.map(async (parentRel: any) => {
+                const parentSpouseRel = await spouseModel.findById(parentRel.parent).lean().exec() as any;
+                if (!parentSpouseRel) return null;
+
+                const father = await this.findOne(parentSpouseRel.husband.toString());
+                const mother = await this.findOne(parentSpouseRel.wife.toString());
+
+                return { ...parentRel, parent: { ...parentSpouseRel, husband: father, wife: mother } };
+            }),
+        );
+
+        return { person, spouses: spousesWithChildren, parents: parents.filter(Boolean) };
     }
 
     async searchByName(name: string) {
