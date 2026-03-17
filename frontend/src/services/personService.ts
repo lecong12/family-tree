@@ -1,30 +1,12 @@
 import api from './api';
 import authService from './authService';
 import personsData from '../data/persons.json';
-import type { PersonDetailsData } from '../types/person';
-
-// Định nghĩa các interface
-// Gender enum from backend: MALE = 0, FEMALE = 1
-export type Gender = 0 | 1 | 'MALE' | 'FEMALE';
-
-export interface Person {
-    _id?: string;
-    cccd?: string;
-    name: string;
-    avatar?: string;
-    gender: Gender;
-    birth?: Date;
-    death?: Date;
-    isDead?: boolean;
-    address?: string;
-    desc?: string;
-}
+import type { Person, PersonDetailsData } from 'src/types/person';
 
 export interface PersonWithGenerations {
     personData: Record<string, Person>;
     treeData: any[];
 }
-
 // Person API Service
 const personService = {
     // Lấy tất cả người

@@ -1,29 +1,8 @@
 import api from './api';
-import { Person } from './personService';
+import type { Person, Spouse, SpouseWithDetails } from 'src/types/person';
 import authService from './authService';
 import spousesData from '../data/spouses.json';
 import personsData from '../data/persons.json';
-
-// Định nghĩa các interface
-export interface Spouse {
-    _id?: string;
-    husband: string;
-    wife: string;
-    husbandOrder?: number;
-    wifeOrder?: number;
-    marriageDate?: Date;
-    divorceDate?: Date;
-}
-
-export interface SpouseWithDetails {
-    _id?: string;
-    husband: Person | string;
-    wife: Person | string;
-    husbandOrder?: number;
-    wifeOrder?: number;
-    marriageDate?: Date;
-    divorceDate?: Date;
-}
 
 // Helper to populate spouse data for guest mode
 const populateSpouse = (spouse: any): SpouseWithDetails => {

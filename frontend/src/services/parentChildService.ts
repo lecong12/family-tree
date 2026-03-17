@@ -1,25 +1,9 @@
 import api from './api';
-import { Person } from './personService';
-import { SpouseWithDetails } from './spouseService';
+import type { Person, SpouseWithDetails, ParentChild, ParentChildWithDetails } from 'src/types/person';
 import authService from './authService';
 import parentChildrenData from '../data/parent_children.json';
 import personsData from '../data/persons.json';
 import spousesData from '../data/spouses.json';
-
-// Định nghĩa các interface
-export interface ParentChild {
-    _id?: string;
-    parent: string;
-    child: string;
-    isAdopted: boolean;
-}
-
-export interface ParentChildWithDetails {
-    _id?: string;
-    parent: SpouseWithDetails | string;
-    child: Person | string;
-    isAdopted: boolean;
-}
 
 // Helper to populate parent-child data for guest mode
 const populateParentChild = (pc: any): ParentChildWithDetails => {

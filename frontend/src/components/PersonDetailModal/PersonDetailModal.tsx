@@ -3,15 +3,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Modal from '../Modal/Modal';
 import Gallery from '../Gallery/Gallery';
-import { Person } from 'src/services/personService';
 import personService from 'src/services/personService';
 import galleryService from 'src/services/galleryService';
-import spouseService, { SpouseWithDetails } from 'src/services/spouseService';
-import parentChildService, { ParentChildWithDetails } from 'src/services/parentChildService';
-import { getGenderText, Gender } from 'src/utils/genderUtils';
+import spouseService from 'src/services/spouseService';
+import parentChildService from 'src/services/parentChildService';
+import { getGenderText } from 'src/utils/genderUtils';
 import { Avatar_Male, Avatar_Female } from 'src/constants/imagePaths';
-import type { PersonDetailsData } from 'src/types/person';
-import { useAuth } from '../../context/AuthContext';
+import type { Person, Gender, SpouseWithDetails, PersonDetailsData } from 'src/types/person';
+import { useAuth } from 'src/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 

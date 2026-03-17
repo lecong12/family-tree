@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Modal from '../Modal/Modal';
-import parentChildService, { ParentChild } from 'src/services/parentChildService';
-import personService, { Person } from 'src/services/personService';
+import parentChildService from 'src/services/parentChildService';
+import personService from 'src/services/personService';
+import type { Person, ParentChild } from '../../types/person';
 import { getGenderText } from 'src/utils/genderUtils';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';

@@ -1,6 +1,4 @@
-import { Person } from 'src/services/personService';
-import { SpouseWithDetails } from 'src/services/spouseService';
-import { ParentChildWithDetails } from 'src/services/parentChildService';
+import type { Person, SpouseWithDetails, ParentChildWithDetails } from 'src/types/person';
 import { extractId } from './types';
 
 export const getBirthYear = (person: Person): string => {

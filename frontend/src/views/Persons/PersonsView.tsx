@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import axios from 'axios';
 import Cookies from 'js-cookie';
 import { useRouter } from 'next/navigation';
-import { Person } from 'src/services/personService';
+import type { Person } from 'src/types/person';
 import { useAuth } from 'src/context/AuthContext';
 import { useFamilyData } from 'src/hooks/useFamilyData';
 import LoadingOverlay from 'src/components/LoadingOverlay/LoadingOverlay';
