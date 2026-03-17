@@ -1,6 +1,7 @@
 import api from './api';
 import authService from './authService';
 import personsData from '../data/persons.json';
+import type { PersonDetailsData } from '../types/person';
 
 // Định nghĩa các interface
 // Gender enum from backend: MALE = 0, FEMALE = 1
@@ -69,6 +70,11 @@ const personService = {
     // Lấy N thế hệ của một người
     getNGenerations: async (personId: string, generations: number): Promise<PersonWithGenerations> => {
         const response = await api.get(`/person/${personId}/generations/${generations}`);
+        return response.data;
+    },
+
+    getPersonDetails: async (id: string): Promise<PersonDetailsData> => {
+        const response = await api.get(`/person/${id}/details`);
         return response.data;
     },
 };

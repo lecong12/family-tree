@@ -10,8 +10,9 @@ import spouseService, { SpouseWithDetails } from 'src/services/spouseService';
 import parentChildService, { ParentChildWithDetails } from 'src/services/parentChildService';
 import { getGenderText, Gender } from 'src/utils/genderUtils';
 import { Avatar_Male, Avatar_Female } from 'src/constants/imagePaths';
+import type { PersonDetailsData } from '../../types/person';
 import { useAuth } from '../../context/AuthContext';
-import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';
 
 interface PersonDetailModalProps {
@@ -40,61 +41,20 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
     // Queries
-    const { data: spouses = [], isLoading: loadingSpouses } = useQuery({
-        queryKey: ['spouses', person?._id],
-        queryFn: () => spouseService.getSpousesByPersonId(person!._id!),
+    // NEW: Single query for all details to improve performance
+    const { data: details, isLoading: loadingDetails } = useQuery<PersonDetailsData>({
+        queryKey: ['personDetails', person?._id],
+        queryFn: () => personService.getPersonDetails(person!._id!),
         enabled: !!isOpen && !!person?._id,
         staleTime: 5 * 60 * 1000,
     });
 
-    const { data: parents = [], isLoading: loadingParents } = useQuery({
-        queryKey: ['parents', person?._id],
-        queryFn: () => parentChildService.getParentsByChildId(person!._id!),
-        enabled: !!isOpen && !!person?._id,
-        staleTime: 5 * 60 * 1000,
-    });
-
-    // Children queries
-    const childrenQueries = useQueries({
-        queries: spouses.map((spouse) => ({
-            queryKey: ['children', spouse._id],
-            queryFn: () => parentChildService.getChildrenByParentId(spouse._id!),
-            enabled: !!isOpen && !!spouse._id,
-            staleTime: 5 * 60 * 1000,
-        })),
-    });
-
-    const children: { [spouseId: string]: ParentChildWithDetails[] } = {};
-    spouses.forEach((spouse, index) => {
-        if (spouse._id && childrenQueries[index].data) {
-            children[spouse._id] = childrenQueries[index].data;
-        }
-    });
-
-    // Spouse Persons Queries (for when husband/wife are strings)
-    const spouseIdsToFetch = spouses.reduce((acc, spouse) => {
-        const husbandId = typeof spouse.husband === 'string' ? spouse.husband : spouse.husband?._id;
-        const wifeId = typeof spouse.wife === 'string' ? spouse.wife : spouse.wife?._id;
-
-        if (typeof spouse.husband === 'string' && husbandId && !acc.includes(husbandId)) acc.push(husbandId);
-        if (typeof spouse.wife === 'string' && wifeId && !acc.includes(wifeId)) acc.push(wifeId);
-        return acc;
-    }, [] as string[]);
-
-    const spousePersonQueries = useQueries({
-        queries: spouseIdsToFetch.map((id) => ({
-            queryKey: ['person', id],
-            queryFn: () => personService.getPersonById(id),
-            staleTime: 5 * 60 * 1000,
-        })),
-    });
-
-    const spousePersons: { [personId: string]: Person } = {};
-    spouseIdsToFetch.forEach((id, index) => {
-        if (spousePersonQueries[index].data) {
-            spousePersons[id] = spousePersonQueries[index].data;
-        }
-    });
+    // Extract data from the unified response
+    // If details are loading, we fallback to empty arrays but we don't block the UI with spinners
+    // because the main person info is already passed as prop.
+    const spouses = details?.spouses || [];
+    const parents = details?.parents || [];
+    // Note: Children are now nested inside spouses in the new API response structure.
 
     // Mutations
     const updatePersonMutation = useMutation({
@@ -102,6 +62,7 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['persons'] });
             queryClient.invalidateQueries({ queryKey: ['person', person?._id] });
+            queryClient.invalidateQueries({ queryKey: ['personDetails', person?._id] });
             toast.success('Cập nhật thành công!');
             setIsEditing(false);
             if (onUpdate) onUpdate();
@@ -130,7 +91,7 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
     const deleteSpouseMutation = useMutation({
         mutationFn: (id: string) => spouseService.deleteSpouse(id),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['spouses', person?._id] });
+            queryClient.invalidateQueries({ queryKey: ['personDetails', person?._id] });
             toast.success('Xóa quan hệ vợ chồng thành công!');
             if (onUpdate) onUpdate();
         },
@@ -143,7 +104,7 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
     const deleteChildMutation = useMutation({
         mutationFn: (id: string) => parentChildService.deleteParentChild(id),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['children'] });
+            queryClient.invalidateQueries({ queryKey: ['personDetails', person?._id] });
             toast.success('Xóa quan hệ con cái thành công!');
             if (onUpdate) onUpdate();
         },
@@ -154,9 +115,7 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
     });
 
     const loading =
-        loadingSpouses ||
-        loadingParents ||
-        childrenQueries.some((q) => q.isLoading) ||
+        loadingDetails ||
         updatePersonMutation.isPending ||
         deletePersonMutation.isPending ||
         deleteSpouseMutation.isPending ||
@@ -200,20 +159,7 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
         if (!spouseId) return 'Unknown';
 
         // Check if spouse data is already populated as object
-        if (husbandId === person._id) {
-            // Current person is husband, so spouse is wife
-            if (typeof spouse.wife !== 'string' && spouse.wife?.name) {
-                return spouse.wife.name;
-            }
-        } else {
-            // Current person is wife (or other), so spouse is husband
-            if (typeof spouse.husband !== 'string' && spouse.husband?.name) {
-                return spouse.husband.name;
-            }
-        }
-
-        // If not populated, look up in spousePersons map
-        const spousePerson = spousePersons[spouseId];
+        const spousePerson = (husbandId === person._id ? spouse.wife : spouse.husband) as Person;
         return spousePerson?.name || 'Unknown';
     };
 
@@ -627,13 +573,8 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
                 </div>
 
                 {/* Parents Info */}
-                {loadingParents ? (
-                    <div className="bg-white p-2 md:p-6 rounded-xl shadow-sm border border-gray-100 flex justify-center items-center">
-                        <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-600 mr-2"></div>
-                        <span className="text-gray-500 text-sm">Đang tải thông tin cha mẹ...</span>
-                    </div>
-                ) : parents.length > 0 ? (
-                    <div className="bg-white p-2 md:p-6 rounded-xl shadow-sm border border-gray-100">
+                {parents.length > 0 && (
+                    <div className="bg-white p-2 md:p-6 rounded-xl shadow-sm border border-gray-100 mt-4">
                         <h4 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path
@@ -669,7 +610,7 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
                             })}
                         </div>
                     </div>
-                ) : null}
+                )}
 
                 {/* Spouse Relationships */}
                 <div className="bg-gray-50 p-2 md:p-4 rounded-lg">
@@ -682,12 +623,7 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
                         )}
                     </div>
 
-                    {loadingSpouses ? (
-                        <div className="flex justify-center items-center py-4">
-                            <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-600 mr-2"></div>
-                            <span className="text-gray-500 text-sm">Đang tải thông tin vợ/chồng...</span>
-                        </div>
-                    ) : spouses.length === 0 ? (
+                    {spouses.length === 0 ? (
                         <p className="text-sm text-gray-500">Chưa có thông tin vợ/chồng</p>
                     ) : (
                         <div className="space-y-3">
@@ -716,40 +652,31 @@ export default function PersonDetailModal({ isOpen, onClose, person, onAddSpouse
                                     </div>
 
                                     {/* Children of this spouse */}
-                                    {childrenQueries[index]?.isLoading ? (
-                                        <div className="mt-2 pl-3 border-l-2 border-gray-300 flex items-center">
-                                            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-gray-400 mr-2"></div>
-                                            <span className="text-xs text-gray-500">Đang tải con cái...</span>
-                                        </div>
-                                    ) : (
-                                        spouse._id &&
-                                        children[spouse._id] &&
-                                        children[spouse._id].length > 0 && (
-                                            <div className="mt-2 pl-3 border-l-2 border-gray-300">
-                                                <p className="text-xs text-gray-600 mb-2">Con cái:</p>
-                                                <div className="divide-y divide-gray-200">
-                                                    {children[spouse._id].map((child) => (
-                                                        <div key={child._id} className="text-sm flex justify-between items-center group hover:bg-gray-50 rounded px-1 py-2 -mx-1">
-                                                            <span>
-                                                                • {typeof child.child !== 'string' && child.child?.name}
-                                                                {child.isAdopted && <span className="text-xs text-gray-500"> (nuôi)</span>}
-                                                            </span>
-                                                            {(isAdmin || isEditor) && (
-                                                                <button
-                                                                    onClick={() => child._id && handleDeleteChild(child._id)}
-                                                                    className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1"
-                                                                    title="Xóa quan hệ con cái"
-                                                                >
-                                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                                                    </svg>
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    ))}
-                                                </div>
+                                    {spouse.children && spouse.children.length > 0 && (
+                                        <div className="mt-2 pl-3 border-l-2 border-gray-300">
+                                            <p className="text-xs text-gray-600 mb-2">Con cái:</p>
+                                            <div className="divide-y divide-gray-200">
+                                                {spouse.children.map((child) => (
+                                                    <div key={child._id} className="text-sm flex justify-between items-center group hover:bg-gray-50 rounded px-1 py-2 -mx-1">
+                                                        <span>
+                                                            • {typeof child.child !== 'string' && (child.child as Person)?.name}
+                                                            {child.isAdopted && <span className="text-xs text-gray-500"> (nuôi)</span>}
+                                                        </span>
+                                                        {(isAdmin || isEditor) && (
+                                                            <button
+                                                                onClick={() => child._id && handleDeleteChild(child._id)}
+                                                                className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1"
+                                                                title="Xóa quan hệ con cái"
+                                                            >
+                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                                </svg>
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ))}
                                             </div>
-                                        )
+                                        </div>
                                     )}
                                 </div>
                             ))}

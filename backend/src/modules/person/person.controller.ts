@@ -71,6 +71,22 @@ export class PersonController {
         return this.personService.findOne(id);
     }
 
+    @Get(':id/details')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @ApiOperation({ summary: 'Get all details for a person (spouses, children, parents)' })
+    @ApiParam({ name: 'id', description: 'Person ID' })
+    @ApiResponse({
+        status: HttpStatus.OK,
+        description: 'Return person details',
+    })
+    @ApiResponse({
+        status: HttpStatus.NOT_FOUND,
+        description: 'Person not found',
+    })
+    getDetails(@Param('id') id: string) {
+        return this.personService.getDetails(id);
+    }
+
     @Patch(':id')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(UserRoles.ADMIN, UserRoles.EDITOR)
