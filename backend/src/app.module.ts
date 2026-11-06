@@ -24,9 +24,10 @@ import { AdminModule } from './admin.module';
         MongooseModule.forRootAsync({
             imports: [ConfigModule],
             useFactory: async (configService: ConfigService) => {
-                const uri = configService.get<string>('MONGO_URI');
+                const uri =
+                    configService.get<string>('MONGO_URI') || configService.get<string>('MONGODB_URI');
                 if (!uri) {
-                    throw new Error('❌ MONGO_URI is missing in Environment Variables!');
+                    throw new Error('❌ MONGO_URI (or MONGODB_URI) is missing in Environment Variables!');
                 }
                 return { uri };
             },

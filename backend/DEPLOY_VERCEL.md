@@ -25,11 +25,12 @@ We have added the following files to enable Vercel deployment:
     - **Root Directory**: Select `backend` (since your NestJS app is in the `backend` folder).
     - **Framework Preset**: Vercel should automatically detect it or select "Other".
     - **Build Command**: `nest build` (or leave default if it detects package.json scripts).
-    - **Output Directory**: `dist` (standard for NestJS).
+    - **Output Directory**: Leave the default; `backend/vercel.json` configures the serverless function entry point.
     - **Install Command**: `npm install` (or `yarn`).
 5.  **Environment Variables**:
-    - Copy all variables from your `backend/.env` file to the Vercel Environment Variables section.
-    - Examples: `MONGO_URI`, `JWT_SECRET`, `CLOUDINARY_CLOUD_NAME`, etc.
+    - Set `MONGO_URI` to a reachable MongoDB Atlas connection string (Vercel cannot connect to your computer's `localhost` MongoDB).
+    - Set `JWT_SECRET` (or `JWT_SECRET_KEY`) and `ADMIN_PASSWORD`.
+    - Set any Cloudinary credentials used by the app.
 6.  Click **Deploy**.
 
 ### Option 2: Deploy via CLI
@@ -56,5 +57,6 @@ We have added the following files to enable Vercel deployment:
 ## Important Notes
 
 - **Cold Starts**: Serverless functions may have a slight delay (cold start) if they haven't been used recently.
-- **Database Connections**: Ensure your MongoDB provider (e.g., MongoDB Atlas) allows connections from anywhere (0.0.0.0/0) or whitelist Vercel's IP ranges (which is harder as they change).
-- **CORS**: The `vercel.ts` file enables CORS for all origins (`*`). Adjust this in production if needed.
+- **Database Connections**: Use a reachable MongoDB provider such as Atlas, and configure its network access to permit connections from the Vercel deployment.
+- **Troubleshooting 500 errors**: Check the deployment's Function Logs in Vercel. A missing Mongo URI or an unreachable/unauthorized database prevents Nest from starting. After changing environment variables, redeploy the Backend project.
+- **CORS**: Add the frontend's exact origin to the allowlist in `backend/src/vercel.ts`; a CORS error is separate from a `500 FUNCTION_INVOCATION_FAILED` backend startup error.

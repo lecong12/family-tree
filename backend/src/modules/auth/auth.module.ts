@@ -18,7 +18,10 @@ import { GuestCode, GuestCodeSchema } from './schemas/guest-code.schema';
         JwtModule.registerAsync({
             imports: [ConfigModule],
             useFactory: async (configService: ConfigService) => ({
-                secret: configService.get<string>('JWT_SECRET') || 'secretKey',
+                secret:
+                    configService.get<string>('JWT_SECRET') ||
+                    configService.get<string>('JWT_SECRET_KEY') ||
+                    'secretKey',
                 signOptions: { expiresIn: '7d' },
             }),
             inject: [ConfigService],

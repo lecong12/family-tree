@@ -1,8 +1,9 @@
 
 PORT=9999
-# Kết nối tới MongoDB local. Nếu bạn chưa cài MongoDB, hãy cài đặt hoặc dùng Docker.
-MONGODB_URI=mongodb://localhost:27017/familytree
-JWT_SECRET_KEY=secret_key_tam_thoi
-CLOUDINARY_CLOUD_NAME=demo
-CLOUDINARY_API_KEY=demo
-CLOUDINARY_API_SECRET=demo
+# Local development only; on Vercel, use a reachable MongoDB Atlas URI.
+MONGO_URI=mongodb://localhost:27017/familytree
+JWT_SECRET_KEY=replace_with_a_long_random_secret
+ADMIN_PASSWORD=replace_with_a_strong_password
+CLOUDINARY_CLOUD_NAME=
+CLOUDINARY_API_KEY=
+CLOUDINARY_API_SECRET=
