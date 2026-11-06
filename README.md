@@ -42,7 +42,7 @@ Tạo file `.env.local` (hoặc set biến môi trường trên server) trong th
 -   Frontend cần biết `NEXT_PUBLIC_API_URL` **tại thời điểm build** (nếu là Static Site Generation) hoặc Runtime (nếu là Client-side fetching).
 -   Trong dự án này, chúng ta dùng Client-side fetching (`axios` trong `src/services`), nên biến này sẽ được trình duyệt đọc. Đảm bảo URL này public (người dùng truy cập được).
 
-## 3. Các bước Deploy cơ bản
+## 3. Các bước Deploy cơ bản,
 
 1. **Database**: Chạy MongoDB, ví dụ dùng dịch vụ `mongodb` trong `docker-compose.yml` ở thư mục gốc.
 2. **Backend**:
