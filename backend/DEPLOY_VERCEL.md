@@ -30,6 +30,7 @@ We have added the following files to enable Vercel deployment:
 5.  **Environment Variables**:
     - Set `MONGO_URI` to a reachable MongoDB Atlas connection string (Vercel cannot connect to your computer's `localhost` MongoDB).
     - Set `JWT_SECRET` (or `JWT_SECRET_KEY`) and `ADMIN_PASSWORD`.
+    - Set `FRONTEND_URL` to the deployed frontend origin, such as `https://your-app.vercel.app`. Multiple origins can be comma-separated.
     - Set any Cloudinary credentials used by the app.
 6.  Click **Deploy**.
 

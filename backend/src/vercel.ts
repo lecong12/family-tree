@@ -12,10 +12,15 @@ async function bootstrap() {
         const server = express();
 
         const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
+        const frontendOrigins = (process.env.FRONTEND_URL ?? '')
+            .split(',')
+            .map((origin) => origin.trim())
+            .filter(Boolean);
 
         // 1. Enable CORS ngay lập tức để tránh lỗi chặn truy cập từ Frontend
         app.enableCors({
             origin: [
+                ...frontendOrigins,
                 'https://family-tree-frontend-mu.vercel.app', // Domain production của Frontend
                 'https://family-tree-frontend-lecong12s-projects.vercel.app', // Domain mới của bạn
                 'https://family-tree-frontend-git-main-lecong12s-projects.vercel.app',
