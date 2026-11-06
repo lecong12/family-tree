@@ -12,7 +12,7 @@ interface SearchBarProps {
 export default function SearchBar({ onSearch }: SearchBarProps) {
     const [searchType, setSearchType] = useState<'name' | 'cccd'>('name');
     const [searchQuery, setSearchQuery] = useState('');
-    const [generations, setGenerations] = useState(3);
+    const [generations, setGenerations] = useState(13);
     const [suggestions, setSuggestions] = useState<Person[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [selectedPerson, setSelectedPerson] = useState<Person | null>(null);
@@ -72,8 +72,8 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
             toast.warning('Vui lòng chọn một người từ danh sách gợi ý!');
             return;
         }
-        if (generations < 1 || generations > 10) {
-            toast.warning('Số thế hệ phải từ 1 đến 10!');
+        if (generations < 1 || generations > 100) {
+            toast.warning('Số thế hệ phải từ 1 đến 100!');
             return;
         }
         onSearch(selectedPerson._id!, generations);
@@ -144,7 +144,7 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
                     <input
                         type="number"
                         min="1"
-                        max="10"
+                        max="100"
                         value={generations}
                         onChange={(e) => setGenerations(parseInt(e.target.value) || 1)}
                         className="w-full md:w-16 px-1 py-1 md:px-2 md:py-2 text-sm md:text-base border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
