@@ -9,7 +9,7 @@ import spouseService from 'src/services/spouseService';
 import parentChildService from 'src/services/parentChildService';
 import { getGenderText } from 'src/utils/genderUtils';
 import { Avatar_Male, Avatar_Female } from 'src/constants/imagePaths';
-import type { Person, Gender, SpouseWithDetails, PersonDetailsData } from 'src/types/person';
+import { Gender, type Person, type SpouseWithDetails, type PersonDetailsData } from 'src/types/person';
 import { useAuth } from 'src/context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'react-toastify';

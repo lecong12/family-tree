@@ -1,3 +1,5 @@
+export type { Person, Spouse, SpouseWithDetails } from 'src/types/person';
+
 import api from './api';
 import type { Person, Spouse, SpouseWithDetails } from 'src/types/person';
 import authService from './authService';

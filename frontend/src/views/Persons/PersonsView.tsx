@@ -165,7 +165,7 @@ export default function PersonsView() {
                 case 'birth': {
                     // Lấy năm sinh, ưu tiên người có năm sinh rõ ràng lên trước/sau
                     // Note: logic slightly different from inline to ensure empty dates are handled consistently
-                    const getYear = (d?: Date) => (d ? new Date(d).getFullYear() : sortDirection === 'asc' ? 9999 : -9999);
+                    const getYear = (d?: Date | string) => (d ? new Date(d).getFullYear() : sortDirection === 'asc' ? 9999 : -9999);
                     const yearA = getYear(a.birth);
                     const yearB = getYear(b.birth);
                     res = yearA - yearB;

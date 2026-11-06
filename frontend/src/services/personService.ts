@@ -1,3 +1,5 @@
+export type { Person, PersonDetailsData } from 'src/types/person';
+
 import api from './api';
 import authService from './authService';
 import personsData from '../data/persons.json';
