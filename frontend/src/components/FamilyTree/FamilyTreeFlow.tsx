@@ -67,8 +67,12 @@ const FamilyTreeFlow: React.FC<FamilyTreeFlowProps> = ({ persons, spouses, paren
             return { nodes: [], edges: [] };
         }
 
-        // Find ROOT_PERSON_ID
-        const ROOT_PERSON_ID = searchRootPersonId || persons.find((p) => p.cccd == '0x00001')?._id || persons[0]?._id;
+        // Start the full family tree from its founding ancestor unless a search selected another person.
+        const ROOT_PERSON_ID =
+            searchRootPersonId ||
+            persons.find((p) => p.name.trim().toLocaleLowerCase('vi') === 'lê công mao')?._id ||
+            persons.find((p) => p.cccd === '0x00001')?._id ||
+            persons[0]?._id;
         if (!ROOT_PERSON_ID) {
             console.error('Could not determine a root person for the family tree. Check if data is available and has IDs.');
             return { nodes: [], edges: [] };
