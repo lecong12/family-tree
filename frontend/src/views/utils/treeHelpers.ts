@@ -21,28 +21,17 @@ export const sortSpouses = (spouses: SpouseWithDetails[], personId: string): Spo
     return [...spouses].sort((a, b) => {
         const aHusbandId = typeof a.husband === 'string' ? a.husband : a.husband?._id;
         const bHusbandId = typeof b.husband === 'string' ? b.husband : b.husband?._id;
-
-        // Check if the common person is the husband
-        if (aHusbandId === personId && bHusbandId === personId) {
-            // We are sorting the marriages of a husband, so use husbandOrder
-            return (a.husbandOrder || 1) - (b.husbandOrder || 1);
-        }
-
         const aWifeId = typeof a.wife === 'string' ? a.wife : a.wife?._id;
         const bWifeId = typeof b.wife === 'string' ? b.wife : b.wife?._id;
 
-        // Check if the common person is the wife
-        if (aWifeId === personId && bWifeId === personId) {
-            // We are sorting the marriages of a wife, so use wifeOrder
-            return (a.wifeOrder || 1) - (b.wifeOrder || 1);
+        const orderA = aHusbandId === personId ? a.wifeOrder : a.husbandOrder;
+        const orderB = bHusbandId === personId ? b.wifeOrder : b.husbandOrder;
+        if (orderA !== undefined || orderB !== undefined) {
+            if (orderA === undefined) return 1;
+            if (orderB === undefined) return -1;
+            if (orderA !== orderB) return orderA - orderB;
         }
 
-        // Fallback for mixed cases or if personId doesn't match
-        const orderA = a.wifeOrder || a.husbandOrder || 1;
-        const orderB = b.wifeOrder || b.husbandOrder || 1;
-        if (orderA !== orderB) return orderA - orderB;
-
-        // Fall back to marriage date
         if (a.marriageDate && b.marriageDate) {
             return new Date(a.marriageDate).getTime() - new Date(b.marriageDate).getTime();
         }

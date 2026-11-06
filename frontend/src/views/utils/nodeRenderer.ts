@@ -1,5 +1,6 @@
 import { Node, Edge, Position } from '@xyflow/react';
 import { Person, SpouseWithDetails, ParentChildWithDetails } from 'src/services';
+import { Gender } from 'src/constants';
 import {
     PERSON_WIDTH,
     RELATIONSHIP_WIDTH,
@@ -151,10 +152,40 @@ function renderPerson(
     if (personSpouses.length === 0) return;
 
     const sortedSpouses = sortSpouses(personSpouses, personId);
+    const orderField = personGender === Gender.MALE ? 'wifeOrder' : 'husbandOrder';
+    const usedOrders = new Set(
+        sortedSpouses
+            .map((spouse) => spouse[orderField])
+            .filter((order): order is number => order !== undefined && Number.isInteger(order) && order > 0),
+    );
+    let nextMissingOrder = 1;
 
     // Render each spouse relationship
     sortedSpouses.forEach((spouse, idx) => {
-        renderSpouseRelationship(spouse, personId, personGender, genIndex, genY, idx, childrenMap, personGeneration, relationshipXPositions, spouseNodeXPositions, nodes, edges, renderedRelationships);
+        const storedOrder = spouse[orderField];
+        let displayOrder = storedOrder;
+        if (!displayOrder || displayOrder < 1) {
+            while (usedOrders.has(nextMissingOrder)) nextMissingOrder++;
+            displayOrder = nextMissingOrder;
+            usedOrders.add(displayOrder);
+        }
+
+        renderSpouseRelationship(
+            spouse,
+            personId,
+            personGender,
+            genIndex,
+            genY,
+            idx,
+            displayOrder,
+            childrenMap,
+            personGeneration,
+            relationshipXPositions,
+            spouseNodeXPositions,
+            nodes,
+            edges,
+            renderedRelationships,
+        );
     });
 }
 
@@ -168,6 +199,7 @@ function renderSpouseRelationship(
     genIndex: number,
     genY: number,
     spouseIdx: number,
+    displayOrder: number,
     childrenMap: Map<string, ParentChildWithDetails[]>,
     personGeneration: Map<string, number>,
     relationshipXPositions: Map<string, number>,
@@ -197,8 +229,8 @@ function renderSpouseRelationship(
         data: {
             id: spouseId,
             top: personGender,
-            husbandOrder: spouse.husbandOrder ?? 1,
-            wifeOrder: spouse.wifeOrder ?? 1,
+            husbandOrder: spouse.husbandOrder ?? (personGender === Gender.FEMALE ? displayOrder : 1),
+            wifeOrder: spouse.wifeOrder ?? (personGender === Gender.MALE ? displayOrder : 1),
             marriageDate: spouse.marriageDate,
             divorceDate: spouse.divorceDate,
         },

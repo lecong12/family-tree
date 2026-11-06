@@ -17,6 +17,8 @@ export default function RelationshipNode(props: RelationshipNodeProps) {
     // Format marriage date
     const marriageDate = props.data.marriageDate ? (typeof props.data.marriageDate === 'string' ? new Date(props.data.marriageDate) : props.data.marriageDate) : null;
     const marriageDateStr = marriageDate ? marriageDate.toLocaleDateString() : '';
+    const spouseOrder =
+        props.data.top === Gender.MALE ? props.data.wifeOrder ?? 1 : props.data.husbandOrder ?? 1;
 
     // Định nghĩa kích thước hình thoi - 4 ĐỈNH CHẠM CẠNH CONTAINER
     const CONTAINER_SIZE = 128; // Khớp với PERSON_WIDTH
@@ -49,7 +51,7 @@ export default function RelationshipNode(props: RelationshipNodeProps) {
             {/* Nội dung text - nằm trên hình thoi */}
             <div className="absolute text-center z-10" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '80%' }}>
                 {marriageDateStr && <p className="text-xs leading-tight">{marriageDateStr}</p>}
-                <p className="text-xs font-semibold">{props.data.top === Gender.MALE ? 'v' + props.data.wifeOrder : 'c' + props.data.husbandOrder}</p>
+                <p className="text-xs font-semibold">{props.data.top === Gender.MALE ? `v${spouseOrder}` : `c${spouseOrder}`}</p>
             </div>
         </div>
     );
