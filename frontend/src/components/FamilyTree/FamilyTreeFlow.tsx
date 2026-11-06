@@ -82,28 +82,55 @@ const FamilyTreeFlow: React.FC<FamilyTreeFlowProps> = ({ persons, spouses, paren
         const personMap = new Map<string, Person>();
         const spouseMap = new Map<string, SpouseWithDetails[]>();
         const childrenMap = new Map<string, ParentChildWithDetails[]>();
+        const spouseByPair = new Map<string, SpouseWithDetails>();
+        const spousePairById = new Map<string, string>();
 
         persons.forEach((p) => p._id && personMap.set(p._id, p));
 
         spouses.forEach((spouse) => {
             const husbandId = extractId(spouse.husband as Person | string);
             const wifeId = extractId(spouse.wife as Person | string);
+            if (!husbandId || !wifeId || !spouse._id) return;
 
-            if (husbandId) {
-                if (!spouseMap.has(husbandId)) spouseMap.set(husbandId, []);
-                spouseMap.get(husbandId)!.push(spouse);
+            const pairKey = [husbandId, wifeId].sort().join(':');
+            const canonicalSpouse = spouseByPair.get(pairKey);
+            spousePairById.set(spouse._id, pairKey);
+
+            if (canonicalSpouse) {
+                Object.assign(canonicalSpouse, {
+                    husbandOrder: canonicalSpouse.husbandOrder ?? spouse.husbandOrder,
+                    wifeOrder: canonicalSpouse.wifeOrder ?? spouse.wifeOrder,
+                    marriageDate: canonicalSpouse.marriageDate ?? spouse.marriageDate,
+                    divorceDate: canonicalSpouse.divorceDate ?? spouse.divorceDate,
+                });
+            } else {
+                spouseByPair.set(pairKey, spouse);
             }
-            if (wifeId) {
-                if (!spouseMap.has(wifeId)) spouseMap.set(wifeId, []);
-                spouseMap.get(wifeId)!.push(spouse);
-            }
+        });
+
+        spouseByPair.forEach((spouse) => {
+            const husbandId = extractId(spouse.husband as Person | string);
+            const wifeId = extractId(spouse.wife as Person | string);
+            if (!husbandId || !wifeId) return;
+
+            if (!spouseMap.has(husbandId)) spouseMap.set(husbandId, []);
+            spouseMap.get(husbandId)!.push(spouse);
+            if (!spouseMap.has(wifeId)) spouseMap.set(wifeId, []);
+            spouseMap.get(wifeId)!.push(spouse);
         });
 
         parentChilds.forEach((pc) => {
             const parentId = typeof pc.parent === 'string' ? pc.parent : pc.parent?._id;
-            if (parentId) {
-                if (!childrenMap.has(parentId)) childrenMap.set(parentId, []);
-                childrenMap.get(parentId)!.push(pc);
+            const pairKey = parentId ? spousePairById.get(parentId) : undefined;
+            const canonicalSpouse = pairKey ? spouseByPair.get(pairKey) : undefined;
+            const canonicalId = canonicalSpouse?._id;
+            if (!canonicalId) return;
+
+            const children = childrenMap.get(canonicalId) || [];
+            const childId = extractId(pc.child as Person | string);
+            if (!children.some((existing) => extractId(existing.child as Person | string) === childId)) {
+                children.push(pc);
+                childrenMap.set(canonicalId, children);
             }
         });
 
