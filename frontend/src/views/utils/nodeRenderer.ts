@@ -1,6 +1,5 @@
 import { Node, Edge, Position } from '@xyflow/react';
 import { Person, SpouseWithDetails, ParentChildWithDetails } from 'src/services';
-import { Gender } from 'src/constants';
 import {
     PERSON_WIDTH,
     RELATIONSHIP_WIDTH,
@@ -198,8 +197,8 @@ function renderSpouseRelationship(
         data: {
             id: spouseId,
             top: personGender,
-            // Corrected logic: If the person is MALE, use husbandOrder. If FEMALE, use wifeOrder.
-            order: (personGender === Gender.MALE ? spouse.husbandOrder : spouse.wifeOrder) || 1,
+            husbandOrder: spouse.husbandOrder ?? 1,
+            wifeOrder: spouse.wifeOrder ?? 1,
             marriageDate: spouse.marriageDate,
             divorceDate: spouse.divorceDate,
         },
