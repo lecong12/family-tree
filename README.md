@@ -47,7 +47,7 @@ Tạo file `.env.local` (hoặc set biến môi trường trên server) trong th
 1. **Database**: Chạy MongoDB, ví dụ dùng dịch vụ `mongodb` trong `docker-compose.yml` ở thư mục gốc.
 2. **Backend**:
     - `cd backend`
-    - `npm install`
+    - `npm ci`
     - `npm run build`
     - `npm run start:prod`
 3. **Frontend**:

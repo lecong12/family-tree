@@ -1,16 +1,14 @@
-## Prepare
+## Chạy backend local
 
-File `.env`
+Yêu cầu Node.js 20 và MongoDB đang chạy tại `localhost:27017`.
 
-```env
-PORT=9999
-MONGODB_URI=mongodb://root:123456@localhost:27017/familytree?authSource=admin
-JWT_SECRET_KEY= [uuid]
-JWT_ACCESS_TOKEN_EXPIRES_IN=1000d
+Từ thư mục gốc của repository, chạy trong PowerShell:
+
+```powershell
+Copy-Item backend\.env.example backend\.env
+Set-Location backend
+npm ci
+npm run start:dev
 ```
 
-## Run dev
-
-```bash
-yarn dev,git.
-```
+API chạy tại `http://localhost:9999/api/v1`.
