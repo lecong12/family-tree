@@ -37,19 +37,29 @@ export default function RelationshipNode(props: RelationshipNodeProps) {
 
             {/* Hình thoi - 4 đỉnh chạm cạnh container */}
             <div
-                className="absolute bg-white border-2"
+                className="absolute border-2"
                 style={{
                     width: DIAMOND_SIZE,
                     height: DIAMOND_SIZE,
                     top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -50%) rotate(45deg)',
+                    backgroundColor: 'var(--color-bg-secondary)',
                     borderColor: props.data.top === Gender.MALE ? '#1448c5 #E91E63 #E91E63 #1448c5' : '#E91E63 #1448c5 #1448c5 #E91E63',
                 }}
             />
 
             {/* Nội dung text - nằm trên hình thoi */}
-            <div className="absolute text-center z-10" style={{ top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '80%' }}>
+            <div
+                className="absolute text-center z-10"
+                style={{
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: '80%',
+                    color: 'var(--color-text-primary)',
+                }}
+            >
                 {marriageDateStr && <p className="text-xs leading-tight">{marriageDateStr}</p>}
                 <p className="text-xs font-semibold">{props.data.top === Gender.MALE ? `v${spouseOrder}` : `c${spouseOrder}`}</p>
             </div>

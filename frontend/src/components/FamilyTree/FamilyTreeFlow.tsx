@@ -45,9 +45,24 @@ const FlowWithSearch = ({ nodes, edges, nodeTypes }: { nodes: any[], edges: any[
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative' }}>
             <SearchBar onNodeSelect={focusNode} />
-            <ReactFlow nodeTypes={nodeTypes} nodes={nodes} edges={edges}>
-                <MiniMap />
-                <Background variant={BackgroundVariant.Lines} gap={12} size={1} />
+            <ReactFlow
+                nodeTypes={nodeTypes}
+                nodes={nodes}
+                edges={edges}
+                style={{ backgroundColor: 'var(--color-bg-primary)' }}
+            >
+                <MiniMap
+                    bgColor="var(--color-bg-secondary)"
+                    maskColor="rgba(107, 114, 128, 0.2)"
+                    nodeStrokeColor="var(--color-text-secondary)"
+                />
+                <Background
+                    variant={BackgroundVariant.Lines}
+                    gap={24}
+                    size={1}
+                    color="var(--color-border)"
+                    bgColor="var(--color-bg-primary)"
+                />
             </ReactFlow>
         </div>
     );
@@ -87,12 +102,22 @@ const FamilyTreeFlow: React.FC<FamilyTreeFlowProps> = ({ persons, spouses, paren
 
         persons.forEach((p) => p._id && personMap.set(p._id, p));
 
+        const getPersonIdentity = (person: Person | string): string => {
+            const personData = typeof person === 'string' ? personMap.get(person) : person;
+            const personId = extractId(person);
+            if (!personData?.name) return personId || '';
+
+            const birthTime = personData.birth ? new Date(personData.birth).getTime() : Number.NaN;
+            const birthDate = Number.isFinite(birthTime) ? new Date(birthTime).toISOString().slice(0, 10) : '';
+            return `${personData.name.trim().toLocaleLowerCase('vi')}|${personData.gender ?? ''}|${birthDate}`;
+        };
+
         spouses.forEach((spouse) => {
             const husbandId = extractId(spouse.husband as Person | string);
             const wifeId = extractId(spouse.wife as Person | string);
             if (!husbandId || !wifeId || !spouse._id) return;
 
-            const pairKey = [husbandId, wifeId].sort().join(':');
+            const pairKey = [getPersonIdentity(spouse.husband), getPersonIdentity(spouse.wife)].sort().join(':');
             const canonicalSpouse = spouseByPair.get(pairKey);
             spousePairById.set(spouse._id, pairKey);
 

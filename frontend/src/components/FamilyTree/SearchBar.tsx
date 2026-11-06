@@ -98,7 +98,12 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
                         }
                     }}
                     placeholder="Tìm kiếm thành viên..."
-                    className="block w-full p-3 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-blue-500 focus:border-blue-500 shadow-md transition-all duration-200 ease-in-out"
+                    className="block w-full p-3 pl-10 text-sm border rounded-lg focus:ring-blue-500 focus:border-blue-500 shadow-md transition-all duration-200 ease-in-out"
+                    style={{
+                        backgroundColor: 'var(--color-bg-secondary)',
+                        color: 'var(--color-text-primary)',
+                        borderColor: 'var(--color-border)',
+                    }}
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3">
                     {loading ? (
@@ -119,22 +124,29 @@ export const SearchBar: React.FC<SearchBarProps> = ({ onNodeSelect }) => {
             </div>
 
             {showDropdown && (
-                <ul className="mt-2 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto divide-y divide-gray-100">
+                <ul
+                    className="mt-2 border rounded-lg shadow-xl max-h-60 overflow-y-auto divide-y"
+                    style={{
+                        backgroundColor: 'var(--color-bg-secondary)',
+                        color: 'var(--color-text-primary)',
+                        borderColor: 'var(--color-border)',
+                    }}
+                >
                     {results.length > 0 ? (
                         results.map((person) => (
                             <li 
                                 key={person._id} 
                                 onClick={() => handleSelect(person)} 
-                                className="p-3 hover:bg-blue-50 cursor-pointer transition-colors duration-150"
+                                className="p-3 hover:bg-[var(--color-bg-primary)] cursor-pointer transition-colors duration-150"
                             >
                                 <div className="font-semibold">{person.name}</div>
-                                <div className="text-xs text-gray-500">
+                                <div className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>
                                     {person.cccd || person.slug}
                                 </div>
                             </li>
                         ))
                     ) : (
-                        <li className="p-3 text-gray-500 text-center text-sm">
+                        <li className="p-3 text-center text-sm" style={{ color: 'var(--color-text-secondary)' }}>
                             {loading ? "Đang tìm kiếm..." : "Không tìm thấy kết quả"}
                         </li>
                     )}

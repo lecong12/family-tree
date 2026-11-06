@@ -47,8 +47,14 @@ export default function PersonNode(props: PersonNodeProps) {
 
     return (
         <div
-            className={`relative border-2 ${isMale(props.data.gender) ? 'border-blue-500' : 'border-pink-500'} bg-white rounded-md p-2 text-center cursor-pointer hover:shadow-lg transition-shadow`}
-            style={{ minWidth: PersonNodeWidth, maxWidth: PersonNodeWidth, height: PersonNodeHeight }}
+            className={`relative border-2 ${isMale(props.data.gender) ? 'border-blue-500' : 'border-pink-500'} rounded-md p-2 text-center cursor-pointer hover:shadow-lg transition-all`}
+            style={{
+                minWidth: PersonNodeWidth,
+                maxWidth: PersonNodeWidth,
+                height: PersonNodeHeight,
+                backgroundColor: 'var(--color-bg-secondary)',
+                color: 'var(--color-text-primary)',
+            }}
             onClick={handleClick}
         >
             <Handle type="target" position={Position.Top} id={'tt'} style={{ opacity: 0 }} />
@@ -70,8 +76,8 @@ export default function PersonNode(props: PersonNodeProps) {
                 </div>
             )}
             <p className="text-sm font-bold">{props.data.name}</p>
-            <p className="text-xs text-gray-500">{birthStr}</p>
-            {ageStr && <p className="text-xs text-gray-500">{ageStr}</p>}
+            <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{birthStr}</p>
+            {ageStr && <p className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>{ageStr}</p>}
             <Handle type="source" position={Position.Bottom} id={'sb'} style={{ opacity: 0 }} />
         </div>
     );
