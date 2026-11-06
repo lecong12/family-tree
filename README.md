@@ -5,7 +5,7 @@
 
 Tài liệu này liệt kê các cấu hình cần thiết để triển khai ứng dụng Family Tree lên server.
 
-## 1. Backend (NestJS)
+## 1. Backend (NestJS),gi
 
 ### Cấu hình Environment Variables
 
@@ -44,7 +44,7 @@ Tạo file `.env.local` (hoặc set biến môi trường trên server) trong th
 
 ## 3. Các bước Deploy cơ bản
 
-1. **Database**: Chạy MongoDB (có thể dùng Docker Compose trong `backend/docker-compose.yml`).
+1. **Database**: Chạy MongoDB, ví dụ dùng dịch vụ `mongodb` trong `docker-compose.yml` ở thư mục gốc.
 2. **Backend**:
     - `cd backend`
     - `npm install`
@@ -57,6 +57,15 @@ Tạo file `.env.local` (hoặc set biến môi trường trên server) trong th
     - `npm run build`
     - `npm start` (chạy Next.js server) hoặc export ra static file nếu cần.
 
-## 4. Docker. (Tùy chọn)
+## 4. Chạy toàn bộ ứng dụng bằng Docker Compose
 
-Nếu bạn muốn đóng gói cả ứng dụng, bạn có thể viết thêm `Dockerfile` cho Backend và Frontend.
+Cài Docker Desktop (bao gồm Docker Compose), sau đó tại thư mục gốc của dự án:
+
+1. Tạo file `.env` từ mẫu: `cp .env.example .env` (trên Windows PowerShell dùng `Copy-Item .env.example .env`).
+2. Đổi `MONGO_ROOT_PASSWORD` và `JWT_SECRET` trong `.env` thành các giá trị riêng. Mật khẩu MongoDB nên dùng ký tự URL-safe.
+3. Chạy `docker compose up --build`.
+4. Mở frontend tại `http://localhost:3000`; API chạy tại `http://localhost:9999/api/v1`.
+
+Compose sẽ đợi MongoDB sẵn sàng trước khi khởi động backend và lưu dữ liệu MongoDB trong volume `mongodb_data`. Frontend được build với `NEXT_PUBLIC_API_URL`; khi truy cập từ máy khác, hãy đặt biến này trong `.env` thành URL công khai của API trước khi build lại. Backend hiện chỉ cho phép CORS từ các origin đã cấu hình trong `backend/src/main.ts`, vì vậy cần bổ sung domain frontend nếu triển khai bằng domain riêng.
+
+Nếu trang kiểm tra vẫn báo không kết nối được Backend, kiểm tra URL API là `http://localhost:9999/api/v1` khi mở frontend trên cùng máy và xem log bằng `docker compose logs -f backend`. Khi truy cập từ máy khác, thay `localhost` bằng IP/domain của máy chạy backend rồi build lại frontend.
