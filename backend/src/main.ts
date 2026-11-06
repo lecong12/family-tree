@@ -32,6 +32,7 @@ async function bootstrap() {
             'https://family-tree-frontend-git-main-lecong12s-projects.vercel.app', // Domain khác từ logs
             'https://family-tree-frontend-lecong12s-projects.vercel.app', // Domain mới của bạn
             'http://localhost:3000', // Domain khi chạy Frontend ở máy local
+            'http://localhost:3001', // Cổng local thay thế của Frontend
         ],
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
