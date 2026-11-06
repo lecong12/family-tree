@@ -12,5 +12,5 @@ JWT_ACCESS_TOKEN_EXPIRES_IN=1000d
 ## Run dev
 
 ```bash
-yarn dev
+yarn dev,git.
 ```
